@@ -138,12 +138,7 @@ class LinearCombinationFunction implements IActivationFunction {
 
 }
 
-/**
- * Step neuron activation function, the output y of this activation function is
- * binary, depending on whether the input meets a specified threshold, 0. The
- * "signal" is sent, i.e. the output is set to one, if the activation meets the
- * threshold.
- */
+
 class StepFunction implements IActivationFunction {
 
     private double yAbove = 1d;
@@ -501,12 +496,12 @@ class GenomeFactory {
 }
 
 class Genome {
-    static String DEAD = "000000000000000000000000000000000000000000000";
+    static String DEAD = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000";
     Entity owner = null;
     String code = null;
 
     Genome(Entity owner) {
-        code = GenomeFactory.create(256);
+        code = GenomeFactory.create(Settings.GENOME_LENGTH);
 
         this.owner = owner;
         code = code.replaceAll("-", "");
@@ -536,19 +531,22 @@ class Genome {
     public void mutate() {
         char[] c = code.toCharArray();
         int index = c.length - 1;
-        index = (int) (Math.random()) * index;
-        if (index < 0) {
-            index = 0;
-        } else if (index >= c.length) {
-            index = c.length - 1;
+        int mutations = c[Gene.GENE_MUTATION_PROBABILITY];
+        for(int j = 0; j < mutations; j++ ) {
+            index = (int) (Math.random()) * index;
+            if (index < 0) {
+                index = 0;
+            } else if (index >= c.length) {
+                index = c.length - 1;
+            }
+            try {
+                char t = c[index];
+                c[index] = c[index - 1];
+                c[index - 1] = t;
+            } catch (Exception ex) {
+            }
         }
-        try {
-            char t = c[index];
-            c[index] = c[index - 1];
-            c[index - 1] = t;
-        } catch (Exception ex) {
-        }
-        c[Gene.KIN] = GenomeFactory.create(256).charAt(Gene.KIN);
+        c[Gene.KIN] = GenomeFactory.create(Settings.GENOME_LENGTH).charAt(Gene.KIN);
         code = String.valueOf(c);
     }
 }
@@ -1071,6 +1069,8 @@ class Gene {
     final static int ACTIVATION_FUNCTION_0 = 22;
     final static int ACTIVATION_FUNCTION_1 = 25;
     final static int ACTIVATION_FUNCTION_2 = 24;
+    final static int GENE_MUTATION_PROBABILITY = 27;
+
 
 
 }
@@ -1329,6 +1329,7 @@ class Population {
 }
 
 class Settings {
+    static int GENOME_LENGTH = 32;
     static int STARTING_POPULATION = 2000;
     static int MAX_OFFSPRING = 3;
     final static int MAX_AGE = 10;
@@ -1552,13 +1553,13 @@ public class GARLTask {
                     }
 
                 }
-                if (livingCount == 1) {
+                if (livingCount == 2) {
                     System.out.println("Recreate population");
                     Entity seed = null;
                     for(int i = 0; i < world.list.size(); i++ ){
-                        Entity e = world.list.get(i);
-                        if( e.alive ){
-                            seed = e;
+                        Entity a = world.list.get(i);
+                        if( a.alive ){
+                            seed = a;
                         }
                     }
                     world.list = Population.create(world, seed, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
