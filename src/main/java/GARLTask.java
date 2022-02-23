@@ -126,9 +126,6 @@ class LinearCombinationFunction implements IActivationFunction {
      */
     private double bias;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public double calc(double summedInput) {
         return summedInput + bias;
@@ -149,27 +146,12 @@ class LinearCombinationFunction implements IActivationFunction {
  */
 class StepFunction implements IActivationFunction {
 
-    /**
-     * Output value if the input is above or equal the threshold
-     */
     private double yAbove = 1d;
 
-    /**
-     * Output value if the input is bellow the threshold
-     */
     private double yBellow = 0d;
 
-    /**
-     * The output of this activation function is binary, depending on whether
-     * the input meets a specified threshold.
-     */
     private double threshold = 0d;
 
-    /**
-     * Default constructor
-     *
-     * @param threshold
-     */
     public StepFunction(double threshold) {
         this.threshold = threshold;
     }
@@ -197,51 +179,25 @@ class StepFunction implements IActivationFunction {
  * @version 0.1
  */
 class Linear implements IActivationFunction {
-    /**
-     * Coefficient that multiplies x
-     */
     private double a = 1.0;
 
-    /**
-     * Linear dummy constructor
-     */
     public Linear() {
 
     }
 
-    /**
-     * Linear constructor
-     *
-     * @param value coefficient of the Linear function
-     */
     public Linear(double value) {
         this.setA(value);
     }
 
-    /**
-     * Sets a new coefficient for the linear function
-     *
-     * @param value new coefficient for the linear function
-     */
     public void setA(double value) {
         this.a = value;
     }
 
-    /**
-     * Calculates and returns the result of the linear function
-     *
-     * @return result of the linear function
-     */
     @Override
     public double calc(double x) {
         return a * x;
     }
 
-    /**
-     * Calculates and returns the derivative value of the linear function
-     *
-     * @return derivative of the linear function
-     */
     public double derivative(double x) {
         return a;
     }
@@ -312,8 +268,6 @@ enum ActivationFunction {
 
 interface IActivationFunction {
     double calc(double x);
-
-
 }
 
 class Neuron {
@@ -478,12 +432,9 @@ class ActionFactory {
         int len = Action.class.getDeclaredFields().length;
         double o = (double) (input % len);
         int n = (int) Math.round(o);
-
-        //System.out.println(n);
         try {
             Field[] list = Action.class.getDeclaredFields();
             String name = list[n].getName();
-            //System.out.println(name);
             Action a = Action.valueOf(name);
             if (a.equals(Action.RANDOM)) {
                 return create(Math.random() * len);
@@ -497,7 +448,6 @@ class ActionFactory {
 
             return a;
         } catch (Exception e) {
-            //e.printStackTrace();
             return Action.RANDOM;
         }
     }
@@ -507,11 +457,10 @@ class ActionFactory {
         double o = (double) (input % len);
         int n = (int) Math.round(o);
 
-        //System.out.println(n);
         try {
             Field[] list = Action.class.getDeclaredFields();
             String name = list[n].getName();
-            //System.out.println(name);
+
             if (a.equals(Action.RANDOM)) {
                 return create(Math.random() * len);
             } else if (a.equals(Action.SIN)) {
@@ -522,7 +471,7 @@ class ActionFactory {
 
             return a;
         } catch (Exception e) {
-            //e.printStackTrace();
+
             return Action.RANDOM;
         }
     }
@@ -537,7 +486,7 @@ class Activity {
 
 class GenomeFactory {
     public static String create(int numSequence) {
-        //System.out.println(numSequence);
+
         if (numSequence <= 32) {
             numSequence = 32;
         }
@@ -752,8 +701,6 @@ class Entity {
         boolean bb = Line.intersects(l1, l2);
 
         if (bb) {
-            //System.out.println(a.genome.code);
-            //System.out.println(b.genome.code);
             return true;
         }
 
@@ -812,8 +759,6 @@ class Entity {
         return clone();
     }
 
-    //ArrayList<Entity> children = new ArrayList<>();
-
     public Entity clone() {
         Entity e = new Entity(world);
         e.alive = true;
@@ -835,7 +780,7 @@ class Entity {
         e.genome.code = genome.code;
         e.brain = new NeuralNet(e.genome);
 
-        e.energy = energy; //Double.parseDouble("" + (int) e.genome.read(Gene.ENERGY));
+        e.energy = energy;
         e.degree = Math.random() * 360;
         e.parent = this;
         e.generation = generation + 1;
@@ -856,19 +801,7 @@ class Entity {
 
     public Action think(World world) {
         age++;
-        /*
-        if (age > Settings.MAX_AGE) {
-            alive = false;
-            genome.code = Genome.DEAD;
-            return Action.STOP;
-        }
         consume();
-        if (energy <= 0) {
-            genome.code = Genome.DEAD;
-            alive = false;
-        }
-         */
-
         Action action = brain.output(world);
 
         process(action, world);
@@ -1058,12 +991,7 @@ class Entity {
 
         double radiansToDegrees = 180d / Math.PI;
         degree = v * radiansToDegrees;
-
         degree = (degree + 360) % 360;
-
-        //degree = radians; //Math.toDegrees(radians);
-
-        //degree = Math.abs(degree);
 
     }
 
@@ -1073,9 +1001,6 @@ class Entity {
                 Entity o = world.list.get(i);
                 if (o != null) {
                     if (isTouching(o) && o != this) {
-
-                        //if(think(world) == Action.KILL) {
-                        //if (o.genome.read(Gene.KILL) * o.size < genome.read(Gene.KILL) * size) {
 
                         double extracted = 0;
                         if (o.alive) {
@@ -1217,22 +1142,7 @@ class World extends JLabel {
         g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
     }
 
-
-
     /*
-    public void paintComponent(Graphics g){
-        Image temp;
-
-        // NEITHER OF THESE WORK FOR CRREATING THE "TEMP" IMAGE
-//	 	temp = app.center.createImage(app.center.getWidth(), app.center.getHeight());
-        temp = createImage(app.center);
-
-        g.drawImage(temp, 0, 0, this);
-
-        repaint();
-    }
-     */
-
     private static BufferedImage createImage(JPanel panel) {
         int w = panel.getWidth();
         int h = panel.getHeight();
@@ -1240,12 +1150,12 @@ class World extends JLabel {
         Graphics2D g = bi.createGraphics();
         return bi;
     }
+    */
 
 
     public void paintComponent(Graphics g) {
 
         super.paintComponent(g);
-        //Graphics2D g = backbuffer.createGraphics();
         Graphics2D g2 = (Graphics2D) g;
         DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -1279,14 +1189,11 @@ class World extends JLabel {
             if (r > 0) {
                 drawVisibilityCircle(g2, p, r, g.getColor());
             }
-            //g.fillOval(e.location.x, e.location.y, r, r);
+
             if (e == selected) {
                 g2.drawOval(e.location.x - (r / 2), e.location.y - (r / 2), r * 2, r * 2);
             }
-            //g.setColor(Color.BLACK);
 
-            //long milliseconds = System.currentTimeMillis();
-            //final long sec = TimeUnit.MILLISECONDS.toSeconds(milliseconds);
             double direction = e.degree;
             int xs = (int) ((int) (e.location.x + r) + (e.size * Math.cos(direction * ((Math.PI) / 360d)))); //);
             int ys = (int) ((int) (e.location.y + r) - (e.size * Math.sin(direction * ((Math.PI) / 360d)))); //);
@@ -1400,7 +1307,7 @@ class Population {
 }
 
 class Settings {
-    static int STARTING_POPULATION = 300;
+    static int STARTING_POPULATION = 600;
     static int MAX_OFFSPRING = 3;
     final static int MAX_AGE = 280;
     final static int MAX_SIZE = 12;
@@ -1545,8 +1452,8 @@ public class GARLTask {
         //2. Optional: What happens when the frame closes?
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        int width = 1000;
-        int height = 1000;
+        int width = 1848;
+        int height = 1016;
         world = new World(width, height);
 
         frame.setSize(width, height);
