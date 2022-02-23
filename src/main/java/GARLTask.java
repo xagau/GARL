@@ -27,6 +27,7 @@ enum Action {
     MOVE_DIRECTION,
     SAMPLE_FORWARD,
     SAMPLE_SELF,
+    JUMP,
     RANDOM,
     COS,
     SIN,
@@ -324,9 +325,7 @@ class ActivationFactory {
         int index = gene % ActivationFunction.values().length;
         Field[] fl = ActivationFunction.class.getDeclaredFields();
         Field f = fl[index];
-        //System.out.println("1:" + f.getName());
         ActivationFunction af = ActivationFunction.valueOf(f.getName());
-        //System.out.println("2:" + af.toString());
         switch (af) {
             case SIGMOID:
                 Sigmoid sigmoid = new Sigmoid((double) gene);
@@ -514,6 +513,13 @@ class Genome {
         }
         char c = code.charAt(0);
         return c;
+    }
+
+    public void jump(int loc)
+    {
+        if( loc < code.length()){
+            index = loc;
+        }
     }
 
     int index = 0;
@@ -837,8 +843,6 @@ class Entity {
             location.vx = -location.vx;
         }
         if (location.y < 0) {
-
-
             location.y = 0;
             location.vy = -location.vy;
         }
@@ -925,11 +929,20 @@ class Entity {
                 long cs = checksum(genome.code);
                 double d = flatten(cs, 1);
                 d += flatten(size, 1);
+                d += flatten((int)energy, 1);
+                d += flatten(age, 1);
+                d += flatten(genome.read(genome.read(Gene.AGE)), 1);
+                d += flatten(fertile?0:1, 1);
+
                 Action flattenedAction = ActionFactory.create(d);
                 process(flattenedAction, world);
 
                 break;
-
+            case JUMP:
+                long js = checksum(genome.code);
+                double gl = flatten(js, genome.code.length());
+                genome.jump((int)gl);
+                break;
             case SAMPLE_FORWARD:
                 //TODO: Change up
                 Entity e = sampleForward();
