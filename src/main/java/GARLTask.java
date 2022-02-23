@@ -683,6 +683,13 @@ class Entity {
         return false;
     }
 
+    public void die()
+    {
+        alive = false;
+        genome.code = Genome.DEAD;
+
+    }
+
     public boolean intersects(Entity a, Entity b) {
         int a_startX = a.location.x;
         int a_startY = a.location.y;
@@ -1050,6 +1057,7 @@ class Entity {
 }
 
 class Gene {
+    final static int AGE = 26;
     final static int SENSORY = 0;
     final static int SIZE = 9;
     final static int MATURITY = 23;
@@ -1235,7 +1243,7 @@ class World extends JLabel {
 
         int spacing = 14;
         int popupWidth = 340;
-        int popupHeight = 350;
+        int popupHeight = 370;
 
         if (e != null) {
             boolean b = e.world.list.contains(e);
@@ -1282,6 +1290,7 @@ class World extends JLabel {
             g.drawString("KIN: " + e.genome.read(Gene.KIN), mx + spacing, my + spacing * 21);
             g.drawString("Fertile: " + e.fertile, mx + spacing, my + spacing * 22);
             g.drawString("Read Position: " + e.genome.index(), mx + spacing, my + spacing * 23);
+            g.drawString("Death: " + Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE), mx + spacing, my + spacing * 24);
 
 
         }
@@ -1304,18 +1313,33 @@ class Population {
 
         return entities;
     }
+
+    public static ArrayList<Entity> create(World world, Entity seed, int individuals, int width, int height) {
+        ArrayList<Entity> entities = new ArrayList<>();
+        Random rand = new Random();
+        for (int i = 0; i < individuals; i++) {
+            Entity e = seed.clone();
+            e.location.x = rand.nextInt(width);
+            e.location.y = rand.nextInt(height);
+            entities.add(e);
+        }
+
+        return entities;
+    }
 }
 
 class Settings {
-    static int STARTING_POPULATION = 600;
+    static int STARTING_POPULATION = 2000;
     static int MAX_OFFSPRING = 3;
-    final static int MAX_AGE = 280;
-    final static int MAX_SIZE = 12;
+    final static int MAX_AGE = 10;
+    final static int DEATH_MULTIPLIER = 15;
+
+    final static int MAX_SIZE = 16;
     final static int SELECTION_EVENT = 1;
     final static double MUTATION_RATE = 0.3;
     final static int CELL_MOVEMENT = 1;
     final static int MAX_SPEED = 5;
-
+    final static int MAX_POPULATION = 1000;
 
     final static double ENERGY_STEP_COST = 0.01;
     final static double ENERGY_STEP_SLEEP_COST = 0.001;
@@ -1491,7 +1515,7 @@ public class GARLTask {
                     for (int j = 0; j < rlist.length; j++) {
                         if (rlist[j] != null) {
                             if (selection.insideRect(rlist[j], e.location.x, e.location.y)) {
-                                e.alive = false;
+                                e.die();
                             }
                         }
                     }
@@ -1505,27 +1529,41 @@ public class GARLTask {
                         if (e.alive && (e.age > min)) {
                             if (Math.random() > 0.8) {
                                 int n = e.genome.read(Gene.RR) % Settings.MAX_OFFSPRING;
+                                if( Settings.MAX_POPULATION > livingCount ){
+                                    n = Math.min(1, n);
+                                }
                                 for (int j = 0; j < n; j++) {
 
                                     Entity a = e.replicate();
                                     e.fertile = false;
                                     world.list.add(a);
                                 }
+                                e.die();
+
                             }
                         }
                     }
 
-                    if (e.age > Settings.MAX_AGE) {
-                        e.alive = false;
+                    if (e.age > Settings.DEATH_MULTIPLIER*e.genome.read(Gene.AGE)) {
+                        e.die();
                     }
                     if (e.alive) {
                         livingCount++;
                     }
+
                 }
-                if (livingCount == 0) {
+                if (livingCount == 1) {
                     System.out.println("Recreate population");
-                    world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                    Entity seed = null;
+                    for(int i = 0; i < world.list.size(); i++ ){
+                        Entity e = world.list.get(i);
+                        if( e.alive ){
+                            seed = e;
+                        }
+                    }
+                    world.list = Population.create(world, seed, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
                 }
+
             }
 
         };
