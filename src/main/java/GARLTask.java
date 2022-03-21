@@ -1,19 +1,28 @@
+import com.google.gson.Gson;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
 enum Action {
+    NONE,
+    COMMIT,
     MOVE_RIGHT,
     MOVE_LEFT,
     MOVE_UP,
@@ -23,7 +32,10 @@ enum Action {
     MOVE_DOWN_LEFT,
     MOVE_DOWN_RIGHT,
     SCAN,
+    CYCLE,
+    TARGET,
     IF,
+    RECODE,
     JUMP,
     COS,
     SIN,
@@ -31,6 +43,13 @@ enum Action {
     SLOW,
     STOP,
     KILL,
+    DIRECTION,
+    CONTINUE,
+    APPEND,
+    SAVE,
+    GOAL,
+    DEATH,
+    DELETE
 }
 
 abstract class NeuralLayer {
@@ -49,33 +68,42 @@ abstract class NeuralLayer {
 
 
         for (int i = 0; i < numberOfNeuronsInLayer; i++) {
-            activationFnc = ActivationFactory.create(owner.owner.read(owner.owner.index));
+            if (name.equals("output")) {
+                SoftmaxFunction sf = new SoftmaxFunction(Action.values().length);
+                sf.setLayer(this);
+                activationFnc = sf;
+
+            } else {
+                activationFnc = new ReluFunction(owner.owner.read(owner.owner.index));
+            }
             owner.owner.advance();
-                try {
-                    neuron.get(i).setActivationFunction(activationFnc);
-                    neuron.get(i).init();
-                } catch (IndexOutOfBoundsException iobe) {
-                    neuron.add(new Neuron(numberOfInputs, activationFnc));
-                    neuron.get(i).init();
-                }
+            double bias = owner.owner.read(owner.owner.index());
+            try {
+                neuron.get(i).setActivationFunction(activationFnc);
+                neuron.get(i).init();
+            } catch (IndexOutOfBoundsException iobe) {
+                neuron.add(new Neuron(numberOfInputs, activationFnc, bias));
+                neuron.get(i).init();
+            }
 
         }
     }
 
     boolean debug = false;
+
     protected void calc() {
-        if( debug ) {
+        if (debug) {
             System.out.println(this.name + " calc() " + numberOfNeuronsInLayer);
         }
         for (int i = 0; i < numberOfNeuronsInLayer; i++) {
-            if( previousLayer != null ) {
-                if( debug ) {
+            if (previousLayer != null) {
+                if (debug) {
                     System.out.println("input-" + name + ":" + previousLayer.input);
                 }
                 neuron.get(i).setInputs(previousLayer.input);
                 neuron.get(i).calc();
             } else {
-                if( debug ) {
+                if (debug) {
                     System.out.println("input-" + name + ":" + input);
                 }
                 neuron.get(i).setInputs(input);
@@ -88,8 +116,8 @@ abstract class NeuralLayer {
                 output.add(neuron.get(i).getOutput());
             }
         }
-        if(nextLayer != null ) {
-            if( debug ) {
+        if (nextLayer != null) {
+            if (debug) {
                 System.out.println("Compute next Layer:");
             }
             nextLayer.input = output;
@@ -97,11 +125,11 @@ abstract class NeuralLayer {
         }
     }
 
-    public void setNeuralNet(NeuralNet net){
+    public void setNeuralNet(NeuralNet net) {
         owner = net;
     }
 
-    public NeuralNet getNeuralNet(){
+    public NeuralNet getNeuralNet() {
         return owner;
     }
 }
@@ -137,7 +165,10 @@ class OutputLayer extends NeuralLayer {
 
 class SinusoidFunction implements IActivationFunction {
 
+    double gene = 0;
+
     public SinusoidFunction(double gene) {
+        this.gene = gene;
     }
 
     /**
@@ -145,19 +176,29 @@ class SinusoidFunction implements IActivationFunction {
      */
     @Override
     public double calc(double summedInput) {
-        return Math.sin(summedInput);
+        return Math.sin(summedInput + gene);
+    }
+
+
+    public void setLayer(NeuralLayer layer) {
     }
 
     public double derivative(double net) {
-        return Math.cos(net);
+        return Math.cos(net + gene);
     }
 
 }
 
 
 class CosusoidFunction implements IActivationFunction {
+    double gene = 0;
 
     public CosusoidFunction(double gene) {
+        this.gene = gene;
+    }
+
+    public void setLayer(NeuralLayer layer) {
+
     }
 
     /**
@@ -165,11 +206,11 @@ class CosusoidFunction implements IActivationFunction {
      */
     @Override
     public double calc(double summedInput) {
-        return Math.cos(summedInput);
+        return Math.cos(summedInput + gene);
     }
 
     public double derivative(double net) {
-        return Math.sin(net);
+        return Math.cos(net + gene);
     }
 
 }
@@ -183,7 +224,15 @@ class LinearCombinationFunction implements IActivationFunction {
     /**
      * Bias value
      */
-    private double bias = Math.random();
+    private double bias = 0;
+
+    LinearCombinationFunction(double bias) {
+        this.bias = bias;
+    }
+
+    public void setLayer(NeuralLayer layer) {
+        setLayer(layer);
+    }
 
     @Override
     public double calc(double summedInput) {
@@ -210,16 +259,20 @@ class StepFunction implements IActivationFunction {
         this.threshold = threshold;
     }
 
+    public void setLayer(NeuralLayer layer) {
+
+    }
 
     public double calc(double summedInput) {
-        if (summedInput >= threshold)
+        if (summedInput >= threshold) {
             return yAbove;
-        else
+        } else {
             return yBellow;
+        }
     }
 
 
-    public double deerivative(double input) {
+    public double derivative(double input) {
         return 1d;
     }
 
@@ -238,6 +291,11 @@ class Linear implements IActivationFunction {
     public Linear() {
 
     }
+
+    public void setLayer(NeuralLayer layer) {
+
+    }
+
 
     public Linear(double value) {
         this.setA(value);
@@ -260,6 +318,10 @@ class Linear implements IActivationFunction {
 class Sigmoid implements IActivationFunction {
     private double a = 1.0;
 
+    public void setLayer(NeuralLayer layer) {
+
+    }
+
     public Sigmoid(double _a) {
         this.a = _a;
     }
@@ -273,6 +335,10 @@ class Sigmoid implements IActivationFunction {
 
 class ReluFunction implements IActivationFunction {
     private double a = 0.0;
+
+    public void setLayer(NeuralLayer layer) {
+
+    }
 
     public ReluFunction(double _a) {
         this.a = _a;
@@ -292,9 +358,16 @@ class HTANFunction implements IActivationFunction {
         this.a = _a;
     }
 
+
+    public void setLayer(NeuralLayer layer) {
+    }
+
+
     @Override
     public double calc(double x) {
-        if( x >= a ) { return Math.tanh(x); }
+        if (x >= a) {
+            return Math.tanh(x);
+        }
         return x;
     }
 }
@@ -307,13 +380,17 @@ class NegateFunction implements IActivationFunction {
         this.a = _a;
     }
 
+
+    public void setLayer(NeuralLayer layer) {
+    }
+
     @Override
     public double calc(double x) {
-        if (x >= a) {
+        if (x < a) {
             x = -x;
             return x;
         }
-        return -a;
+        return -x;
     }
 }
 
@@ -326,34 +403,44 @@ class SoftmaxFunction implements IActivationFunction {
     }
 
     NeuralLayer layer = null;
-    public void setLayer(NeuralLayer layer)
-    {
+
+    public void setLayer(NeuralLayer layer) {
         this.layer = layer;
     }
+
     @Override
     public double calc(double netInput) {
         double totalLayerInput = 0;
         // add max here for numerical stability - find max netInput for all neurons in this layer
         double max = netInput;
 
-        if( layer == null ){
-            System.out.println("Layer is null;");
-            return 1;
+        if (layer == null) {
+            System.out.println("Layer is null:");
+            return netInput;
         }
         ArrayList<Neuron> list = layer.neuron;
-        for (int i = 0; i < list.size(); i++ ) {
-            Neuron neuron = (Neuron)list.get(i);
-            totalLayerInput += Math.exp(neuron.getOutput()-max);
+        for (int i = 0; i < list.size(); i++) {
+            Neuron neuron = (Neuron) list.get(i);
+            totalLayerInput += Math.exp(neuron.getOutput() - max);
         }
 
-        double output = Math.exp(netInput-max) / totalLayerInput;
+        double output = Math.exp(netInput - max) / totalLayerInput;
         return output;
     }
 
 }
 
 enum ActivationFunction {
-    LINEAR, SIGMOID, HYPERTAN, RELU, SINUSMOID
+    //LINEAR,
+    SIGMOID,
+    //HYPERTAN,
+    RELU,
+    SOFTMAX,
+    //COSUSMOID,
+    //SINUSMOID,
+    //STEP,
+    //NEGATE,
+    //LINEAR_COMBINATION
 }
 
 interface IActivationFunction {
@@ -366,10 +453,11 @@ class Neuron {
     private Double output = 0d;
     private Double outputBeforeActivation = 0d;
     private int numberOfInputs = 0;
-    protected Double bias = Math.random();
+    protected Double bias = 0d; // get from gene? OR TD(0)?
     private IActivationFunction activationFunction;
 
-    public Neuron(int numberofinputs, IActivationFunction iaf) {
+    public Neuron(int numberofinputs, IActivationFunction iaf, Double bias) {
+        this.bias = bias;
         numberOfInputs = numberofinputs;
         weight = new ArrayList<>(numberofinputs + 1);
         input = new ArrayList<>(numberofinputs);
@@ -398,10 +486,12 @@ class Neuron {
         if (numberOfInputs > 0) {
             if (input != null && weight != null) {
                 for (int i = 0; i <= numberOfInputs; i++) {
-                    double v =0 ;
+                    double v = 0;
                     try {
                         v = (i == numberOfInputs ? bias : input.get(i));
-                    } catch(Exception ex) { v = bias ; }
+                    } catch (Exception ex) {
+                        v = bias;
+                    }
                     outputBeforeActivation += v * weight.get(i);
                 }
             }
@@ -410,11 +500,12 @@ class Neuron {
     }
 
     public void setInputs(ArrayList<Double> input) {
+        this.input = new ArrayList<Double>();
         this.input.addAll(input);
     }
 
     public Double getOutput() {
-        return Math.abs(output);
+        return output;
     }
 
 }
@@ -428,34 +519,52 @@ class ActivationFactory {
 
         switch (af) {
             case SIGMOID:
-                Sigmoid sigmoid = new Sigmoid(1.0);
+                Sigmoid sigmoid = new Sigmoid(gene);
                 return sigmoid;
-            case LINEAR:
-                Linear linear = new Linear(1.0 * gene);
-                return linear;
+            //case LINEAR:
+            //    Linear linear = new Linear(gene);
+            //    return linear;
             //case STEP:
             //    StepFunction st = new StepFunction((double) gene);
             //    return st;
-            case HYPERTAN:
-                HTANFunction ht = new HTANFunction((double) gene);
-                return ht;
+            //case HYPERTAN:
+            //    HTANFunction ht = new HTANFunction((double) gene);
+            //    return ht;
             case RELU:
                 ReluFunction rl = new ReluFunction((double) gene);
                 return rl;
+            case SOFTMAX:
+                SoftmaxFunction smx = new SoftmaxFunction((double) gene);
+                return smx;
             //case NEGATE:
             //    NegateFunction nl = new NegateFunction((double) gene);
             //    return nl;
-
+            //case LINEAR_COMBINATION:
+            //    LinearCombinationFunction lcb = new LinearCombinationFunction((double) gene);
+            //    return lcb;
+            //case SINUSMOID:
+            //    SinusoidFunction sinusmoid = new SinusoidFunction((double) gene);
+            //    return sinusmoid;
+            //case COSUSMOID:
+            //    CosusoidFunction cosusmoid = new CosusoidFunction((double) gene);
+            //    return cosusmoid;
             default:
-                Sigmoid smx = new Sigmoid((double) gene);
-                return smx;
+                ReluFunction smax = new ReluFunction((double) gene);
+                return smax;
         }
     }
 }
 
 class Globals {
     static GARLRectangle spawn = new GARLRectangle();
+    static GARLRectangle control = new GARLRectangle();
+
     static boolean verbose = true;
+    static long threshold = 250;
+    static Semaphore semaphore = new Semaphore(1);
+
+    static boolean debug = false;
+
 }
 
 class NeuralNet {
@@ -468,12 +577,12 @@ class NeuralNet {
     public NeuralNet(Genome g) {
         owner = g;
         int numInputs = Settings.NUMBER_OF_INPUTS;
-        int numDense = (int) g.read(Gene.DENSE) % Settings.MAX_NEURONS;
-        int numHidden = (int) g.read(Gene.HIDDEN) % Settings.MAX_NEURONS;
+        int numDense = Math.max(2, (int) g.read(Gene.DENSE) % Settings.MAX_NEURONS);
+        int numHidden = Math.max(2, (int) g.read(Gene.HIDDEN) % Settings.MAX_NEURONS);
 
         SoftmaxFunction softmax = new SoftmaxFunction(Action.values().length);
         try {
-            output = new OutputLayer(1, softmax, numDense);
+            output = new OutputLayer(1, softmax, numHidden);
             output.setNeuralNet(this);
             output.name = "output";
             softmax.setLayer(output);
@@ -481,18 +590,21 @@ class NeuralNet {
         } catch (Exception ex) {
         }
 
-        IActivationFunction iaf0 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_0));
+        //IActivationFunction iaf0 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_0));
+
         try {
-            second = new HiddenLayer(numHidden, iaf0, numDense);
+            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_0));
+            second = new HiddenLayer(numHidden, relu, numDense);
             second.setNeuralNet(this);
             second.nextLayer = output;
             second.name = "hidden";
         } catch (Exception ex) {
         }
 
-        IActivationFunction iaf1 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_1));
+        //IActivationFunction iaf1 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_1));
         try {
-            dense = new HiddenLayer(numDense, iaf1, numInputs);
+            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
+            dense = new HiddenLayer(numDense, relu, numInputs);
             dense.setNeuralNet(this);
             dense.nextLayer = second;
             dense.name = "dense";
@@ -502,7 +614,8 @@ class NeuralNet {
 
         IActivationFunction iaf2 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_2));
         try {
-            input = new InputLayer(numInputs, ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_INPUT)), numInputs);
+            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_INPUT));
+            input = new InputLayer(numInputs, relu, numInputs);
             input.setNeuralNet(this);
             input.name = "input";
             input.nextLayer = dense;
@@ -526,8 +639,6 @@ class NeuralNet {
     }
 
 
-
-
 }
 
 class ActionFactory {
@@ -542,25 +653,18 @@ class ActionFactory {
             Field[] list = Action.class.getDeclaredFields();
             String name = list[n].getName();
             Action a = Action.valueOf(name);
-            if (a.equals(Action.SIN)) {
-                return create(Math.sin(input) * len);
-            } else if (a.equals(Action.COS)) {
-                return create(Math.cos(input) * len);
-            } else if (a.equals(Action.TAN)) {
-                return create(Math.tanh(input) * len);
-            }
 
             return a;
         } catch (Exception e) {
-            return Action.JUMP;
+            return Action.COMMIT;
         }
     }
 
 }
 
-class Activity {
-    int x, y;
-    double vx, vy;
+class Coords {
+    double x = 0, y = 0;
+    double vx = 0.0, vy = 0.0;
 }
 
 class GenomeFactory {
@@ -570,8 +674,14 @@ class GenomeFactory {
             numSequence = Settings.GENOME_LENGTH;
         }
         String code = "";
+        String str = "";
+        for (int i = 0; i <= Settings.GENOME_LENGTH; i++) {
+            Random r = new Random();
+            char c = (char) (r.nextInt(Settings.CHAR_SET) + 'a');
+            str += c;
+        }
         for (int i = 0; i < numSequence; i++) {
-            code += UUID.randomUUID().toString();
+            code += str;
         }
         code = code.replaceAll("-", "");
         return code;
@@ -589,11 +699,14 @@ class GenomeFactory {
 class GARLRectangle extends Rectangle {
     boolean kill = true;
     boolean spawner = false;
+    boolean control = false;
     Color color = Color.pink;
 
     Color getColor() {
         if (spawner) {
             return Color.green;
+        } else if (control) {
+            return Color.magenta;
         }
         return color;
     }
@@ -601,36 +714,60 @@ class GARLRectangle extends Rectangle {
 }
 
 class Genome {
-    static String DEAD = GenomeFactory.create(Settings.GENOME_LENGTH * Settings.GENOME_LENGTH, '0');
+    static String DEAD = GenomeFactory.create(Settings.GENOME_LENGTH * Settings.GENOME_LENGTH, '-');
     Entity owner = null;
     String code = null;
+    int numAppends = 0;
+    int numDeletions = 0;
+    int numRecodes = 0;
 
-    Genome(Entity owner) {
+    public Genome(Entity owner) {
         code = GenomeFactory.create(Settings.GENOME_LENGTH);
         this.owner = owner;
     }
 
+    public Genome(String code) {
+        this.code = code;
+    }
+
+    public void setOwner(Entity e) {
+        this.owner = e;
+    }
 
     public synchronized char read(int loc) {
+        if (loc < 0) {
+            loc = Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION);
+        }
         if (loc < code.length()) {
             return code.charAt(loc);
-        }
-        else if( loc >= code.length()){
+        } else if (loc >= code.length()) {
             try {
                 int more = code.length() - loc;
                 return read(more);
-            } catch(Exception ex) {}
+            } catch (Exception ex) {
+            }
         }
-        char c = code.charAt(Settings.GENOME_LENGTH+(int)Math.random()%2);
-        //advance();
+        char c = code.charAt(Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION));
         return c;
     }
 
+    public void recode(int loc, char c) {
+        //int p = read(Gene.RECODE_PREFERENCE) + (int)code.length();
+        //if (numRecodes <= p) {
+
+        if (loc + Settings.GENOME_LENGTH > code.length()) {
+            return;
+        }
+        char[] g = code.toCharArray();
+        g[Settings.GENOME_LENGTH + loc] = c; //Utility.flatten(c, 26);
+        code = String.valueOf(g);
+        numRecodes++;
+        //}
+    }
+
     public void jump(int loc) {
-        if (loc < code.length()) {
+        if (index + loc < code.length()) {
             index += loc;
-        } else {
-            index = Settings.GENOME_LENGTH;
         }
     }
 
@@ -639,11 +776,23 @@ class Genome {
     public void advance() {
         index++;
         if (index >= code.length()) {
-            index = Settings.GENOME_LENGTH;
+            index = Settings.GENOME_LENGTH + 1;
+        }
+        if (index < Settings.GENOME_LENGTH) {
+            index = Settings.GENOME_LENGTH + 1;
         }
     }
 
+    public void reverse() {
+        index--;
+        if (index <= Settings.GENOME_LENGTH) {
+            index = Settings.GENOME_LENGTH + 1;
+        }
+    }
+
+
     public int index() {
+        advance();
         return index;
     }
 
@@ -651,8 +800,8 @@ class Genome {
         Random rand = new Random();
         char[] c = code.toCharArray();
         int index = c.length - 1;
-        int mutations = (int) (c[Gene.GENE_MUTATION_PROBABILITY] * rand.nextDouble() * c[Gene.GENE_MUTATION_MULTIPLIER]);
-        for (int j = 0; j < mutations; j++) {
+        int mutations = (int) Math.min((c[Gene.GENE_MUTATION_PROBABILITY] * 0.005 * c[Gene.GENE_MUTATION_MULTIPLIER]), Settings.GENOME_LENGTH / 2);
+        for (int j = 0; j <= mutations; j++) {
             index = (int) (Math.random()) * index;
             if (index < 0) {
                 index = 0;
@@ -766,7 +915,6 @@ class GFG {
             return 0;
         }
     }
-
 }
 
 class Utility {
@@ -785,15 +933,19 @@ class Utility {
         return d;
     }
 
+    public static char flatten(int c, int max) {
+        c = c % max;
+        char ch = Long.toHexString((long) c).charAt(0);
+        return ch;
+    }
+
+    public static void main(String[] args) {
+        char c = flatten('*', 16);
+    }
+
     public static double flatten(double v, double max) {
-        if( v > 1 ) {
-            v = Math.abs(Math.cos(v));
-            return v;
-        } else if( v == 0 ){
-            v = Math.abs(Math.sin(v));
-            return v;
-        }
-        return 0.5;
+        v = v % max;
+        return v;
     }
 
 }
@@ -801,16 +953,26 @@ class Utility {
 class Brain {
     Entity entity = null;
     Genome genome = null;
-    public Brain(Entity owner, Genome genome){
+
+    public Brain(Genome genome) {
+        ann = new NeuralNet(genome);
+        this.genome = genome;
+    }
+
+    public void setOwner(Entity o) {
+        entity = o;
+    }
+
+    public Brain(Entity owner, Genome genome) {
         ann = new NeuralNet(genome);
         this.genome = genome;
         this.entity = owner;
     }
+
     NeuralNet ann = null;
 
-    public static void main(String args[])
-    {
-        World world = new World(1848,1016);
+    public static void main(String args[]) {
+        World world = new World(1848, 1016);
         Entity e = new Entity(world);
         e.age = 100;
         Action a = e.brain.evaluate(world);
@@ -818,74 +980,123 @@ class Brain {
         double d = e.brain.getOutput();
 
     }
-    public void input(Entity e, World world) {
+
+    public synchronized void input(Entity e, World world) {
         ArrayList<Double> list = new ArrayList<>();
-        if (e == null) {
-            System.out.println("Genome is null");
-        }
-        list.add((double) world.getWidth());
-        list.add((double) world.getHeight());
-        list.add((double) Globals.spawn.x);
-        list.add((double) Globals.spawn.y);
-        list.add((double) Globals.spawn.width);
-        list.add((double) Globals.spawn.height);
-        list.add((double) (0d));
-        for(int i =0; i < world.selection.rlist.size(); i++ ){
-            list.add((double) world.selection.rlist.get(i).x);
-            list.add((double) world.selection.rlist.get(i).y);
-            list.add((double) world.selection.rlist.get(i).width);
-            list.add((double) world.selection.rlist.get(i).height);
-            list.add((double) (world.selection.rlist.get(i).kill?1d:0d));
-        }
-
-        for(int i =0; i < world.list.size(); i++ ){
-            list.add((double) world.list.get(i).location.x);
-            list.add((double) world.list.get(i).location.y);
-            list.add((double) world.list.get(i).location.vx);
-            list.add((double) world.list.get(i).location.vy);
-            list.add((double) e.age);
-            list.add((double)(e.fertile?1d:0d));
-            list.add((double) world.list.get(i).size);
-            list.add((double) (world.list.get(i).alive?1d:0d));
-            list.add((double) world.list.get(i).getEnergy());
-            list.add((double) (world.list.get(i).genome.read(Gene.KIN)));
-        }
-
-        list.add((double) e.location.x);
-        list.add((double) e.location.y);
-        list.add( e.location.vy);
-        list.add( e.location.vx);
-        list.add((double) e.age);
-        list.add((double)(e.fertile?1d:0d));
-        list.add((double) e.size);
-        list.add( e.getEnergy());
-        list.add((double) e.genome.read(Gene.KIN));
-        list.add((double) e.genome.index);
-        list.add((double) e.genome.read(e.genome.index));
-
-        long mlcs = Utility.checksum(e.genome.code);
-        double mld = Utility.flatten(mlcs, 1);
-        list.add(mld);
-        list.add((double)e.sampleForward().size());
-
         try {
-            e.brain.ann.input.input = list;
-        } catch(Exception ex){}
+            if (e == null) {
+                System.out.println("Genome is null");
+            }
+            list.add((double) world.getWidth());
+            list.add((double) world.getHeight());
+            list.add((double) Globals.spawn.x);
+            list.add((double) Globals.spawn.y);
+            list.add((double) Globals.spawn.width);
+            list.add((double) Globals.spawn.height);
+            list.add((double) Globals.spawn.getColor().getRGB());
+            list.add((double) Globals.control.x);
+            list.add((double) Globals.control.y);
+            list.add((double) Globals.control.width);
+            list.add((double) Globals.control.height);
+            list.add((double) Globals.control.getColor().getRGB());
+            list.add((double) (1d));
+            list.add((double) e.location.x);
+            list.add((double) e.location.y);
+            list.add(e.location.vy);
+            list.add(e.location.vx);
+            list.add((double) e.age);
+            list.add((double) Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE));
+
+            list.add((double) (e.fertile ? 1d : 0d));
+            list.add((double) (e.isTrajectoryGoal() ? 1d : 0d));
+            list.add((double) (e.isTrajectoryDeath() ? 1d : 0d));
+            list.add((double) (e.walls));
+            list.add((double) e.size);
+            list.add(e.getEnergy());
+            list.add((double) e.genome.read(Gene.KIN));
+            list.add((double) e.genome.index);
+            list.add((double) e.genome.read(e.genome.index));
+            list.add((double) e.location.x - Globals.spawn.x);
+            list.add((double) e.location.y - Globals.spawn.y);
+            list.add((double) world.getLivingCount());
+            long mlcs = Utility.checksum(e.genome.code);
+            double mld = Utility.flatten(mlcs, Action.values().length);
+            list.add(mld);
+            for (int i = 0; i < world.selection.rlist.size(); i++) {
+                list.add((double) world.selection.rlist.get(i).x);
+                list.add((double) world.selection.rlist.get(i).y);
+                list.add((double) world.selection.rlist.get(i).width);
+                list.add((double) world.selection.rlist.get(i).height);
+                list.add((double) (world.selection.rlist.get(i).kill ? 1d : 0d));
+                list.add((double) world.selection.rlist.get(i).getColor().getRGB());
+                list.add((double) (0d));
+            }
+
+            ArrayList<Entity> m = e.sampleForward();
+
+            for (int i = 0; i < m.size(); i++) {
+                try {
+                    list.add((double) m.get(i).location.x);
+                    list.add((double) m.get(i).location.y);
+                    list.add((double) m.get(i).location.vx);
+                    list.add((double) m.get(i).location.vy);
+                    list.add((double) m.get(i).age);
+                    list.add((double) Settings.DEATH_MULTIPLIER * m.get(i).genome.read(Gene.AGE));
+                    list.add((double) (m.get(i).fertile ? 1d : 0d));
+                    list.add((double) m.get(i).size);
+
+                    list.add((double) (m.get(i).alive ? 1d : 0d));
+                    list.add((double) m.get(i).getEnergy());
+                    list.add((double) (m.get(i).genome.read(Gene.KIN)));
+                    list.add((double) (m.get(i).walls));
+                    list.add((double) (m.get(i).reachedGoal ? 1d : 0d));
+                } catch (Exception ex) {
+                }
+            }
+
+
+            for (int i = 0; i < world.list.size(); i++) {
+                try {
+                    list.add((double) world.list.get(i).location.x);
+                    list.add((double) world.list.get(i).location.y);
+                    list.add((double) world.list.get(i).location.vx);
+                    list.add((double) world.list.get(i).location.vy);
+                    list.add((double) world.list.get(i).age);
+                    list.add((double) Settings.DEATH_MULTIPLIER * world.list.get(i).genome.read(Gene.AGE));
+                    list.add((double) (world.list.get(i).fertile ? 1d : 0d));
+                    list.add((double) world.list.get(i).size);
+
+                    list.add((double) (world.list.get(i).alive ? 1d : 0d));
+                    list.add((double) world.list.get(i).getEnergy());
+                    list.add((double) (world.list.get(i).genome.read(Gene.KIN)));
+                    list.add((double) (world.list.get(i).walls));
+                    list.add((double) (world.list.get(i).reachedGoal ? 1d : 0d));
+                } catch (Exception ex) {
+                }
+
+            }
+        } catch (Exception ex) {
+
+        } finally {
+            try {
+                e.brain.ann.input.input = list;
+                //System.out.println("input size:" + list.size());
+            } catch (Exception ex) {
+            }
+        }
     }
 
-    public double getOutput()
-    {
+    public double getOutput() {
         return getOutput(entity);
     }
 
 
-    public double getOutput(Entity e)
-    {
+    public double getOutput(Entity e) {
         NeuralLayer d = e.brain.ann.output;
         ArrayList<Neuron> n = d.neuron;
         Neuron nn = d.neuron.get(0);
         double r = 0;
-        if( nn == null ){
+        if (nn == null) {
             System.out.println("nn is null");
         } else {
             r = nn.getOutput();
@@ -895,98 +1106,216 @@ class Brain {
 
     Action last = null;
 
-    public Action evaluate(World world) {
+    public synchronized Action evaluate(World world) {
 
-        if( entity != null ) {
-            input(entity, world);
-            try {
-                entity.brain.ann.input.calc();
-            } catch(Exception ex) {
-                return null;
-            }
-            double d = entity.brain.getOutput();
-            Action a = ActionFactory.create(entity.genome.read(entity.genome.index+(int)d));
-            entity.genome.advance();
-            if( entity.last != a ) {
-                entity.last = a;
-                return a;
-            } else {
+        try {
+            if (entity != null) {
                 input(entity, world);
-                ArrayList<Entity> ls = entity.sampleForward();
-                for(int i = 0; i < ls.size(); i++ ){
-                   input(ls.get(i), world);
+                try {
+                    long s = System.currentTimeMillis();
+                    entity.brain.ann.input.calc();
+                    long e = System.currentTimeMillis();
+                } catch (Exception ex) {
+                    return Action.COMMIT;
                 }
-                entity.brain.ann.input.calc();
-                double dd = entity.brain.getOutput();
-                dd = Utility.flatten(dd, (double)Action.values().length);
-                a = ActionFactory.create(entity.genome.read(entity.genome.index+(int)dd));
+                long s = System.currentTimeMillis();
+                double d = entity.brain.getOutput();
+                Action a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) d));
                 entity.genome.advance();
-                entity.last = a;
-                return a;
+                long e = System.currentTimeMillis();
+
+                if (entity.last != a) {
+                    entity.last = a;
+                    return a;
+                } else {
+                    long ss = System.currentTimeMillis();
+                    input(entity, world);
+                    entity.brain.ann.input.calc();
+                    double dd = entity.brain.getOutput();
+                    dd = Utility.flatten(dd, (double) Action.values().length);
+                    a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) dd));
+                    entity.genome.advance();
+                    entity.last = a;
+                    long ee = System.currentTimeMillis();
+
+                    return a;
+                }
+            } else {
+                entity.genome.advance();
+                entity.last = Action.IF;
+                return Action.IF;
             }
-        } else {
-            entity.genome.advance();
-            entity.last = Action.IF;
+        } catch (Exception ex) {
             return Action.IF;
         }
     }
 
     public Action evaluate(Entity entity, World world) {
 
-        if( entity != null ) {
-            input(entity, world);
-            try {
-                entity.brain.ann.input.calc();
-            } catch(Exception ex) {
-                return null;
-            }
-            double d = entity.brain.getOutput();
-            Action a = ActionFactory.create(entity.genome.read(entity.genome.index+(int)d));
-            entity.genome.advance();
-            if( entity.last != a ) {
-                entity.last = a;
-                return a;
-            } else {
+        try {
+
+            if (entity != null) {
                 input(entity, world);
-                ArrayList<Entity> ls = entity.sampleForward();
-                for(int i = 0; i < ls.size(); i++ ){
-                    input(ls.get(i), world);
-                }
                 entity.brain.ann.input.calc();
-                double dd = entity.brain.getOutput();
-                dd = Utility.flatten(dd, (double)Action.values().length);
-                a = ActionFactory.create(entity.genome.read(entity.genome.index+(int)dd));
+                double d = entity.brain.getOutput();
+                Action a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) d));
                 entity.genome.advance();
-                entity.last = a;
-                return a;
+                if (entity.last != a) {
+                    entity.last = a;
+                    return a;
+                } else {
+                    d = Utility.flatten(d, (double) Action.values().length);
+                    a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) d));
+                    entity.genome.advance();
+                    entity.last = a;
+                    return a;
+                }
+            } else {
+                entity.genome.advance();
+                entity.last = Action.IF;
+                return Action.IF;
             }
-        } else {
-            entity.genome.advance();
-            entity.last = Action.IF;
+        } catch (Exception ex) {
             return Action.IF;
         }
+
     }
 }
 
 class Entity {
     Brain brain = null;
-    Activity location = new Activity();
+    Coords location = new Coords();
     Genome genome = null;
-    Entity parent = null;
     int generation = 0;
     boolean fertile = false;
-    private double energy = 1;
-    int size = 1;
-    double degree = 0; // must be 0 - 360 to specify the direction the entity is facing.
+    private double energy = Settings.ENERGY;
+    int size = Settings.MIN_SIZE;
+    double degree = Math.random() * 360; // must be 0 - 360 to specify the direction the entity is facing.
     boolean selected = false;
     Action last = null;
     Entity touching = null;
+    boolean reachedGoal = false;
 
+    int walls = 0;
     int age = 0;
 
     Color color = Color.blue;
     World world = null;
     boolean alive = true;
+
+    public static GARLRectangle closest(ArrayList<GARLRectangle> list, Entity e) {
+        int distX = Integer.MAX_VALUE;
+        int distY = Integer.MAX_VALUE;
+        GARLRectangle closest = new GARLRectangle();
+        closest.x = Integer.MAX_VALUE - 2;
+        closest.y = Integer.MAX_VALUE - 2;
+        closest.width = Integer.MAX_VALUE - 1;
+        closest.height = Integer.MAX_VALUE - 1;
+
+
+        for (int i = 0; i < list.size(); i++) {
+            GARLRectangle g = list.get(i);
+
+            if (g.getX() < e.location.x && g.getY() < e.location.y) {
+                int tdistX = (int) g.getX() - (int)e.location.x;
+                int tdistY = (int) g.getY() - (int)e.location.y;
+                tdistX = Math.abs(tdistX);
+                tdistY = Math.abs(tdistY);
+
+                if( tdistX < distX && tdistY < distY ){
+                    distX = tdistX;
+                    distY = tdistY;
+                    closest = g;
+                }
+            }
+
+        }
+        if(e.selected) {
+            System.out.println("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
+            System.out.println("Entity:" + e.location.x + "-" + e.location.y);
+        }
+        if (closest != null) {
+            return closest;
+        }
+
+        return null;
+    }
+
+    public boolean isTrajectoryGoal() {
+        ArrayList<GARLRectangle> mwalls = sampleForward(this);
+
+        GARLRectangle first = closest(mwalls, this);
+        if (walls == 0) {
+            return false;
+        }
+        double direction = degree;
+        int _xs = (int) ((int) (location.x + (size / 2)) + (size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d)))); //);
+        int _ys = (int) ((int) (location.y + (size / 2)) - (size * world.getHeight() * Math.sin(direction * ((Math.PI) / 360d)))); //);
+
+        int x = (int) location.x + ((size / 2) / 2);
+        int y = (int) location.y + ((size / 2) / 2);
+
+        Line2D line = new Line2D.Double((double) x, (double) y, (double) _xs, (double) _ys);
+
+
+        GARLRectangle goal = Globals.spawn;
+        Line line1 = new Line(goal.x, goal.y, goal.x + goal.width, goal.y + goal.height);
+        if (goal.intersectsLine(line)) {
+            if (walls == 1) {
+                return true;
+            }
+        }
+        if (walls > 1) {
+            if (first == Globals.spawn) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public ArrayList<GARLRectangle> sampleForward(Entity e) {
+        double direction = e.degree;
+        int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d)))); //);
+        int _ys = (int) ((int) (e.location.y + (e.size / 2)) - (e.size * world.getHeight() * Math.sin(direction * ((Math.PI) / 360d)))); //);
+
+        int x = (int) e.location.x + ((e.size / 2) / 2);
+        int y = (int) e.location.y + ((e.size / 2) / 2);
+
+        Line2D line = new Line2D.Double((double) x, (double) y, (double) _xs, (double) _ys);
+
+        ArrayList<GARLRectangle> walls = new ArrayList<>();
+        for (int i = 0; i < world.selection.rlist.size(); i++) {
+            try {
+                GARLRectangle wall = world.selection.rlist.get(i);
+                Line line1 = new Line(wall.x, wall.y, wall.x + wall.width, wall.y + wall.height);
+                if (wall.intersectsLine(line)) {
+                    walls.add(wall);
+                }
+            } catch (Exception ex) {
+            }
+        }
+
+        e.walls = walls.size();
+
+        return walls;
+    }
+
+    public boolean isTrajectoryDeath() {
+
+        if (isTrajectoryGoal()) {
+            return false;
+        }
+
+        ArrayList<GARLRectangle> walls = sampleForward(this);
+        // check to see if wall with closest trajectory is spawn or not.
+        this.walls = walls.size();
+        if (walls.isEmpty()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
     public boolean isTouching(Entity e) {
         if (e == null) {
@@ -995,10 +1324,13 @@ class Entity {
         int t = GFG.circle(location.x, location.y, e.location.x,
                 e.location.y, size / 2, e.size / 2);
         if (t == 1) {
+            touching = e;
             return true;
         } else if (t < 0) {
+            touching = null;
             return false;
         } else {
+            touching = e;
             return true;
         }
     }
@@ -1021,8 +1353,8 @@ class Entity {
     public void die() {
         alive = false;
         genome.code = Genome.DEAD;
-        brain = null;
         touching = null;
+        brain = null;
     }
 
     public boolean intersects(Entity a, Entity b) {
@@ -1031,11 +1363,11 @@ class Entity {
             return false;
         }
 
-        int a_startX = a.location.x;
-        int a_startY = a.location.y;
+        int a_startX = (int) a.location.x;
+        int a_startY = (int) a.location.y;
 
-        int b_startX = b.location.x;
-        int b_startY = b.location.y;
+        int b_startX = (int) b.location.x;
+        int b_startY = (int) b.location.y;
 
         double direction = a.degree;
 
@@ -1101,7 +1433,7 @@ class Entity {
     }
 
 
-    Entity(World world) {
+    public Entity(World world) {
         this.world = world;
         genome = new Genome(this);
         brain = new Brain(this, genome);
@@ -1109,8 +1441,9 @@ class Entity {
         r = genome.read(Gene.SENSORY);
         g = genome.read(Gene.HIDDEN);
         b = genome.read(Gene.SIZE);
-        color = Color.getHSBColor(r, g, b);
-        size = genome.read(Gene.SIZE) % Settings.MAX_SIZE;
+        color = Color.getHSBColor(r, 128 % g, 128 % b);
+        size = Math.max(genome.read(Gene.SIZE) % Settings.MAX_SIZE, Settings.MIN_SIZE);
+        degree = Math.random() * 360;
     }
 
     Entity replicate() {
@@ -1131,16 +1464,17 @@ class Entity {
             e.location.y = location.y - Settings.CELL_MOVEMENT - e.size;
         }
 
-        genome.mutate();
+        //genome.mutate();
         e.genome.code = genome.code;
+        e.genome.numAppends = 0;
+        e.genome.numRecodes = 0;
         e.genome.mutate();
+        e.size = size;
         e.brain = new Brain(e, e.genome);
 
         e.age = 0;
-        e.energy = 1;
+        e.energy = Settings.ENERGY;
         e.degree = Math.random() * 360;
-        e.parent = this;
-        this.parent = null;
         e.generation = generation + 1;
         e.fertile = false;
 
@@ -1155,31 +1489,281 @@ class Entity {
         }
     }
 
-    public Action think(World world) {
+    public Action think(World world, long start) {
+
 
         age++;
         consume();
-        Action action = brain.evaluate(world);
+        Action action = null;
+        try {
+            action = brain.evaluate(world);
+            long intermediate = System.currentTimeMillis();
 
-        if( action == null ){
-            return null;
+        } catch (Exception ex) {
         }
+
+        //if (action == null) {
+        //    System.out.println("Action is null");
+        //    return Action.NONE;
+        //}
 
         int depth = 0;
         process(action, world, depth);
+        //process(Action.NONE, world, depth);
+        long intermediate = System.currentTimeMillis();
+
         world.setState(action);
-        int vx = (int) location.vx;
-        int vy = (int) location.vy;
 
-        if (vx > Settings.MAX_SPEED) {
-            vx = Settings.MAX_SPEED;
-        }
-        if (vy > Settings.MAX_SPEED) {
-            vy = Settings.MAX_SPEED;
-        }
-        location.vx = vx;
-        location.vy = vy;
+        return action;
+    }
 
+
+    double register = 0;
+    double goal = 0;
+    double direction = 1;
+    double cycle = 0;
+
+    double anglex = 0;
+    double angley = 0;
+
+    public void process(Action action, World world, int depth) {
+
+        depth++;
+        if (depth > Settings.MAX_THINK_DEPTH) {
+            last = Action.APPEND;
+        }
+
+        if (brain != null) {
+
+            switch (action) {
+                case NONE:
+                    //degree++;
+
+                    //System.out.println("degree:" + degree);
+                    //break;
+                case SIN:
+
+                    anglex = Math.sin(anglex);
+                    angley = Math.sin(angley);
+                    break;
+                case COS:
+                    anglex = Math.cos(anglex);
+                    angley = Math.cos(angley);
+                    break;
+                case TAN:
+                    anglex = Math.tan(anglex);
+                    angley = Math.tan(angley);
+                    break;
+
+                case STOP:
+                    // if we're stopped - and we're touching someone, lets move.
+                    if (isTouching()) {
+                        doKill(Action.KILL);
+                    } else {
+                        location.vx = 0;
+                        location.vy = 0;
+                    }
+                    break;
+
+                case JUMP:
+
+                    try {
+                        brain.input(this, world);
+                        brain.ann.input.calc();
+                        register = brain.getOutput();
+                        double jf = 0;
+                        double jmo = 0;
+                        if (register != 0d) {
+                            genome.jump((int) register);
+                        }
+                    } catch (Exception ex) {
+                    }
+                    break;
+                case IF:
+                    if (genome.read((int) register) < genome.read(Gene.DECISION)) {
+                        genome.advance();
+                        //process(Action.JUMP, world, depth);
+                    } else {
+                        genome.reverse();
+                    }
+                    break;
+                case DIRECTION:
+                    direction = -direction;
+                    break;
+                case CYCLE:
+                case CONTINUE:
+                    //break;
+                case GOAL:
+
+                    //if (isTrajectoryGoal()) {
+                    //process(Action.APPEND, world, depth);
+                    //    goal = 1;
+                    //} else {
+                    //process(Action.CYCLE, world, depth);
+                    //    process(Action.RECODE, world, depth);
+                    //    goal = 0;
+                    //}
+
+                    break;
+                case DEATH:
+
+                    //if (isTrajectoryDeath()) {
+                    //    goal = 0;
+                    //process(Action.STOP, world, depth);
+                    //process(Action.RECODE, world, depth);
+                    //}
+
+                    //break;
+                case COMMIT:
+                    //process(last, world, depth);
+
+                case SAVE:
+                    brain.input(this, world);
+                    brain.ann.input.calc();
+                    register = brain.getOutput();
+
+                    break;
+                case DELETE:
+                    int maxDeletions = genome.read(Gene.MAX_DELETIONS);
+                    if (genome.numDeletions <= maxDeletions) {
+                        ArrayList<Entity> ae = sampleForward();
+                        double ao = 0;
+                        for (int i = 0; i < ae.size(); i++) {
+                            Entity ent = ae.get(i);
+                            brain.input(ent, world);
+                        }
+                        brain.ann.input.calc();
+                        ao = brain.getOutput();
+                        //ao = Utility.flatten(ao, (double) Action.values().length);
+                        double l = Utility.flatten((long) ao, Settings.CHAR_SET);
+                        long lng = (long) l;
+                        char c = Long.toHexString(lng).charAt(0);
+
+                        String right = brain.entity.genome.code.substring(0, brain.entity.genome.index);
+                        String left = brain.entity.genome.code.substring(right.length() - 1, brain.entity.genome.code.length());
+
+                        brain.entity.genome.code = right + left;
+                        genome.numDeletions++;
+                    }
+                    break;
+
+
+                case APPEND:
+                    try {
+                        int maxAppends = genome.read(Gene.MAX_APPENDS);
+                        if (genome.numAppends <= maxAppends) {
+                            double ao = 0;
+
+                            double l = 0;
+                            if (register == 0d) {
+                                brain.input(this, world);
+                                brain.ann.input.calc();
+                                ao = brain.getOutput();
+                                l = Utility.flatten((long) ao, Settings.CHAR_SET);
+                            } else {
+                                l = Utility.flatten((long) register, Settings.CHAR_SET);
+                            }
+                            long lng = (long) l;
+                            char c = Long.toHexString(lng).charAt(0);
+                            brain.entity.genome.code += c;
+                            genome.numAppends++;
+                        }
+                    } catch (Exception ex) {
+                    }
+                    break;
+                case SCAN:
+
+                    try {
+
+                        double o = 0;
+                        brain.input(this, world);
+                        brain.ann.input.calc();
+                        if (direction < 0) {
+                            o -= brain.getOutput();
+                        } else {
+                            o += brain.getOutput();
+                        }
+                        register = o;
+
+                    } catch (Exception ex) {
+                    }
+                    break;
+
+                case RECODE:
+
+                    try {
+                        brain.input(this, world);
+                        brain.ann.input.calc();
+                        double output = brain.getOutput();
+                        brain.input(this, world);
+                        brain.ann.input.calc();
+                        double code = brain.getOutput();
+                        if (Character.isLetter((char) output) || Character.isDigit((char) output)) {
+                            genome.recode((int) code, (char) output);
+                        }
+                    } catch (Exception ex) {
+                    }
+                    break;
+
+                case MOVE_DOWN: {
+                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vy += changey;
+
+                    break;
+                }
+                case SLOW:
+                    location.vy = location.vy / 2;
+                    location.vx = location.vx / 2;
+                    break;
+                case MOVE_UP: {
+                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vy -= changey;
+                    break;
+                }
+                case MOVE_UP_RIGHT: {
+                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vx += changex;
+                    location.vy -= changey;
+                    break;
+                }
+                case MOVE_UP_LEFT: {
+                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vx -= changex;
+                    location.vy -= changey;
+                    break;
+                }
+                case MOVE_DOWN_RIGHT: {
+                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vx += changex;
+                    location.vy += changey;
+                    break;
+                }
+                case MOVE_DOWN_LEFT: {
+                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vx -= changex;
+                    location.vy += changey;
+                    break;
+                }
+                case MOVE_LEFT: {
+                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vx -= changex;
+                    break;
+                }
+                case MOVE_RIGHT: {
+                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    location.vx += changex;
+                    break;
+                }
+                case KILL:
+                    doKill(action);
+                    break;
+            }
+
+        }
 
         if (location.x + size > world.getWidth()) {
             location.x = (location.x - size) - Settings.CELL_MOVEMENT;
@@ -1198,125 +1782,33 @@ class Entity {
             location.vy = -location.vy;
         }
 
-        location.x = location.x + vx;
-        location.y = location.y + vy;
 
-        return action;
-    }
-
-
-    double cycle = 0;
-    public void process(Action action, World world, int depth) {
-
-        depth++;
-        if( depth > Settings.MAX_THINK_DEPTH){
-            System.out.println("Hit Max Depth");
-            return;
+        if (location.vx >= Settings.MAX_SPEED) {
+            location.vx = Settings.MAX_SPEED;
         }
-
-        switch (action) {
-            case STOP:
-                // if we're stopped - and we're touching someone, lets move.
-                if (isTouching()) {
-                    doKill(Action.KILL);
-                } else {
-                    location.vx = 0;
-                    location.vy = 0;
-                }
-                break;
-
-            case JUMP:
-
-                try {
-                    brain.input(this, world);
-                    double jf = brain.getOutput(); // TODO: replace with jump factor.
-                    double jmo = genome.index + Math.abs(jf-1);
-                    genome.jump((int) jmo);
-                } catch (Exception ex) {
-                }
-                break;
-            case IF:
-                if (genome.read(genome.index) == (char) Gene.DECISION) {
-                    genome.advance();
-                    process(Action.JUMP, world, depth);
-                } else {
-                    genome.advance();
-                }
-                break;
-            case SCAN:
-
-                ArrayList<Entity> e = sampleForward();
-
-                double o = 0;
-                for(int i =0; i < e.size(); i++) {
-                    Entity ent = e.get(0);
-                    brain.input(ent, world);
-                    brain.ann.input.calc();
-                    o += brain.getOutput();
-                }
-
-                {
-                    double v = 0;
-                    if( Math.random() > 0.5 ) {
-                        v = Utility.flatten(o, 180d);
-                    } else {
-                        v = Utility.flatten(cycle, 180d);
-                        cycle++;
-                    }
-                    double radiansToDegrees = 180d / Math.PI;
-                    degree = v * radiansToDegrees;
-                    degree = (degree + 360) % 360;
-                }
-                return;
-
-            case MOVE_DOWN:
-                location.vy += Settings.CELL_MOVEMENT;
-
-                break;
-            case SLOW:
-                location.vy -= Settings.CELL_MOVEMENT;
-                location.vx -= Settings.CELL_MOVEMENT;
-                break;
-            case MOVE_UP:
-                location.vy -= Settings.CELL_MOVEMENT;
-
-                break;
-            case MOVE_UP_RIGHT:
-                location.vx += Settings.CELL_MOVEMENT;
-                location.vy -= Settings.CELL_MOVEMENT;
-                break;
-            case MOVE_UP_LEFT:
-                location.vx -= Settings.CELL_MOVEMENT;
-                location.vy -= Settings.CELL_MOVEMENT;
-                break;
-            case MOVE_DOWN_RIGHT:
-                location.vx += Settings.CELL_MOVEMENT;
-                location.vy += Settings.CELL_MOVEMENT;
-                break;
-            case MOVE_DOWN_LEFT:
-                location.vx -= Settings.CELL_MOVEMENT;
-                location.vy += Settings.CELL_MOVEMENT;
-                break;
-            case MOVE_LEFT:
-                location.vx -= Settings.CELL_MOVEMENT;
-
-                break;
-            case MOVE_RIGHT:
-                location.vx += Settings.CELL_MOVEMENT;
-
-                break;
-            case KILL:
-                doKill(action);
-                return;
+        if (location.vy >= Settings.MAX_SPEED) {
+            location.vy = Settings.MAX_SPEED;
         }
+        if (location.vx <= -Settings.MAX_SPEED) {
+            location.vx = -Settings.MAX_SPEED;
+        }
+        if (location.vy <= -Settings.MAX_SPEED) {
+            location.vy = -Settings.MAX_SPEED;
+        }
+        location.x = location.x + location.vx;
+        location.y = location.y + location.vy;
 
         double v = Math.atan2(location.vx, location.vy);
 
-        double radiansToDegrees = 180d / Math.PI;
-        degree = v * radiansToDegrees;
-        degree = (degree + 360) % 360;
+        double radiansToDegrees = 360d / Math.PI;
+        degree = v * radiansToDegrees; //
+        //degree = (degree + 360) % 360;
+        degree = degree + World.offset;
+
+        //System.out.println("Made to end of function");
 
     }
+
 
     public void doKill(Action action) {
         if (action == Action.KILL) {
@@ -1325,8 +1817,10 @@ class Entity {
                 if (o != null) {
                     if (isTouching(o) && o != this) {
 
-                        if( o.genome.read(Gene.KIN) == genome.read(Gene.KIN)){
+                        if (o.genome.read(Gene.KIN) == genome.read(Gene.KIN)) {
                             o.fertile = true;
+                            o.touching = this;
+                            touching = o;
                             fertile = true; // partner for sharing genes.
                             return;
                         }
@@ -1348,12 +1842,28 @@ class Entity {
                         if (size > Settings.MAX_SIZE) {
                             size = Settings.MAX_SIZE;
                         }
+                        if (o.size > Settings.MAX_SIZE) {
+                            o.size = Settings.MAX_SIZE;
+                        }
+
+                        if (size <= Settings.MIN_SIZE) {
+                            size = Settings.MIN_SIZE;
+                        }
+                        if (o.size <= Settings.MIN_SIZE) {
+                            o.size = Settings.MIN_SIZE;
+                        }
                         o.setEnergy(o.getEnergy() - extracted);
-                        if (o.getEnergy() <= 0 || o.size <= 0) {
+                        if (o.getEnergy() <= 0 || o.size <= Settings.MIN_SIZE) {
                             o.die();
+                            if (o.size <= Settings.MIN_SIZE) {
+                                o.size = Settings.MIN_SIZE;
+                            }
                             world.list.remove(o);
-                        } else if (getEnergy() <= 0 || size <= 0) {
+                        } else if (getEnergy() <= 0 || size <= Settings.MIN_SIZE) {
                             die();
+                            if (size <= Settings.MIN_SIZE) {
+                                size = Settings.MIN_SIZE;
+                            }
                             world.list.remove(this);
                         }
                     }
@@ -1395,13 +1905,21 @@ class Gene {
     final static int AGE = 26;
     final static int DECISION = 27;
     final static int ACTIVATION_FUNCTION_INPUT = 28;
+    final static int RECODE_PREFERENCE = 29;
+    final static int MAX_APPENDS = 30;
+    final static int MAX_DELETIONS = 31;
 
 }
 
 class World extends JLabel {
-    ArrayList<Entity> list = new ArrayList<>();
+    static ArrayList<Entity> list = new ArrayList<>();
 
     Selection selection = null;
+
+    static double offset = -180;
+    int controls = 0;
+    static int totalControls = 0;
+    static int totalSpawns = 0;
 
     int children = 0;
     int width;
@@ -1411,10 +1929,15 @@ class World extends JLabel {
     static ArrayList<Entity> prospectSeeds = new ArrayList<>();
     int step = 0;
     double phl = 0;
-    double increment = 0.0010000;
+    double increment = 0.0001000;
     int mx = 0;
     int my = 0;
-    Entity selected = null;
+    static Entity selected = null;
+
+
+    int spawns = 0;
+    int impact = 0;
+    int epoch = 1;
 
     World(int w, int h) {
         width = w;
@@ -1428,6 +1951,28 @@ class World extends JLabel {
         width = w;
         height = h;
 
+    }
+
+    public int getLivingCount() {
+        int livingCount = 0;
+        for (int i = 0; i < list.size(); i++) {
+            Entity e = (Entity) list.get(i);
+            if (e.alive) {
+                livingCount++;
+            }
+        }
+        return livingCount;
+    }
+
+    public int getDeadCount() {
+        int deadCount = 0;
+        for (int i = 0; i < list.size(); i++) {
+            Entity e = (Entity) list.get(i);
+            if (!e.alive) {
+                deadCount++;
+            }
+        }
+        return deadCount;
     }
 
     public void setPopulation(ArrayList<Entity> population) {
@@ -1444,7 +1989,7 @@ class World extends JLabel {
         last = action;
     }
 
-    public Action getPreviousState() {
+    public Action getState() {
         return last;
     }
 
@@ -1482,7 +2027,9 @@ class World extends JLabel {
         DecimalFormat df = new DecimalFormat("0.00000000");
 
         step++;
-        phl += increment;
+        if (totalSpawns > totalControls) {
+            phl += increment;
+        }
 
         g2.setColor(Color.DARK_GRAY);
         g2.fillRect(0, 0, getWidth(), getHeight());
@@ -1497,34 +2044,43 @@ class World extends JLabel {
             }
         }
 
-        int livingCount = 0;
+        int livingCount = getLivingCount();
         for (int i = 0; i < list.size(); i++) {
             Entity e = list.get(i);
 
             int r = e.size / 2;
+            if (r <= Settings.MIN_SIZE / 2) {
+                r = Settings.MIN_SIZE / 2;
+            }
             if (e.alive) {
-                livingCount++;
                 g2.setColor(e.color);
             } else {
                 e.color = Color.BLUE;
                 g2.setColor(Color.BLUE);
             }
-            Point p = new Point(e.location.x + r / 2, e.location.y + r / 2);
-            if (r > 0) {
+            Point p = new Point((int) e.location.x + (r / 2), (int) e.location.y + (r / 2));
+            if (r >= Settings.MIN_SIZE / 2) {
                 int k = e.genome.read(Gene.KIN);
-                Color kin = new Color(k, k, k);
+                Color kin = new Color(k, 128 % (k % 256), 128 % (k % 256));
                 drawVisibilityCircle(g2, kin, p, r, e.color);
             }
 
             if (e == selected) {
-                g2.drawOval(e.location.x - (r / 2), e.location.y - (r / 2), r * 2, r * 2);
+                g2.drawOval((int) e.location.x - (r / 2), (int) e.location.y - (r / 2), r * 2, r * 2);
             }
 
             double direction = e.degree;
             int xs = (int) ((int) (e.location.x + r) + (e.size * Math.cos(direction * ((Math.PI) / 360d)))); //);
             int ys = (int) ((int) (e.location.y + r) - (e.size * Math.sin(direction * ((Math.PI) / 360d)))); //);
+            int _xs = (int) ((int) (e.location.x + r) + (e.size * getWidth() * Math.cos(direction * ((Math.PI) / 360d)))); //);
+            int _ys = (int) ((int) (e.location.y + r) - (e.size * getHeight() * Math.sin(direction * ((Math.PI) / 360d)))); //);
 
-            g2.drawLine(e.location.x + r / 2, e.location.y + (r / 2), xs, ys);
+            if (xs > 300 && ys > 300) {
+                g2.setColor(Color.RED);
+                g2.drawLine((int) e.location.x + (r / 2), (int) e.location.y + (r / 2), xs, ys);
+                //g2.setColor(Color.BLUE);
+                //g2.drawLine(e.location.x + (r / 2), e.location.y + (r / 2), _xs, _ys);
+            }
 
             if (e == selected) {
 
@@ -1534,8 +2090,8 @@ class World extends JLabel {
                 int _ys1 = (int) ((int) (e.location.y + r) - (e.size * Math.sin(d1 * ((Math.PI) / 360d))));
                 int _xs2 = (int) ((int) (e.location.x + r) + (e.size * Math.cos(d2 * ((Math.PI) / 360d))));
                 int _ys2 = (int) ((int) (e.location.y + r) - (e.size * Math.sin(d2 * ((Math.PI) / 360d))));
-                g2.drawLine(e.location.x + (r / 2), e.location.y + (r / 2), _xs1, _ys1);
-                g2.drawLine(e.location.x + (r / 2), e.location.y + (r / 2), _xs2, _ys2);
+                g2.drawLine((int) e.location.x + (r / 2), (int) e.location.y + (r / 2), _xs1, _ys1);
+                g2.drawLine((int) e.location.x + (r / 2), (int) e.location.y + (r / 2), _xs2, _ys2);
 
             }
 
@@ -1547,19 +2103,17 @@ class World extends JLabel {
         g2.setColor(Color.BLACK);
         g2.fillRect(0, getHeight() - 24, getWidth(), getHeight());
         g2.setColor(Color.YELLOW);
-        g2.drawString("Think:" + step + " population:" + livingCount + " killed:" + (Settings.STARTING_POPULATION - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " spawns:" + spawns + " best seed:" + bestSpawn, 10, (getHeight() - 10));
+        g2.drawString("Think:" + step + " population:" + livingCount + " killed:" + (list.size() - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " best seed:" + bestSpawn, 10, (getHeight() - 10));
 
+        g2.dispose();
     }
 
-    int spawns = 0;
-    int impact = 0;
-    int epoch = 1;
 
     public void drawPopup(Graphics g, Entity e, int mx, int my) {
 
         int spacing = 14;
         int popupWidth = 340;
-        int popupHeight = 400;
+        int popupHeight = 530;
 
         if (e != null) {
             boolean b = e.world.list.contains(e);
@@ -1571,17 +2125,15 @@ class World extends JLabel {
             DecimalFormat df = new DecimalFormat("0.00");
             g.setColor(Color.white);
             g.fillRect(mx, my, popupWidth, popupHeight);
-            //g.setColor(e.color);
-            //g.drawOval((e.location.x)-(e.size/2)+10, (e.location.y*2)-10, (e.size*2) + 10, (e.size*2) + 10);
             g.setColor(Color.BLACK);
 
-            g.drawString("Position: X " + e.location.x + ": Y " + e.location.y, mx + spacing, my + spacing * 1);
+            g.drawString("Position: X " + df.format(e.location.x) + "-Y " + df.format(e.location.y), mx + spacing, my + spacing * 1);
             g.drawString("Size:" + e.size, mx + spacing, my + spacing * 2);
             g.drawString("Age:" + e.age, mx + spacing, my + spacing * 3);
             g.drawString("Energy:" + df.format(e.getEnergy()), mx + spacing, my + spacing * 4);
-            g.drawString("Degree: " + e.degree, mx + spacing, my + spacing * 5);
-            g.drawString("VX: " + e.location.vx, mx + spacing, my + spacing * 6);
-            g.drawString("VY: " + e.location.vy, mx + spacing, my + spacing * 7);
+            g.drawString("Degree: " + df.format(Math.abs(e.degree)), mx + spacing, my + spacing * 5);
+            g.drawString("VX: " + df.format(e.location.vx), mx + spacing, my + spacing * 6);
+            g.drawString("VY: " + df.format(e.location.vy), mx + spacing, my + spacing * 7);
             g.drawString("Alive: " + e.alive, mx + spacing, my + spacing * 8);
             g.drawString("Reproductive Number: " + (int) e.genome.read(Gene.RR), mx + spacing, my + spacing * 9);
             g.drawString("Kill Gene: " + (int) e.genome.read(Gene.KILL), mx + spacing, my + spacing * 10);
@@ -1594,21 +2146,33 @@ class World extends JLabel {
             g.drawString(e.genome.code.substring(0, 32), mx + spacing, my + spacing * 13);
             g.drawString("Drift: ", mx + spacing, my + spacing * 14);
             g.setColor(e.color);
+            g.setColor(e.color);
             g.fillRect(mx + spacing, my + spacing * 15, popupWidth - 30, 10);
             g.setColor(Color.black);
             g.drawString("Generation: " + e.generation, mx + spacing, my + spacing * 17);
             g.setColor(Color.black);
             g.drawString("Touching: " + e.isTouching(), mx + spacing, my + spacing * 18);
             g.setColor(Color.black);
-            g.drawString("Last Thought: " + e.getLast(), mx + spacing, my + spacing * 19);
+            g.drawString("Deletions: " + e.genome.numDeletions, mx + spacing, my + spacing * 19);
             int sz = UUID.randomUUID().toString().replaceAll("-", "").length();
-            g.drawString("Genome Length: " + e.genome.code.length() / sz, mx + spacing, my + spacing * 20);
+            //g.drawString("Genome Length: " + e.genome.code.length() / sz, mx + spacing, my + spacing * 20);
             g.drawString("KIN: " + e.genome.read(Gene.KIN), mx + spacing, my + spacing * 21);
             g.drawString("Fertile: " + e.fertile, mx + spacing, my + spacing * 22);
             g.drawString("Read Position: " + e.genome.index(), mx + spacing, my + spacing * 23);
             g.drawString("Death: " + Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE), mx + spacing, my + spacing * 24);
             g.drawString("Sample Forward: " + e.sampleForward().size(), mx + spacing, my + spacing * 25);
+            g.drawString("Genome Length: " + e.genome.code.length(), mx + spacing, my + spacing * 26);
+            g.drawString("Recodes: " + e.genome.numRecodes, mx + spacing, my + spacing * 27);
+            g.drawString("Appends: " + e.genome.numAppends, mx + spacing, my + spacing * 28);
+            g.drawString("Input: " + e.brain.ann.input.numberOfNeuronsInLayer, mx + spacing, my + spacing * 29);
+            g.drawString("Dense: " + e.brain.ann.dense.numberOfNeuronsInLayer, mx + spacing, my + spacing * 30);
+            g.drawString("Hidden: " + e.brain.ann.second.numberOfNeuronsInLayer, mx + spacing, my + spacing * 31);
+            g.drawString("Output: " + e.brain.ann.output.numberOfNeuronsInLayer, mx + spacing, my + spacing * 32);
+            g.drawString("Trajectory Goal: " + e.isTrajectoryGoal(), mx + spacing, my + spacing * 33);
+            g.drawString("Walls: " + e.walls, mx + spacing, my + spacing * 34);
+            g.drawString("Read Char: " + e.genome.read(e.genome.index), mx + spacing, my + spacing * 35);
 
+            g.setColor(Color.black);
 
         }
 
@@ -1619,6 +2183,8 @@ class World extends JLabel {
 class Population {
 
     public static ArrayList<Entity> create(World world, int individuals, int width, int height) {
+
+        System.out.println("Creating population from random");
         ArrayList<Entity> entities = new ArrayList<>();
         Random rand = new Random();
         world.impact = 0;
@@ -1632,7 +2198,10 @@ class Population {
         return entities;
     }
 
-    public static ArrayList<Entity> create(World world, ArrayList seedList, int individuals, int width, int height) {
+    public static ArrayList<Entity> create(World world, ArrayList seedList, int individuals, int width, int height) throws IOException {
+
+
+        System.out.println("Create population from seed list");
         ArrayList<Entity> entities = new ArrayList<>();
         Random rand = new Random();
         world.impact = 0;
@@ -1641,9 +2210,9 @@ class Population {
         Comparator<Entity> comparator = new Comparator<Entity>() {
             @Override
             public int compare(Entity e1, Entity e2) {
-                if( e1.generation == e2.generation) {
+                if (e1.generation == e2.generation) {
                     return 0;
-                } else if( e1.generation < e2.generation ){
+                } else if (e1.generation < e2.generation) {
                     return 1;
                 } else {
                     return -1;
@@ -1652,9 +2221,16 @@ class Population {
         };
         try {
             Collections.sort(seedList, comparator);
-        } catch(Exception ex) {ex.printStackTrace();}
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
         int adjustedIndividuals = individuals - seedList.size();
+
+        String fileName = System.currentTimeMillis() + "-" + world.epoch + "-epoch.json";
+        System.out.println(fileName);
+        FileWriter writer = new FileWriter(new File(fileName));
+        writer.write("[");
         for (int i = 0; i < individuals; i++) {
             try {
                 Entity seed = (Entity) seedList.get(i);
@@ -1662,15 +2238,19 @@ class Population {
                 e.location.x = rand.nextInt(width);
                 e.location.y = rand.nextInt(height);
                 entities.add(e);
-                if( Globals.verbose ) {
-                    System.out.println("{ \"epoch\":" + world.epoch + ", \"generation\":" + e.generation + ", \"position\":" + i + ", \"genome\": \"" + e.genome.code + "\"}");
+                if (Globals.verbose) {
+                    writer.write("{ \"epoch\":" + world.epoch + ", \"generation\":" + e.generation + ", \"position\":" + i + ", \"genome\": \"" + e.genome.code + "\"}");
+                    if (i + 1 != individuals) {
+                        writer.write(",\n");
+                    }
                 }
             } catch (Exception ex) {
-                break;
             }
+
         }
 
-        if( adjustedIndividuals > 0 ) {
+
+        if (adjustedIndividuals > 0) {
             for (int i = 0; i < adjustedIndividuals; i++) {
                 try {
                     Entity e = new Entity(world);
@@ -1678,60 +2258,71 @@ class Population {
                     e.location.y = rand.nextInt(height);
                     entities.add(e);
                     if (Globals.verbose) {
-                        System.out.println("{ \"generation\":" + e.generation + ", \"position\":" + i + ", \"genome\": \"" + e.genome.code + "\"}");
+                        writer.write("{ \"generation\":" + e.generation + ", \"position\":" + i + ", \"genome\": \"" + e.genome.code + "\"}");
+                        if (i + 1 != adjustedIndividuals) {
+                            writer.write(",\n");
+                        }
                     }
                 } catch (Exception ex) {
                 }
             }
         }
+        writer.flush();
+        writer.write("]");
+        writer.flush();
+        writer.close();
 
         return entities;
     }
 }
 
 class Settings {
+    static double ACCELERATION = 0.5;
+    static int CHAR_SET = 62;
     static int GENOME_LENGTH = 32;
-    static int STARTING_POPULATION = 200;
-    static int MAX_OFFSPRING = 6;
-    //final static int MAX_AGE = 10;
+    static int STARTING_POPULATION = 100;
+    static int MAX_OFFSPRING = 4;
+    static boolean NATURAL_REPLICATION = true;
     final static int MAX_THINK_DEPTH = 4;
-    final static int NUMBER_OF_INPUTS = 1;
+    final static int NUMBER_OF_INPUTS = 64; //STARTING_POPULATION * 12; // Action.values().length;
     final static int DEATH_MULTIPLIER = 25;
-    final static int GENE_POOL = 8;
+    final static int GENE_POOL = 10;
     final static int MAX_SIZE = 18;
-    final static int MAX_NEURONS = 5;
+    final static int MIN_SIZE = 5;
+    final static int MAX_NEURONS = 16;
 
-    //final static int SELECTION_EVENT = 1;
-    //final static double MUTATION_RATE = 0.2;
+
     final static int CELL_MOVEMENT = 1;
-    final static int MAX_SPEED = 4;
-    final static int MAX_POPULATION = 250;
+    final static int MAX_SPEED = 6;
+    final static int MAX_POPULATION = 1000;
 
-    final static double ENERGY_STEP_COST = 0.001;
-    final static double ENERGY_STEP_SLEEP_COST = 0.00001;
+    final static double ENERGY = 10.0;
+    final static double ENERGY_STEP_COST = 0.00001;
+    final static double ENERGY_STEP_SLEEP_COST = 0.001;
 
 
 }
 
 class Selection {
 
-    ArrayList<GARLRectangle> rlist = new ArrayList<>();
-    Selection() {
+    public static ArrayList<GARLRectangle> rlist = new ArrayList<>();
+    World world = null;
 
+    Selection(World world) {
+        this.world = world;
         makeNewList();
 
     }
 
-    public void makeNewList()
-    {
-        GARLRectangle[] list = new GARLRectangle[15];
+    public void makeNewList() {
+        GARLRectangle[] list = new GARLRectangle[16];
         rlist = new ArrayList<>();
 
         list[0] = new GARLRectangle();
-        list[0].x = 1820;
+        list[0].x = world.getWidth() - 20;
         list[0].y = 0;
         list[0].width = 20;
-        list[0].height = 1016;
+        list[0].height = world.getHeight() - 20;
 
         list[1] = new GARLRectangle();
         list[1].x = 100;
@@ -1742,91 +2333,103 @@ class Selection {
         list[2] = new GARLRectangle();
         list[2].x = 0;
         list[2].y = -10;
-        list[2].width = 3000;
+        list[2].width = world.getWidth() - 20;
         list[2].height = 30;
 
         list[3] = new GARLRectangle();
         list[3].x = 0;
-        list[3].y = 930;
-        list[3].width = 1800;
+        list[3].y = world.getHeight() - 20;
+        list[3].width = world.getWidth() - 20;
         list[3].height = 20;
 
+
         list[4] = new GARLRectangle();
-        list[4].x = (int)(200*Math.random());
-        list[4].y = (int)(200*Math.random());
-        list[4].width = 20;
-        list[4].height = 400;
+        list[4].x = (int) (200 * Math.random());
+        list[4].y = (int) (200 * Math.random());
+        list[4].width = (int) (20 * Math.random());
+        list[4].height = (int) (400 * Math.random());
 
         list[5] = new GARLRectangle();
-        list[5].x = (int)(500*Math.random());
-        list[5].y = (int)(500*Math.random());
-        list[5].width = 20;
-        list[5].height = 400;
+        list[5].x = (int) (0);
+        list[5].y = (int) (world.height - 80);
+        list[5].width = (int) (world.width);
+        list[5].height = (int) (80);
 
 
         list[6] = new GARLRectangle();
-        list[6].x = (int)(200*Math.random());
-        list[6].y = (int)(500*Math.random());
-        list[6].width = 20;
-        list[6].height = 430;
+        list[6].x = (int) (200 * Math.random());
+        list[6].y = (int) (500 * Math.random());
+        list[6].width = (int) (20 * Math.random());
+        list[6].height = (int) (430 * Math.random());
 
         list[7] = new GARLRectangle();
-        list[7].x = 0;
-        list[7].y = 300;
-        list[7].width = 20;
-        list[7].height = 630;
+        list[7].x = (int) 0;
+        list[7].y = (int) 300;
+        list[7].width = (int) 20;
+        list[7].height = (int) (630 * Math.random());
 
         list[8] = new GARLRectangle();
-        list[8].x = (int)(700*Math.random());
-        list[8].y = (int)(200*Math.random());
-        list[8].width = 20;
-        list[8].height = 730;
+        list[8].x = (int) (700 * Math.random());
+        list[8].y = (int) (200 * Math.random());
+        list[8].width = (int) 20;
+        list[8].height = (int) (730 * Math.random());
 
 
         list[9] = new GARLRectangle();
-        list[9].x = (int)(990*Math.random());
-        list[9].y = 0;
-        list[9].width = 20;
-        list[9].height = 700;
+        list[9].x = (int) (990 * Math.random());
+        list[9].y = (int) 0;
+        list[9].width = (int) 20;
+        list[9].height = (int) (700 * Math.random());
 
 
         list[10] = new GARLRectangle();
-        list[10].x = (int)(1440*Math.random());
-        list[10].y = 500;
-        list[10].width = 20;
-        list[10].height = 430;
+        list[10].x = (int) (1440 * Math.random());
+        list[10].y = (int) 500;
+        list[10].width = (int) 20;
+        list[10].height = (int) (430 * Math.random());
 
 
         list[11] = new GARLRectangle();
-        list[11].x = 1400;
-        list[11].y = 500;
-        list[11].width = 100;
-        list[11].height = 20;
+        list[11].x = (int) (1400 * Math.random());
+        list[11].y = (int) (500 * Math.random());
+        list[11].width = (int) (100 * Math.random());
+        list[11].height = (int) 20;
 
 
         list[12] = new GARLRectangle();
-        list[12].x = 0;
-        list[12].y = 1000;
-        list[12].width = 1800;
-        list[12].height = 20;
+        list[12].x = (int) 0;
+        list[12].y = (int) (1000 * Math.random());
+        list[12].width = (int) (1800 * Math.random());
+        list[12].height = (int) 20;
 
         list[13] = new GARLRectangle();
-        list[13].x = 1400;
-        list[13].y = 100;
-        list[13].width = 100;
-        list[13].height = 300;
+        list[13].x = (int) (1400 * Math.random());
+        list[13].y = (int) 100;
+        list[13].width = (int) 100;
+        list[13].height = (int) (300 * Math.random());
+
 
         list[14] = new GARLRectangle();
-        list[14].x = (int)(1200*Math.random());
-        list[14].y = (int)(500*Math.random());
-        list[14].width = 100;
-        list[14].height = 100;
-        list[14].spawner = true;
-        list[14].kill = false;
+        list[14].x = (int) ((world.width - 100) * Math.random());
+        list[14].y = (int) ((world.height - 100) * Math.random());
+        list[14].control = true;
+        list[14].width = (int) (100 * Math.random()) + 30;
+        list[14].height = (int) (100 * Math.random()) + 30;
+        list[14].kill = true;
 
-        Globals.spawn = list[14];
+        list[15] = new GARLRectangle();
+        list[15].x = (int) ((world.width - 100) * Math.random());
+        list[15].y = (int) ((world.height - 100) * Math.random());
+        list[15].width = (int) (100 * Math.random()) + 30;
+        list[15].height = (int) (100 * Math.random()) + 30;
+        list[15].spawner = true;
+        list[15].kill = false;
 
-        for(int i =0; i < list.length; i++ ){
+
+        Globals.spawn = list[15];
+        Globals.control = list[14];
+
+        for (int i = 0; i < list.length; i++) {
             rlist.add(list[i]);
         }
     }
@@ -1843,7 +2446,59 @@ class Selection {
 
 }
 
-class MouseHandler implements MouseMotionListener {
+class KeyHandler implements KeyListener {
+
+    @Override
+    public void keyTyped(KeyEvent keyEvent) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent keyEvent) {
+
+        System.out.println("Key Pressed");
+        if (world.selected != null) {
+            if (keyEvent.getKeyCode() == KeyEvent.VK_RIGHT) {
+                System.out.println("Key Right");
+                world.selected.process(Action.MOVE_RIGHT, world, 0);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_LEFT) {
+                System.out.println("Key Left");
+                world.selected.process(Action.MOVE_LEFT, world, 0);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_UP) {
+                System.out.println("Key Up");
+                world.selected.process(Action.MOVE_UP, world, 0);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_DOWN) {
+                System.out.println("Key Down");
+                world.selected.process(Action.MOVE_DOWN, world, 0);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_O) {
+                System.out.println("Key O");
+                World.offset += 1;
+                System.out.println("offset:" + World.offset);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_D) {
+                System.out.println("Key D");
+                World.offset -= 1;
+                System.out.println("offset:" + World.offset);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_S) {
+                System.out.println("Key S");
+                world.selected.process(Action.STOP, world, 0);
+            }
+
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent keyEvent) {
+
+    }
+
+    KeyHandler(World world) {
+        this.world = world;
+    }
+
+    World world = null;
+}
+
+class MouseHandler implements MouseMotionListener, MouseListener {
 
     World world = null;
 
@@ -1851,8 +2506,17 @@ class MouseHandler implements MouseMotionListener {
         this.world = world;
     }
 
+    int startx = -1;
+    int starty = -1;
+    int endx = -1;
+    int endy = -1;
+
+    boolean dragging = false;
+    GARLRectangle current = null;
+
     @Override
     public void mouseDragged(MouseEvent mouseEvent) {
+
 
     }
 
@@ -1873,6 +2537,33 @@ class MouseHandler implements MouseMotionListener {
             }
         }
     }
+
+    @Override
+    public void mouseClicked(MouseEvent mouseEvent) {
+        Globals.control.x = mouseEvent.getX();
+        Globals.control.y = mouseEvent.getY();
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent mouseEvent) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent mouseEvent) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent mouseEvent) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent mouseEvent) {
+
+    }
 }
 
 class SelectionTask extends TimerTask {
@@ -1890,58 +2581,93 @@ class SelectionTask extends TimerTask {
         this.frame = frame;
     }
 
+    public void save(int epoch, int generation, Genome g) {
+        try {
+            FileWriter writer = new FileWriter(new File("./" + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
+            writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + generation + ", \"genome\":\"" + g.code + "\" }");
+            writer.flush();
+            writer.close();
+
+        } catch (Exception ex) {
+
+        }
+    }
+
+
     @Override
     public void run() {
         // Perform Selection.
-        Selection selection = world.selection;
+        try {
+            Globals.semaphore.acquire();
 
-        ArrayList<GARLRectangle> rlist = world.selection.rlist;
-        int livingCount = 0;
-        for (int i = 0; i < world.list.size(); i++) {
-            Entity e = world.list.get(i);
-            if (e.location.y == 0) {
-                e.die();
-            } else if (e.location.x == 0) {
-                e.die();
-            }
-            Random rand = new Random();
-            for (int j = 0; j < rlist.size(); j++) {
-                GARLRectangle rect = rlist.get(j);
-                if (rect != null) {
-                    if (e.alive) {
-                        if (selection.insideRect(rect, e.location.x, e.location.y)) {
-                            if (rect.spawner) {
-                                Globals.spawn = rect;
-                                for (int k = 0; k < 5; k++) {
-                                    Entity n = e.clone();
-                                    n.location.x = rand.nextInt(frame.getWidth());
-                                    n.location.y = rand.nextInt(frame.getHeight());
-                                    n.alive = true;
-                                    world.list.add(n);
-                                    world.spawns++;
-                                    world.prospectSeeds.add(e.clone());
-                                    if (world.spawns >= world.bestSpawn) {
-                                        world.bestSeeds.add(e.clone());
-                                        world.bestSpawn = world.spawns;
+            long start = System.currentTimeMillis();
+            Selection selection = world.selection;
+
+            ArrayList<GARLRectangle> rlist = world.selection.rlist;
+
+            for (int i = 0; i < world.list.size(); i++) {
+                Entity e = world.list.get(i);
+                if (e.location.y == 0) {
+                    e.die();
+                } else if (e.location.x == 0) {
+                    e.die();
+                }
+                Random rand = new Random();
+                for (int j = 0; j < rlist.size(); j++) {
+                    GARLRectangle rect = rlist.get(j);
+                    if (rect != null) {
+                        if (e.alive) {
+
+                            if (selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
+                                if (rect.spawner) {
+                                    Globals.spawn = rect;
+                                    save(world.epoch, e.generation, e.genome);
+                                    for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
+                                        Entity n = e.clone();
+                                        n.location.x = rand.nextInt(frame.getWidth());
+                                        n.location.y = rand.nextInt(frame.getHeight());
+                                        n.alive = true;
+                                        world.list.add(n);
+                                        world.spawns++;
+                                        world.totalSpawns++;
+
+                                        world.prospectSeeds.add(e.clone());
+                                        if (world.spawns >= world.bestSpawn) {
+                                            world.bestSeeds.add(e.clone());
+                                            world.bestSpawn = world.spawns;
+                                        }
+                                        long intermediate = System.currentTimeMillis();
+                                        if (intermediate - start > Globals.threshold) {
+                                            return;
+                                        }
                                     }
+                                    e.reachedGoal = true;
+                                    e.die();
+                                } else if (rect.kill) {
+                                    if (rect.control) {
+                                        world.controls += Settings.MAX_OFFSPRING;
+                                        world.totalControls += Settings.MAX_OFFSPRING;
+                                    }
+                                    world.impact++;
+                                    e.die();
                                 }
-                                e.die();
-                            } else if (rect.kill) {
-                                world.impact++;
-                                e.die();
                             }
                         }
                     }
                 }
-            }
 
-            if (e.getEnergy() <= 0) {
-                e.die();
+                if (e.getEnergy() <= 0) {
+                    e.die();
+                }
+                //else if (e.age >= Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE)) {
+                //    e.die();
+                //}
+                long end = System.currentTimeMillis();
             }
-            else if (e.age >= Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE)) {
-                e.die();
-            }
+        } catch (Exception ex) {
 
+        } finally {
+            Globals.semaphore.release();
         }
     }
 }
@@ -1964,158 +2690,260 @@ class ReplicationTask extends TimerTask {
     @Override
     public void run() {
 
-        int livingCount = 0;
-        for (int i = 0; i < world.list.size(); i++) {
+        long start = System.currentTimeMillis();
 
-            Entity e = world.list.get(i);
+        try {
+            Globals.semaphore.acquire();
+        } catch (Exception ex) {
+            return;
+        }
+        int livingCount = world.getLivingCount();
+        if (Settings.NATURAL_REPLICATION) {
+            for (int i = 0; i < world.list.size(); i++) {
 
-            if (e.fertile && e.alive) {
-                int min = Math.max(32, e.genome.read(Gene.MATURITY));
-                if (e.alive && (e.age > min)) {
-                    if (Math.random() > 0.8) {
-                        int n = e.genome.read(Gene.RR) % Settings.MAX_OFFSPRING;
-                        if (livingCount > Settings.MAX_POPULATION) {
-                            n = Math.min(1, n);
-                        } else {
-                            for (int j = 0; j <= n; j++) {
+                Entity e = world.list.get(i);
+
+                if (e.fertile && e.alive) {
+                    int min = Math.max(128, e.genome.read(Gene.MATURITY) * 2);
+                    if (e.alive && (e.age > min)) {
+                        if (Math.random() > 0.8) {
+                            int n = e.genome.read(Gene.RR) % Settings.MAX_OFFSPRING;
+                            if (livingCount > Settings.MAX_POPULATION) {
+                                n = Math.min(2, n);
+                            }
+                            final int nn = n;
+
+                            for (int j = 0; j <= nn; j++) {
 
                                 Entity a = e.replicate();
                                 world.list.add(a);
                                 world.prospectSeeds.add(a);
                                 world.children++;
-                                world.spawns++;
-                                if (world.spawns > world.bestSpawn) {
-                                    world.bestSpawn = world.spawns;
-                                }
                             }
-                        }
-                        e.die();
 
+                            e.die();
+
+                        }
                     }
                 }
             }
         }
+
+        long end = System.currentTimeMillis();
+        Globals.semaphore.release();
     }
 }
+
+
 class ThinkTask extends TimerTask {
     World world = null;
 
     int width = 0;
     int height = 0;
     JFrame frame = null;
+    int chunk = 0;
 
-    public ThinkTask(JFrame frame, World world, int width, int height) {
+    public ThinkTask(JFrame frame, World world, int width, int height, int chunk) {
         this.world = world;
         this.width = width;
         this.height = height;
         this.frame = frame;
+        this.chunk = chunk;
     }
 
-    int ctr = 0;
+    long start = 0;
+
     @Override
     public void run() {
 
+        start = System.currentTimeMillis();
 
-        SwingUtilities.invokeLater(
-                new Runnable() {
-                    public void run() {
-                        ctr++;
-                        if(ctr > 10)
+        try {
+            Globals.semaphore.acquire();
 
-                        {
-                            //System.out.println("THINK");
-                            //System.out.println("Size:" + world.list.size() + " " + world.prospectSeeds.size() + " " + world.bestSeeds.size());
-                            ctr = 0;
+            int livingCount = world.getLivingCount();
+
+            for (int i = 0; i < world.list.size(); i++) {
+                try {
+                    Entity e = world.list.get(i);
+                    if (e.alive) {
+                        //e.process(Action.CYCLE, world, 0);
+
+                        e.think(world, start);
+                    }
+                } catch (Exception ex) {
+                }
+            }
+
+            if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
+                try {
+
+                    ArrayList<Seed> list = GARLTask.load();
+
+                    System.out.println("Recreate population");
+                    world.list = new ArrayList<>();
+                    ArrayList<Entity> seedList = GARLTask.load(list, world);
+                    for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
+                        try {
+                            Entity a = seedList.get(i);
+                            if (a.alive) {
+                                world.list.add(a);
+                            }
+                        } catch (Exception ex) {
                         }
 
-                        int livingCount = 0;
-                        for (int i = 0; i < world.list.size(); i++) {
-                            Entity e = world.list.get(i);
-                            if (e.alive) {
-                                livingCount++;
-                                e.think(world);
-                            }
-                        }
+                    }
 
-                        if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
-                            //System.out.println("Recreate population");
-                            ArrayList<Entity> seedList = new ArrayList<>();
-                            for (int i = 0; i < world.list.size(); i++) {
-                                Entity a = world.list.get(i);
-                                if (a.alive) {
-                                    seedList.add(a);
-                                }
-                            }
 
-                            for (int j = 0; j < world.bestSeeds.size(); j++) {
-                                Entity a = world.bestSeeds.get(j);
-                                seedList.add(a);
-                                seedList.add(new Entity(world));
-                            }
-                            for (int j = 0; j < world.prospectSeeds.size(); j++) {
-                                Entity a = world.prospectSeeds.get(j);
-                                seedList.add(world.prospectSeeds.get(j));
-                                seedList.add(new Entity(world));
-                            }
+                    world.children = 0;
+                    world.impact = 0;
+                    world.spawns = 0;
+                    world.controls = 0;
 
-                            for (int j = 0; j < seedList.size(); j++) {
-                                Entity ee = (Entity) seedList.get(j);
-                                if (ee.genome.code.endsWith("000000000")) {
-                                    seedList.remove(ee);
-                                }
-                            }
-
-                            world.children = 0;
-                            world.impact = 0;
-                            world.spawns = 0;
-                            world.epoch++;
-                            if (!seedList.isEmpty()) {
-                                world.list = Population.create(world, seedList, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
-                                world.selection.makeNewList();
-                            } else if (world.list.size() == 0) {
-                                world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
-                                world.selection.makeNewList();
-                            }
-                            world.prospectSeeds = new ArrayList<>();
-
+                    world.epoch++;
+                    if (world.epoch == 900) {
+                        System.out.println("total controls:" + world.totalControls);
+                        System.out.println("total spawns:" + world.totalSpawns);
+                        System.exit(-1);
+                    }
+                    if (livingCount <= Settings.GENE_POOL && seedList.isEmpty()) {
+                        try {
+                            world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                            world.selection.makeNewList();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
                         }
                     }
 
-                    ;
+                    if (livingCount <= Settings.GENE_POOL && !seedList.isEmpty()) {
 
+                        try {
+                            world.list = Population.create(world, seedList, Math.max(Settings.STARTING_POPULATION, Math.min(seedList.size(), Settings.STARTING_POPULATION)), frame.getWidth(), frame.getHeight());
+                            world.selection.makeNewList();
+                            System.out.println("Using seed list:" + seedList.size());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
 
-                });
+                } catch (Exception ex) {
+                }
 
+            }
+        } catch (Exception ex) {
+        } finally {
+            Globals.semaphore.release();
+        }
+
+        long end = System.currentTimeMillis();
     }
+}
+
+class Seed {
+    int epoch;
+    int generation;
+    String genome;
+}
+
+class SeedList {
+    Seed[] seeds = null;
 }
 
 public class GARLTask extends Thread {
 
-    String seed = null;
-    final static int FPS = 32;
+    public static UUID run = UUID.randomUUID();
+    ArrayList<Seed> list = null;
+    final static int FPS = 64;
 
-    public GARLTask(String seed) {
-        if (seed != null) {
-            this.seed = seed;
+    public GARLTask(ArrayList<Seed> list) {
+        if (list != null) {
+            this.list = list;
         }
     }
 
 
-    public static void main(String[] args) {
-        String seed = null;
+    public static ArrayList<Seed> load() throws IOException {
+        ArrayList<Seed> list = new ArrayList<>();
+        String seed = "./";
+        Gson gson = new Gson(); //null;
+        // create a reader
+        File dir = new File(seed);
+        //File[] listFiles = dir.listFiles();
+        File[] listFiles = dir.listFiles();
+        File[] files = dir.listFiles();
+        Arrays.sort(files, Comparator.comparingLong(File::lastModified));
+        int ctr = 0;
+        for (int i = files.length - 1; i >= 0; i--) {
+            File f = files[i];
+            if (f.getName().contains("genome")) {
+                String fName = f.getName();
+                System.out.println("Using Entity:" + f.getName());
+                Reader reader = Files.newBufferedReader(Paths.get(fName));
+                try {
+                    Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
+                    list.add(lseed);
+                    ctr++;
+                } catch (Exception ex) {
+                }
+            }
+            if (ctr >= Settings.STARTING_POPULATION) {
+                break;
+            }
+            // convert JSON string to User object
+        }
+        return list;
+    }
 
+    public static ArrayList<Entity> load(ArrayList<Seed> seeds, World world) throws IOException {
+        ArrayList<Seed> list = seeds;
+        ArrayList<Entity> ents = new ArrayList<>();
+
+        for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
+            if (list.get(i).genome.contains("-")) {
+
+                continue;
+            }
+            try {
+                String genome = list.get(i).genome;
+                System.out.println("Adding:" + i + ":" + genome);
+                Genome g = new Genome(genome);
+                Brain brain = new Brain(g);
+                Entity e = new Entity(world);
+                brain.setOwner(e);
+                e.location.x = (int) (Math.random() * world.getWidth());
+                e.location.y = (int) (Math.random() * world.getHeight());
+                g.setOwner(e);
+                e.brain = brain;
+
+                e.genome = g;
+                ents.add(e);
+                System.out.println("Added:" + i + " at " + e.location.x + " " + e.location.y);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return ents;
+    }
+
+
+    public static void main(String[] args) throws IOException {
+
+
+        ArrayList<Seed> list = new ArrayList<>();
         if (args.length > 0) {
-            seed = args[0];
+            list = load();
         }
 
-        GARLTask task = new GARLTask(seed);
+        GARLTask task = new GARLTask(list);
         task.start();
+
     }
 
-    Selection selection = new Selection();
     JFrame frame = new JFrame("Genetic Based Multi-Agent Reinforcement Learning");
 
     World world = null;
+    Selection selection = null;
 
     public void run() {
 
@@ -2127,85 +2955,97 @@ public class GARLTask extends Thread {
         int width = 1848;
         int height = 1016;
         world = new World(width, height);
-
+        selection = new Selection(world);
         frame.setSize(width, height);
 
         //3. Create components and put them in the frame.
         //...create emptyLabel...
-        final ArrayList<Entity> population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getWidth());
+        ArrayList<Entity> population = new ArrayList<>();
+        if (list == null) {
+            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getWidth());
+        } else {
+            System.out.println("Loading from seed list:" + list.size());
+            for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
+                if (list.get(i).genome.contains("-")) {
+
+                    continue;
+                }
+                try {
+                    String genome = list.get(i).genome;
+                    System.out.println("Adding:" + i + ":" + genome);
+                    Genome g = new Genome(genome);
+                    Brain brain = new Brain(g);
+                    Entity e = new Entity(world);
+                    brain.setOwner(e);
+                    e.location.x = (int) (Math.random() * width);
+                    e.location.y = (int) (Math.random() * height);
+                    g.setOwner(e);
+                    e.brain = brain;
+
+                    e.genome = g;
+                    population.add(e);
+                    System.out.println("Added:" + i + " at " + e.location.x + " " + e.location.y);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
         world.setPopulation(population);
         world.setSelection(selection);
-        MouseHandler handler = new MouseHandler(world);
-        world.addMouseMotionListener(handler);
+        MouseHandler mouseHandler = new MouseHandler(world);
+        KeyHandler keyHandler = new KeyHandler(world);
+        world.addMouseMotionListener(mouseHandler);
+        world.addMouseListener(mouseHandler);
+        frame.addKeyListener(keyHandler);
 
         world.setMaximumSize(new Dimension(width, height));
         world.setMinimumSize(new Dimension(width, height));
         world.setPreferredSize(new Dimension(width, height));
-        //frame.setContentPane(world);
         frame.add(world);
-        ;//, BorderLayout.CENTER);
+
         //4. Size the frame.
 
         //5. Show it.
         frame.setVisible(true);
 
-        ThinkTask think = new ThinkTask(frame, world, width, height);
+        ThinkTask think = new ThinkTask(frame, world, width, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width, height);
         ReplicationTask replication = new ReplicationTask(frame, world, width, height);
 
-        Timer timer = new Timer();
+        Timer timer = new Timer(true);
         TimerTask paint = new TimerTask() {
             int ctr = 0;
+
             @Override
             public void run() {
+
                 try {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            ctr++;
-                            if(ctr >100)
-                            {
-                                //System.out.println("FPS");
-                                ctr = 0;
-                            }
-                            world.repaint();
-                        }
-                    });
+                    long start = System.currentTimeMillis();
+                    Globals.semaphore.acquire();
+                    ctr++;
+                    if (ctr > 100) {
+                        ctr = 0;
+                    }
+                    world.repaint();
+                    long end = System.currentTimeMillis();
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 } catch (Error e) {
                     e.printStackTrace();
+                } finally {
+                    Globals.semaphore.release();
                 }
             }
         };
 
+        long taskTime = 120;
         timer.scheduleAtFixedRate(paint, 0, 1000 / FPS);
-        timer.scheduleAtFixedRate(think, 0, 250);
-        timer.scheduleAtFixedRate(selection, 0, 250);
-        timer.scheduleAtFixedRate(replication, 100, 250);
+        timer.scheduleAtFixedRate(think, 0, taskTime);
+        timer.scheduleAtFixedRate(selection, 50, taskTime);
+        timer.scheduleAtFixedRate(replication, 100, taskTime);
 
-    }
-
-    boolean running = true;
-
-    public void setRunning(boolean b) {
-        running = b;
-    }
-
-    String args = null;
-
-    public void setParameter(String args) {
-        this.args = args;
-    }
-
-
-    public ArrayList<String> getCombinedGenome() {
-        ArrayList<String> list = new ArrayList<>();
-        for (int i = 0; i < world.list.size(); i++) {
-            Genome g = world.list.get(i).genome;
-            list.add(g.code.toString());
-        }
-        return list;
     }
 
 }
+
