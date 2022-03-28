@@ -17,4 +17,4 @@ I've provided hundreds of "fit/train" evolved genomes. To use these, expand a fo
      /genomes/1647404319361-genome-6eb067a5-4adb-45f8-8ab8-3761d2b3994c.json
      /genomes/...
 ```
-Note: Requires Swing and a Desktop.
+Note: Requires Java Swing Installed and a Desktop.
