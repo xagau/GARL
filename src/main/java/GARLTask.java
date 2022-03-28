@@ -1,6 +1,8 @@
 import com.google.gson.Gson;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
@@ -41,6 +43,7 @@ enum Action {
     SIN,
     TAN,
     SLOW,
+    FASTER,
     STOP,
     KILL,
     DIRECTION,
@@ -89,21 +92,21 @@ abstract class NeuralLayer {
         }
     }
 
-    boolean debug = false;
+    boolean neuralLayerDebug = false;
 
     protected void calc() {
-        if (debug) {
+        if (neuralLayerDebug) {
             System.out.println(this.name + " calc() " + numberOfNeuronsInLayer);
         }
         for (int i = 0; i < numberOfNeuronsInLayer; i++) {
             if (previousLayer != null) {
-                if (debug) {
+                if (neuralLayerDebug) {
                     System.out.println("input-" + name + ":" + previousLayer.input);
                 }
                 neuron.get(i).setInputs(previousLayer.input);
                 neuron.get(i).calc();
             } else {
-                if (debug) {
+                if (neuralLayerDebug) {
                     System.out.println("input-" + name + ":" + input);
                 }
                 neuron.get(i).setInputs(input);
@@ -112,12 +115,11 @@ abstract class NeuralLayer {
             try {
                 output.set(i, neuron.get(i).getOutput());
             } catch (IndexOutOfBoundsException iobe) {
-                //iobe.printStackTrace();
                 output.add(neuron.get(i).getOutput());
             }
         }
         if (nextLayer != null) {
-            if (debug) {
+            if (neuralLayerDebug) {
                 System.out.println("Compute next Layer:");
             }
             nextLayer.input = output;
@@ -570,15 +572,17 @@ class Globals {
 class NeuralNet {
     InputLayer input = null;
     HiddenLayer dense = null;
-    HiddenLayer second = null;
+    HiddenLayer hidden = null;
+    HiddenLayer dropout = null;
     OutputLayer output = null;
     Genome owner = null;
 
     public NeuralNet(Genome g) {
         owner = g;
         int numInputs = Settings.NUMBER_OF_INPUTS;
-        int numDense = Math.max(2, (int) g.read(Gene.DENSE) % Settings.MAX_NEURONS);
-        int numHidden = Math.max(2, (int) g.read(Gene.HIDDEN) % Settings.MAX_NEURONS);
+        int numDense = Math.min(Settings.MAX_NEURONS, Math.max(2, (int) g.read(Gene.DENSE)) );
+        int numHidden = Math.min(Settings.MAX_NEURONS, Math.max(2,(int) g.read(Gene.HIDDEN)) );
+        int numDropout = 2;
 
         SoftmaxFunction softmax = new SoftmaxFunction(Action.values().length);
         try {
@@ -590,23 +594,29 @@ class NeuralNet {
         } catch (Exception ex) {
         }
 
-        //IActivationFunction iaf0 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_0));
-
         try {
-            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_0));
-            second = new HiddenLayer(numHidden, relu, numDense);
-            second.setNeuralNet(this);
-            second.nextLayer = output;
-            second.name = "hidden";
+            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
+            dropout = new HiddenLayer(numDropout, relu, numHidden);
+            dropout.setNeuralNet(this);
+            dropout.nextLayer = output;
+            dropout.name = "dropout";
         } catch (Exception ex) {
         }
 
-        //IActivationFunction iaf1 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_1));
+        try {
+            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_0));
+            hidden = new HiddenLayer(numHidden, relu, numDense);
+            hidden.setNeuralNet(this);
+            hidden.nextLayer = dropout;
+            hidden.name = "hidden";
+        } catch (Exception ex) {
+        }
+
         try {
             ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
-            dense = new HiddenLayer(numDense, relu, numInputs);
+            dense = new HiddenLayer(numHidden, relu, numInputs);
             dense.setNeuralNet(this);
-            dense.nextLayer = second;
+            dense.nextLayer = hidden;
             dense.name = "dense";
         } catch (Exception ex) {
         }
@@ -625,12 +635,14 @@ class NeuralNet {
         try {
             input.previousLayer = null;
             dense.previousLayer = input;
-            second.previousLayer = dense;
-            output.previousLayer = second;
+            hidden.previousLayer = dense;
+            dropout.previousLayer = hidden;
+            output.previousLayer = dropout;
 
             input.init();
             dense.init();
-            second.init();
+            hidden.init();
+            dropout.init();
             output.init();
         } catch (Exception ex) {
             System.out.println("Unable to build Neural Network:" + ex);
@@ -701,6 +713,17 @@ class GARLRectangle extends Rectangle {
     boolean spawner = false;
     boolean control = false;
     Color color = Color.pink;
+    String name = "wall";
+
+    public String getName() {
+        if( spawner ){
+            return "spawner";
+        } else if( control ){
+            return "control";
+        } else {
+            return name;
+        }
+    }
 
     Color getColor() {
         if (spawner) {
@@ -734,12 +757,19 @@ class Genome {
         this.owner = e;
     }
 
+    char last = 0;
+
+    public synchronized char last() {
+        return last;
+    }
+
     public synchronized char read(int loc) {
         if (loc < 0) {
             loc = Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION);
         }
         if (loc < code.length()) {
-            return code.charAt(loc);
+            last = code.charAt(loc);
+            return last;
         } else if (loc >= code.length()) {
             try {
                 int more = code.length() - loc;
@@ -748,12 +778,11 @@ class Genome {
             }
         }
         char c = code.charAt(Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION));
+        last = c;
         return c;
     }
 
     public void recode(int loc, char c) {
-        //int p = read(Gene.RECODE_PREFERENCE) + (int)code.length();
-        //if (numRecodes <= p) {
 
         if (loc + Settings.GENOME_LENGTH > code.length()) {
             return;
@@ -762,7 +791,6 @@ class Genome {
         g[Settings.GENOME_LENGTH + loc] = c; //Utility.flatten(c, 26);
         code = String.valueOf(g);
         numRecodes++;
-        //}
     }
 
     public void jump(int loc) {
@@ -818,7 +846,7 @@ class Genome {
         String time = "" + Long.toHexString(System.currentTimeMillis());
         time = reverse(time);
 
-        c[Gene.KIN] = time.charAt(0);
+        c[Gene.KIN] = KinFactory.create(time.charAt(0));
         code = String.valueOf(c);
     }
 
@@ -1004,7 +1032,10 @@ class Brain {
             list.add((double) e.location.y);
             list.add(e.location.vy);
             list.add(e.location.vx);
+            list.add(e.distanceX);
+            list.add(e.distanceY);
             list.add((double) e.age);
+            list.add((double) e.getEnergy());
             list.add((double) Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE));
 
             list.add((double) (e.fertile ? 1d : 0d));
@@ -1013,11 +1044,13 @@ class Brain {
             list.add((double) (e.walls));
             list.add((double) e.size);
             list.add(e.getEnergy());
-            list.add((double) e.genome.read(Gene.KIN));
+            list.add((double) KinFactory.create(e.genome.read(Gene.KIN)));
             list.add((double) e.genome.index);
             list.add((double) e.genome.read(e.genome.index));
             list.add((double) e.location.x - Globals.spawn.x);
             list.add((double) e.location.y - Globals.spawn.y);
+            list.add((double) e.location.x - Globals.spawn.width);
+            list.add((double) e.location.y - Globals.spawn.width);
             list.add((double) world.getLivingCount());
             long mlcs = Utility.checksum(e.genome.code);
             double mld = Utility.flatten(mlcs, Action.values().length);
@@ -1047,7 +1080,7 @@ class Brain {
 
                     list.add((double) (m.get(i).alive ? 1d : 0d));
                     list.add((double) m.get(i).getEnergy());
-                    list.add((double) (m.get(i).genome.read(Gene.KIN)));
+                    list.add((double) (KinFactory.create(m.get(i).genome.read(Gene.KIN))));
                     list.add((double) (m.get(i).walls));
                     list.add((double) (m.get(i).reachedGoal ? 1d : 0d));
                 } catch (Exception ex) {
@@ -1068,7 +1101,7 @@ class Brain {
 
                     list.add((double) (world.list.get(i).alive ? 1d : 0d));
                     list.add((double) world.list.get(i).getEnergy());
-                    list.add((double) (world.list.get(i).genome.read(Gene.KIN)));
+                    list.add((double) (KinFactory.create(world.list.get(i).genome.read(Gene.KIN))));
                     list.add((double) (world.list.get(i).walls));
                     list.add((double) (world.list.get(i).reachedGoal ? 1d : 0d));
                 } catch (Exception ex) {
@@ -1080,7 +1113,6 @@ class Brain {
         } finally {
             try {
                 e.brain.ann.input.input = list;
-                //System.out.println("input size:" + list.size());
             } catch (Exception ex) {
             }
         }
@@ -1106,48 +1138,76 @@ class Brain {
 
     Action last = null;
 
+    public boolean isOdd(int in) {
+        return in % 2 == 1;
+    }
+
     public synchronized Action evaluate(World world) {
 
         try {
+
             if (entity != null) {
-                input(entity, world);
-                try {
-                    long s = System.currentTimeMillis();
-                    entity.brain.ann.input.calc();
-                    long e = System.currentTimeMillis();
-                } catch (Exception ex) {
-                    return Action.COMMIT;
-                }
-                long s = System.currentTimeMillis();
-                double d = entity.brain.getOutput();
-                Action a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) d));
-                entity.genome.advance();
-                long e = System.currentTimeMillis();
-
-                if (entity.last != a) {
-                    entity.last = a;
-                    return a;
+                if ( entity.target &&  entity.isTrajectoryGoal() && entity.walls <= 1) {
+                    entity.location.vx = entity.targetvx;
+                    entity.location.vy = entity.targetvy;
+                    return Action.FASTER;
+                } else if( entity.target && !entity.isTrajectoryGoal()) {
+                    entity.process(Action.SLOW, world, 0);
+                    entity.process(Action.SCAN, world, 0);
                 } else {
-                    long ss = System.currentTimeMillis();
                     input(entity, world);
-                    entity.brain.ann.input.calc();
-                    double dd = entity.brain.getOutput();
-                    dd = Utility.flatten(dd, (double) Action.values().length);
-                    a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) dd));
-                    entity.genome.advance();
-                    entity.last = a;
-                    long ee = System.currentTimeMillis();
+                    try {
+                        long s = System.currentTimeMillis();
+                        entity.brain.ann.input.calc();
+                        long e = System.currentTimeMillis();
+                    } catch (Exception ex) {
+                        return Action.CONTINUE;
+                    }
+                    long s = System.currentTimeMillis();
+                    double d = entity.brain.getOutput();
+                    double loc = entity.genome.index + (int) d;
+                    double floc = 0;
+                    char cfloc = 0;
 
-                    return a;
+                    if (isOdd((int) loc)) {
+                        cfloc = entity.genome.read((int) loc);
+                    } else {
+                        entity.genome.advance();
+                        cfloc = entity.genome.read((int) entity.genome.index());
+                    }
+                    if (cfloc == entity.genome.last()) {
+                        entity.process(Action.RECODE, world, 1);
+                    }
+                    entity.input = floc;
+                    Action a = ActionFactory.create((double) cfloc);
+                    entity.genome.advance();
+                    long e = System.currentTimeMillis();
+
+                    if (entity.last != a) {
+                        entity.last = a;
+                        return a;
+                    } else {
+                        if( !entity.isTrajectoryGoal() ) {
+                            return Action.SLOW;
+                        }
+                        long ss = System.currentTimeMillis();
+                        input(entity, world);
+                        entity.brain.ann.input.calc();
+                        double dd = entity.brain.getOutput();
+                        dd = Utility.flatten(dd, (double) Action.values().length);
+                        a = ActionFactory.create(entity.genome.read(entity.genome.index + (int) dd));
+                        entity.genome.advance();
+                        entity.last = a;
+                        long ee = System.currentTimeMillis();
+
+                        return a;
+                    }
                 }
-            } else {
-                entity.genome.advance();
-                entity.last = Action.IF;
-                return Action.IF;
             }
         } catch (Exception ex) {
-            return Action.IF;
+            return Action.SCAN;
         }
+        return Action.SCAN;
     }
 
     public Action evaluate(Entity entity, World world) {
@@ -1193,8 +1253,11 @@ class Entity {
     double degree = Math.random() * 360; // must be 0 - 360 to specify the direction the entity is facing.
     boolean selected = false;
     Action last = null;
+    double input = 0;
     Entity touching = null;
     boolean reachedGoal = false;
+    double distanceX = Double.NaN;
+    double distanceY = Double.NaN;
 
     int walls = 0;
     int age = 0;
@@ -1216,21 +1279,26 @@ class Entity {
         for (int i = 0; i < list.size(); i++) {
             GARLRectangle g = list.get(i);
 
-            if (g.getX() < e.location.x && g.getY() < e.location.y) {
-                int tdistX = (int) g.getX() - (int)e.location.x;
-                int tdistY = (int) g.getY() - (int)e.location.y;
-                tdistX = Math.abs(tdistX);
-                tdistY = Math.abs(tdistY);
+            //if (g.getCenterX()+g.width/2 < (e.location.x+e.size/2) && (g.getCenterY()+g.height/2 < e.location.y+e.size/2)) {
+            int tdistX = (int) (g.x + g.width ) - ((int) e.location.x + e.size / 2);
+            int tdistY = (int) (g.y + g.height ) - ((int) e.location.y + e.size / 2);
+            tdistX = Math.abs(tdistX);
+            tdistY = Math.abs(tdistY);
 
-                if( tdistX < distX && tdistY < distY ){
+            //if( g.spawner) {
+                if (tdistX < distX && tdistY < distY) {
                     distX = tdistX;
                     distY = tdistY;
                     closest = g;
                 }
-            }
+            //}
+            if( g.spawner){
 
+                e.distanceX = tdistX;
+                e.distanceY = tdistY;
+            }
         }
-        if(e.selected) {
+        if (e.selected) {
             System.out.println("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
             System.out.println("Entity:" + e.location.x + "-" + e.location.y);
         }
@@ -1260,15 +1328,18 @@ class Entity {
 
         GARLRectangle goal = Globals.spawn;
         Line line1 = new Line(goal.x, goal.y, goal.x + goal.width, goal.y + goal.height);
-        if (goal.intersectsLine(line)) {
-            if (walls == 1) {
+
+        if (walls == 1 && first == Globals.spawn) {
+                target = true;
+                targetvx = location.vx;
+                targetvy = location.vy;
+
+                this.goal = 1;
+                targetx = location.x;
+                targety = location.y;
+
                 return true;
-            }
-        }
-        if (walls > 1) {
-            if (first == Globals.spawn) {
-                return true;
-            }
+
         }
 
         return false;
@@ -1309,9 +1380,13 @@ class Entity {
 
         ArrayList<GARLRectangle> walls = sampleForward(this);
         // check to see if wall with closest trajectory is spawn or not.
+        GARLRectangle first = closest(walls, this);
+
         this.walls = walls.size();
         if (walls.isEmpty()) {
             return false;
+        } else if (!first.spawner) {
+            return true;
         } else {
             return true;
         }
@@ -1453,18 +1528,33 @@ class Entity {
     public Entity clone() {
         Entity e = new Entity(world);
         e.alive = true;
-        if (Math.random() > 0.5) {
-            e.location.x = location.x + Settings.CELL_MOVEMENT + e.size;
-        } else {
-            e.location.x = location.x - Settings.CELL_MOVEMENT - e.size;
-        }
-        if (Math.random() < 0.5) {
-            e.location.y = location.y + Settings.CELL_MOVEMENT + e.size;
-        } else {
-            e.location.y = location.y - Settings.CELL_MOVEMENT - e.size;
-        }
 
-        //genome.mutate();
+        int move = 1;
+
+        boolean tryAgain = false;
+        do {
+            tryAgain = false;
+            if (Math.random() > 0.5) {
+                e.location.x = location.x + Settings.CELL_MOVEMENT + e.size + move;
+            } else {
+                e.location.x = location.x - Settings.CELL_MOVEMENT - e.size - move;
+            }
+            if (Math.random() < 0.5) {
+                e.location.y = location.y + Settings.CELL_MOVEMENT + e.size + move;
+            } else {
+                e.location.y = location.y - Settings.CELL_MOVEMENT - e.size - move;
+            }
+            ArrayList<GARLRectangle> list = world.selection.rlist;
+            for (int i = 0; i < list.size(); i++) {
+                GARLRectangle rect = list.get(i);
+                if (world.selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
+                    tryAgain = true;
+                    move++;
+                }
+            }
+
+        } while(tryAgain);
+
         e.genome.code = genome.code;
         e.genome.numAppends = 0;
         e.genome.numRecodes = 0;
@@ -1496,20 +1586,44 @@ class Entity {
         consume();
         Action action = null;
         try {
-            action = brain.evaluate(world);
-            long intermediate = System.currentTimeMillis();
+            ArrayList<GARLRectangle> list = sampleForward(this);
+            GARLRectangle closest = Entity.closest(list, this);
+            if( closest != null ) {
+                if (closest.getName().equals("spawner")) {
+                    double cx = location.x + size/2;
+                    double cy = location.y + size/2;
+                    double ex = closest.getCenterX();
+                    double ey = closest.getCenterY();
+
+                    Line line = new Line((int)cx, (int)cy,(int) ex,(int) ey);
+
+                    if( ex < cx ) {
+                        location.vx = location.vx - (ex / ey);
+                    } else {
+                        location.vx = location.vx + (ex / ey);
+                    }
+                    if( ey < cy ) {
+                        location.vy = location.vy - (ey / ex);
+                    } else {
+                        location.vy = location.vy + (ey / ex);
+                    }
+                    location.vy = location.vy+(ey/ex);
+                    process(Action.FASTER, world, 0);
+
+                }
+            }
+            if( target && isTrajectoryGoal() ){
+                return Action.FASTER;
+            } else {
+                action = brain.evaluate(world);
+                long intermediate = System.currentTimeMillis();
+            }
 
         } catch (Exception ex) {
         }
 
-        //if (action == null) {
-        //    System.out.println("Action is null");
-        //    return Action.NONE;
-        //}
-
         int depth = 0;
         process(action, world, depth);
-        //process(Action.NONE, world, depth);
         long intermediate = System.currentTimeMillis();
 
         world.setState(action);
@@ -1530,17 +1644,17 @@ class Entity {
 
         depth++;
         if (depth > Settings.MAX_THINK_DEPTH) {
-            last = Action.APPEND;
+            if (action != last) {
+                last = Action.SCAN;
+                process(Action.SCAN, world, depth);
+                return;
+            }
         }
 
         if (brain != null) {
 
             switch (action) {
                 case NONE:
-                    //degree++;
-
-                    //System.out.println("degree:" + degree);
-                    //break;
                 case SIN:
 
                     anglex = Math.sin(anglex);
@@ -1557,20 +1671,27 @@ class Entity {
 
                 case STOP:
                     // if we're stopped - and we're touching someone, lets move.
-                    if (isTouching()) {
-                        doKill(Action.KILL);
-                    } else {
-                        location.vx = 0;
-                        location.vy = 0;
+                    if(!target ) {
+                        if (isTouching()) {
+                            doKill(Action.KILL);
+                        } else {
+                            location.vx = 0;
+                            location.vy = 0;
+                        }
+                    } else if(  !isTrajectoryGoal() ){
+                        process(Action.SCAN, world, depth);
                     }
+
                     break;
 
                 case JUMP:
 
                     try {
-                        brain.input(this, world);
-                        brain.ann.input.calc();
-                        register = brain.getOutput();
+                        if (register == 0) {
+                            brain.input(this, world);
+                            brain.ann.input.calc();
+                            register = brain.getOutput();
+                        }
                         double jf = 0;
                         double jmo = 0;
                         if (register != 0d) {
@@ -1582,7 +1703,6 @@ class Entity {
                 case IF:
                     if (genome.read((int) register) < genome.read(Gene.DECISION)) {
                         genome.advance();
-                        //process(Action.JUMP, world, depth);
                     } else {
                         genome.reverse();
                     }
@@ -1592,30 +1712,59 @@ class Entity {
                     break;
                 case CYCLE:
                 case CONTINUE:
-                    //break;
+                    if (target) {
+                        location.vx = targetvx;
+                        location.vy = targetvy;
+                    }
+                    break;
                 case GOAL:
 
-                    //if (isTrajectoryGoal()) {
-                    //process(Action.APPEND, world, depth);
-                    //    goal = 1;
-                    //} else {
-                    //process(Action.CYCLE, world, depth);
-                    //    process(Action.RECODE, world, depth);
-                    //    goal = 0;
-                    //}
+                    if (isTrajectoryGoal()) {
+
+                        goal = 1;
+                        target = true;
+
+                    } else {
+                        if (target) {
+                            if (isTrajectoryGoal()) {
+                                process(Action.CONTINUE, world, depth);
+                            } else {
+                                process(Action.SCAN, world, depth);
+                            }
+                            break;
+                        }
+                    }
 
                     break;
                 case DEATH:
 
-                    //if (isTrajectoryDeath()) {
-                    //    goal = 0;
-                    //process(Action.STOP, world, depth);
-                    //process(Action.RECODE, world, depth);
-                    //}
-
-                    //break;
+                    if (target) {
+                        if (isTrajectoryGoal()) {
+                            process(Action.CONTINUE, world, depth);
+                        } else {
+                            process(Action.SLOW, world, depth);
+                            process(Action.SCAN, world, depth);
+                        }
+                        break;
+                    }
+                    if (isTrajectoryGoal()) {
+                        goal = 1;
+                    } else {
+                        register = 0;
+                        process(Action.SLOW, world, depth);
+                        process(Action.RECODE, world, depth);
+                    }
+                    break;
                 case COMMIT:
-                    //process(last, world, depth);
+                    if (target) {
+                        if (isTrajectoryGoal()) {
+                            process(Action.CONTINUE, world, depth);
+                        } else {
+                            process(Action.SCAN, world, depth);
+                        }
+                        break;
+                    }
+
 
                 case SAVE:
                     brain.input(this, world);
@@ -1634,7 +1783,7 @@ class Entity {
                         }
                         brain.ann.input.calc();
                         ao = brain.getOutput();
-                        //ao = Utility.flatten(ao, (double) Action.values().length);
+
                         double l = Utility.flatten((long) ao, Settings.CHAR_SET);
                         long lng = (long) l;
                         char c = Long.toHexString(lng).charAt(0);
@@ -1650,40 +1799,48 @@ class Entity {
 
                 case APPEND:
                     try {
+                        process(Action.SCAN, world, depth);
                         int maxAppends = genome.read(Gene.MAX_APPENDS);
-                        if (genome.numAppends <= maxAppends) {
-                            double ao = 0;
 
-                            double l = 0;
-                            if (register == 0d) {
-                                brain.input(this, world);
-                                brain.ann.input.calc();
-                                ao = brain.getOutput();
-                                l = Utility.flatten((long) ao, Settings.CHAR_SET);
-                            } else {
-                                l = Utility.flatten((long) register, Settings.CHAR_SET);
-                            }
-                            long lng = (long) l;
-                            char c = Long.toHexString(lng).charAt(0);
-                            brain.entity.genome.code += c;
-                            genome.numAppends++;
+                        double ao = 0;
+
+                        double l = 0;
+                        if (register == 0d) {
+                            brain.input(this, world);
+                            brain.ann.input.calc();
+                            ao = brain.getOutput();
+                            l = Utility.flatten((long) ao, Settings.CHAR_SET);
+                        } else {
+                            l = Utility.flatten((long) register, Settings.CHAR_SET);
                         }
+                        long lng = (long) l;
+                        char c = Long.toHexString(lng).charAt(0);
+                        brain.entity.genome.code += c;
+                        genome.numAppends++;
+                        process(Action.JUMP, world, depth);
+
                     } catch (Exception ex) {
                     }
                     break;
                 case SCAN:
 
                     try {
+                        if (target == false) {
 
-                        double o = 0;
-                        brain.input(this, world);
-                        brain.ann.input.calc();
-                        if (direction < 0) {
-                            o -= brain.getOutput();
-                        } else {
-                            o += brain.getOutput();
+                            degree += Math.random() * 360d;
+                            if (isTrajectoryDeath()) {
+                                genome.advance();
+                                Action a = Action.RECODE;
+                                process(Action.SLOW, world, depth);
+                                process(a, world, depth);
+                            }
+                        } else if( isTrajectoryGoal()) {
+                            location.vx = targetvx;
+                            location.vy = targetvy;
+
+                            process(Action.FASTER, world, depth);
+                            process(Action.CONTINUE, world, depth);
                         }
-                        register = o;
 
                     } catch (Exception ex) {
                     }
@@ -1700,6 +1857,8 @@ class Entity {
                         double code = brain.getOutput();
                         if (Character.isLetter((char) output) || Character.isDigit((char) output)) {
                             genome.recode((int) code, (char) output);
+                            register = code;
+                            process(Action.JUMP, world, depth);
                         }
                     } catch (Exception ex) {
                     }
@@ -1715,6 +1874,23 @@ class Entity {
                     location.vy = location.vy / 2;
                     location.vx = location.vx / 2;
                     break;
+                case FASTER:
+                    location.vy = location.vy * (1 + Settings.ACCELERATION);
+                    location.vx = location.vx * (1 + Settings.ACCELERATION);
+                    break;
+                /*
+                case ADJUST:
+
+                    double adjustmentvx = Double.NaN;
+                    double adjustmentvy = Double.NaN;
+
+                    adjustmentvx = Math.sqrt(Math.pow(location.x,2) + Math.pow(targetx,2));
+                    adjustmentvy = Math.sqrt(Math.pow(location.y,2) + Math.pow(targety,2));
+
+                    location.vy = location.vy * adjustmentvy;
+                    location.vx = location.vx * adjustmentvx;
+                    break;
+                 */
                 case MOVE_UP: {
                     double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
                     location.vy -= changey;
@@ -1759,6 +1935,15 @@ class Entity {
                     break;
                 }
                 case KILL:
+                    if (target) {
+                        if (isTrajectoryGoal()) {
+                            process(Action.CONTINUE, world, depth);
+                        } else {
+                            process(Action.SCAN, world, depth);
+                        }
+                        break;
+                    }
+
                     doKill(action);
                     break;
             }
@@ -1795,19 +1980,29 @@ class Entity {
         if (location.vy <= -Settings.MAX_SPEED) {
             location.vy = -Settings.MAX_SPEED;
         }
+
+
         location.x = location.x + location.vx;
         location.y = location.y + location.vy;
 
         double v = Math.atan2(location.vx, location.vy);
 
+        isTrajectoryGoal();
+
         double radiansToDegrees = 360d / Math.PI;
         degree = v * radiansToDegrees; //
-        //degree = (degree + 360) % 360;
         degree = degree + World.offset;
 
-        //System.out.println("Made to end of function");
 
     }
+
+    boolean target = false;
+
+    double targetvx = Double.NaN;
+    double targetvy = Double.NaN;
+
+    double targetx = Double.NaN;
+    double targety = Double.NaN;
 
 
     public void doKill(Action action) {
@@ -1817,7 +2012,7 @@ class Entity {
                 if (o != null) {
                     if (isTouching(o) && o != this) {
 
-                        if (o.genome.read(Gene.KIN) == genome.read(Gene.KIN)) {
+                        if (KinFactory.create(o.genome.read(Gene.KIN)) == KinFactory.create(genome.read(Gene.KIN))) {
                             o.fertile = true;
                             o.touching = this;
                             touching = o;
@@ -1911,6 +2106,21 @@ class Gene {
 
 }
 
+class KinFactory {
+    public static char create(char c) {
+        if (c < 'a') {
+            return 'f';
+        } else if (c < 'e') {
+            return 'c';
+        } else if (c < 'm') {
+            return 'g';
+        } else if (c > 'w') {
+            return 't';
+        }
+        return 'z';
+    }
+}
+
 class World extends JLabel {
     static ArrayList<Entity> list = new ArrayList<>();
 
@@ -1993,19 +2203,19 @@ class World extends JLabel {
         return last;
     }
 
-    private static void drawVisibilityCircle(Graphics2D g2d, Color kin, Point center, float r, Color c) {
+    private static void drawVisibilityCircle(Graphics2D g2d, Color kin, Point center, float r, Color c, Entity ent) {
         float radius = r;
         float[] dist = {0f, 1f};
         Color[] colors = {new Color(0, 0, 0, 0), c};
         Color[] kins = {new Color(0, 0, 0, 0), kin};
         //workaround to prevent background color from showing
-        drawBackGroundCircle(g2d, radius, Color.WHITE, center);
-        drawGradientCircle(g2d, radius, dist, colors, center);
-        drawGradientCircle(g2d, 2, dist, kins, center);
+        drawBackGroundCircle(g2d, radius, Color.WHITE, center, ent);
+        drawGradientCircle(g2d, radius, dist, colors, center, ent);
+        drawGradientCircle(g2d, 2, dist, kins, center, ent);
 
     }
 
-    private static void drawBackGroundCircle(Graphics2D g2d, float radius, Color color, Point2D center) {
+    private static void drawBackGroundCircle(Graphics2D g2d, float radius, Color color, Point2D center, Entity ent) {
 
         g2d.setColor(color);
         radius -= 1;//make radius a bit smaller to prevent fuzzy edge
@@ -2013,10 +2223,19 @@ class World extends JLabel {
                 - radius, radius * 2, radius * 2));
     }
 
-    private static void drawGradientCircle(Graphics2D g2d, float radius, float[] dist, Color[] colors, Point2D center) {
+    private static void drawGradientCircle(Graphics2D g2d, float radius, float[] dist, Color[] colors, Point2D center, Entity ent) {
+
+        //GradientPaint gp4 = new GradientPaint(radius, radius,
+        //        ent.color, radius/2, radius, Color.black, true);
+
         RadialGradientPaint rgp = new RadialGradientPaint(center, radius, dist, colors);
         g2d.setPaint(rgp);
         g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
+
+        //int[] xValues = {(int)center.getX() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size};
+        //int[] yValues = {(int)center.getY() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size};
+        //Polygon poly = new Polygon(xValues, yValues, 6);
+        //g2d.fill(poly);
     }
 
 
@@ -2037,21 +2256,37 @@ class World extends JLabel {
         ArrayList<GARLRectangle> rlist = selection.rlist;
 
         for (int j = 0; j < rlist.size(); j++) {
-            GARLRectangle rect = rlist.get(j);
-            g2.setColor(rect.getColor());
-            if (rect != null) {
-                g.fillRect(rect.x, rect.y, rect.width, rect.height);
-            }
+            try {
+                GARLRectangle rect = rlist.get(j);
+                Point2D point = new Point2D.Double(rect.getCenterX(), rect.getCenterY());
+                Color[] colors = {Color.pink, Color.pink, Color.pink};
+                float[] dist = {0.0f, 0.5f, 1.0f};
+                Point2D center = new Point2D.Float(0.5f * rect.width, 0.5f * rect.height);
+
+                RadialGradientPaint p =
+                        new RadialGradientPaint(center, 0.5f * rect.width, dist, colors);
+                //RadialGradientPaint rgp = new RadialGradientPaint(point, (float)rect.width, (float)rect.height, rect.color);
+                g2.setPaint(p);
+                if( rect.spawner ){
+                    g2.setColor(rect.getColor());
+                }
+                if( rect.control ){
+                    g2.setColor(rect.getColor());
+                }
+                //g2.setColor(rect.getColor());
+                if (rect != null) {
+                    g.fillRect(rect.x, rect.y, rect.width, rect.height);
+                }
+            } catch(Exception ex) {}
         }
 
         int livingCount = getLivingCount();
         for (int i = 0; i < list.size(); i++) {
             Entity e = list.get(i);
 
-            int r = e.size / 2;
-            if (r <= Settings.MIN_SIZE / 2) {
-                r = Settings.MIN_SIZE / 2;
-            }
+            int r = (int) Math.ceil((double) e.size / 2);
+
+
             if (e.alive) {
                 g2.setColor(e.color);
             } else {
@@ -2059,11 +2294,16 @@ class World extends JLabel {
                 g2.setColor(Color.BLUE);
             }
             Point p = new Point((int) e.location.x + (r / 2), (int) e.location.y + (r / 2));
-            if (r >= Settings.MIN_SIZE / 2) {
-                int k = e.genome.read(Gene.KIN);
-                Color kin = new Color(k, 128 % (k % 256), 128 % (k % 256));
-                drawVisibilityCircle(g2, kin, p, r, e.color);
+            //if (r >= 1) {
+            Color kin = Color.yellow;
+            try {
+                int k = KinFactory.create(e.genome.read(Gene.KIN));
+                kin = new Color(k, 128 % (k % 256), 128 % (k % 256));
+            } catch (Exception ex) {
+
             }
+            drawVisibilityCircle(g2, kin, p, r, e.color, e);
+            //}
 
             if (e == selected) {
                 g2.drawOval((int) e.location.x - (r / 2), (int) e.location.y - (r / 2), r * 2, r * 2);
@@ -2078,8 +2318,7 @@ class World extends JLabel {
             if (xs > 300 && ys > 300) {
                 g2.setColor(Color.RED);
                 g2.drawLine((int) e.location.x + (r / 2), (int) e.location.y + (r / 2), xs, ys);
-                //g2.setColor(Color.BLUE);
-                //g2.drawLine(e.location.x + (r / 2), e.location.y + (r / 2), _xs, _ys);
+
             }
 
             if (e == selected) {
@@ -2113,7 +2352,7 @@ class World extends JLabel {
 
         int spacing = 14;
         int popupWidth = 340;
-        int popupHeight = 530;
+        int popupHeight = 560;
 
         if (e != null) {
             boolean b = e.world.list.contains(e);
@@ -2139,7 +2378,7 @@ class World extends JLabel {
             g.drawString("Kill Gene: " + (int) e.genome.read(Gene.KILL), mx + spacing, my + spacing * 10);
 
             try {
-                g.drawString("Thought: " + e.last.toString(), mx + spacing, my + spacing * 11);
+                g.drawString("Thought: " + e.last.toString() + " " + df.format(e.input), mx + spacing, my + spacing * 11);
             } catch (Exception ex) {
             }
             g.drawString("Genome:", mx + spacing, my + spacing * 12);
@@ -2156,7 +2395,7 @@ class World extends JLabel {
             g.drawString("Deletions: " + e.genome.numDeletions, mx + spacing, my + spacing * 19);
             int sz = UUID.randomUUID().toString().replaceAll("-", "").length();
             //g.drawString("Genome Length: " + e.genome.code.length() / sz, mx + spacing, my + spacing * 20);
-            g.drawString("KIN: " + e.genome.read(Gene.KIN), mx + spacing, my + spacing * 21);
+            g.drawString("KIN: " + KinFactory.create(e.genome.read(Gene.KIN)) + ":" + e.genome.read(Gene.KIN), mx + spacing, my + spacing * 21);
             g.drawString("Fertile: " + e.fertile, mx + spacing, my + spacing * 22);
             g.drawString("Read Position: " + e.genome.index(), mx + spacing, my + spacing * 23);
             g.drawString("Death: " + Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE), mx + spacing, my + spacing * 24);
@@ -2166,11 +2405,15 @@ class World extends JLabel {
             g.drawString("Appends: " + e.genome.numAppends, mx + spacing, my + spacing * 28);
             g.drawString("Input: " + e.brain.ann.input.numberOfNeuronsInLayer, mx + spacing, my + spacing * 29);
             g.drawString("Dense: " + e.brain.ann.dense.numberOfNeuronsInLayer, mx + spacing, my + spacing * 30);
-            g.drawString("Hidden: " + e.brain.ann.second.numberOfNeuronsInLayer, mx + spacing, my + spacing * 31);
-            g.drawString("Output: " + e.brain.ann.output.numberOfNeuronsInLayer, mx + spacing, my + spacing * 32);
-            g.drawString("Trajectory Goal: " + e.isTrajectoryGoal(), mx + spacing, my + spacing * 33);
-            g.drawString("Walls: " + e.walls, mx + spacing, my + spacing * 34);
-            g.drawString("Read Char: " + e.genome.read(e.genome.index), mx + spacing, my + spacing * 35);
+            g.drawString("Hidden: " + e.brain.ann.hidden.numberOfNeuronsInLayer, mx + spacing, my + spacing * 31);
+            g.drawString("Dropout: " + e.brain.ann.dropout.numberOfNeuronsInLayer, mx + spacing, my + spacing * 32);
+            g.drawString("Output: " + e.brain.ann.output.numberOfNeuronsInLayer, mx + spacing, my + spacing * 33);
+            g.drawString("Trajectory Goal: " + e.isTrajectoryGoal(), mx + spacing, my + spacing * 34);
+            g.drawString("Walls: " + e.walls, mx + spacing, my + spacing * 35);
+            g.drawString("Read Char: " + e.genome.read(e.genome.index), mx + spacing, my + spacing * 36);
+            g.drawString("Found Target: " + e.target, mx + spacing, my + spacing * 37);
+            g.drawString("Closest: " + Entity.closest(e.world.selection.rlist, e).getName(), mx + spacing, my + spacing * 38);
+            g.drawString("Distance to Goal: X:" + e.distanceX + " Y:" + e.distanceY, mx + spacing, my + spacing * 39);
 
             g.setColor(Color.black);
 
@@ -2277,28 +2520,29 @@ class Population {
 }
 
 class Settings {
-    static double ACCELERATION = 0.5;
+    static int INSPECTOR_WIDTH = 400;
+    static double ACCELERATION = 1.0;
     static int CHAR_SET = 62;
     static int GENOME_LENGTH = 32;
     static int STARTING_POPULATION = 100;
     static int MAX_OFFSPRING = 4;
     static boolean NATURAL_REPLICATION = true;
-    final static int MAX_THINK_DEPTH = 4;
-    final static int NUMBER_OF_INPUTS = 64; //STARTING_POPULATION * 12; // Action.values().length;
-    final static int DEATH_MULTIPLIER = 25;
-    final static int GENE_POOL = 10;
-    final static int MAX_SIZE = 18;
-    final static int MIN_SIZE = 5;
-    final static int MAX_NEURONS = 16;
+    static int MAX_THINK_DEPTH = 4;
+    static int NUMBER_OF_INPUTS = 32; //STARTING_POPULATION * 12; // Action.values().length;
+    static int DEATH_MULTIPLIER = 25;
+    static int GENE_POOL = 2;
+    static int MAX_SIZE = 18;
+    static int MIN_SIZE = 5;
+    static int MAX_NEURONS = 4;
 
 
-    final static int CELL_MOVEMENT = 1;
-    final static int MAX_SPEED = 6;
-    final static int MAX_POPULATION = 1000;
+    static int CELL_MOVEMENT = 1;
+    static int MAX_SPEED = 6;
+    static int MAX_POPULATION = 500;
 
-    final static double ENERGY = 10.0;
-    final static double ENERGY_STEP_COST = 0.00001;
-    final static double ENERGY_STEP_SLEEP_COST = 0.001;
+    static double ENERGY = 10.0;
+    static double ENERGY_STEP_COST = 0.00001;
+    static double ENERGY_STEP_SLEEP_COST = 0.01;
 
 
 }
@@ -2481,6 +2725,12 @@ class KeyHandler implements KeyListener {
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_S) {
                 System.out.println("Key S");
                 world.selected.process(Action.STOP, world, 0);
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_K) {
+                System.out.println("Key K");
+                for (int i = 0; i < world.list.size(); i++) {
+                    Entity e = (Entity) world.list.get(i);
+                    e.die();
+                }
             }
 
         }
@@ -2502,7 +2752,7 @@ class MouseHandler implements MouseMotionListener, MouseListener {
 
     World world = null;
 
-    MouseHandler(World world) {
+    public MouseHandler(World world) {
         this.world = world;
     }
 
@@ -2659,9 +2909,7 @@ class SelectionTask extends TimerTask {
                 if (e.getEnergy() <= 0) {
                     e.die();
                 }
-                //else if (e.age >= Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE)) {
-                //    e.die();
-                //}
+
                 long end = System.currentTimeMillis();
             }
         } catch (Exception ex) {
@@ -2849,6 +3097,163 @@ class SeedList {
     Seed[] seeds = null;
 }
 
+class NNCanvas extends Canvas {
+
+    Entity entity = null;
+    World world = null;
+
+    public NNCanvas(World world) {
+        this.world = world;
+    }
+
+    public void setSelected(Entity e) {
+        entity = e;
+    }
+
+    boolean NNdebug = true;
+
+    public void paint(Graphics g) {
+
+        try {
+            if (NNdebug) {
+                return;
+            }
+            entity = world.selected;
+            if (entity == null) {
+                return;
+            }
+            if (!entity.alive) {
+                return;
+            }
+            int inputs = entity.brain.ann.input.numberOfNeuronsInLayer;
+            int dense = entity.brain.ann.dense.numberOfNeuronsInLayer;
+            int hidden = entity.brain.ann.hidden.numberOfNeuronsInLayer;
+            int dropout = entity.brain.ann.dropout.numberOfNeuronsInLayer;
+            int output = entity.brain.ann.output.numberOfNeuronsInLayer;
+
+            int numLayers = 5;
+            int circle = 3;
+            int space = circle * 2;
+            int startingPos = 10;
+            int pos = 3;
+            int initPos = pos;
+            int hpos = 10;
+            g.setColor(Color.BLACK);
+            int maxHeight = 0;
+            int offset = 0;
+            for (int i = 1; i <= inputs; i++) {
+
+                try {
+                    int f = space * i;
+                    g.fillOval(hpos + circle, circle + f, circle + circle, circle + circle);
+                    pos += space;
+
+                    maxHeight = pos;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+
+            hpos += (Settings.INSPECTOR_WIDTH / numLayers);
+
+
+            offset = maxHeight / dense / 2;
+            space = (maxHeight / dense);
+
+            int startingPosX = startingPos;
+            int startingPosY = startingPos;
+
+            startingPosX += circle;
+            for (int j = 1; j <= inputs; j++) {
+                for (int k = 1; k <= dense; k++) {
+                    g.drawLine((startingPosX + ((circle) / 2)), startingPosY - ((circle) / 2), hpos , k + offset * j );
+                    g.drawLine((startingPosX + ((circle) / 2)), startingPosY - ((circle) / 2), hpos , k + offset  + space *j);
+                    g.drawLine((startingPosX + ((circle) / 2)), startingPosY - ((circle) / 2), hpos , k + offset + space + space *j);
+                    g.drawLine((startingPosX + ((circle) / 2)), startingPosY - ((circle) / 2), hpos , k + offset + space + space + space *j);
+                }
+                startingPosY = (j+initPos);
+                System.out.println("Going down:" + startingPosY + "j" + j + "*pos" + pos);
+
+            }
+
+
+            for (int i = 1; i <= dense; i++) {
+
+                try {
+                    int f = (space * i) - offset;
+                    g.fillOval(hpos + circle, circle + f, circle + circle, circle + circle);
+                    pos += space;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+            hpos += (Settings.INSPECTOR_WIDTH / numLayers);
+
+
+            space = maxHeight / hidden;
+            offset = maxHeight / hidden / 2;
+            for (int i = 1; i <= hidden; i++) {
+
+                try {
+                    int f = (space * i) - offset;
+                    g.fillOval(hpos + circle, circle + f, circle + circle, circle + circle);
+                    pos += space;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+            hpos += (Settings.INSPECTOR_WIDTH / numLayers);
+
+
+            space = maxHeight / dropout;
+            offset = maxHeight / dropout / 2;
+
+            for (int i = 1; i <= dropout; i++) {
+
+                try {
+                    int f = (space * i) - offset;
+                    g.fillOval(hpos + circle, circle + f, circle + circle, circle + circle);
+                    pos += space;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+            hpos += (Settings.INSPECTOR_WIDTH / numLayers);
+
+
+            space = maxHeight / output;
+
+            offset = maxHeight / 2;
+            for (int i = 1; i <= output; i++) {
+
+                try {
+                    int f = (space * i) - offset;
+                    g.fillOval(hpos + circle, circle + f, circle + circle, circle + circle);
+                    pos += space;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+            //g.drawString("" + dense, 10, 20);
+            //g.drawString("" + hidden, 10, 30);
+            //g.drawString("" + dropout, 10, 40);
+            //g.drawString("" + output, 10, 50);
+        } catch (Exception ex) {
+            g.drawString("Selected is null", 10, 10);
+        }
+
+    }
+}
+
 public class GARLTask extends Thread {
 
     public static UUID run = UUID.randomUUID();
@@ -2898,7 +3303,7 @@ public class GARLTask extends Thread {
         ArrayList<Seed> list = seeds;
         ArrayList<Entity> ents = new ArrayList<>();
 
-        for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
+        for (int i = 0; i < Math.min(list.size() > Settings.STARTING_POPULATION ? list.size() : Settings.STARTING_POPULATION, Settings.STARTING_POPULATION); i++) {
             if (list.get(i).genome.contains("-")) {
 
                 continue;
@@ -2942,6 +3347,7 @@ public class GARLTask extends Thread {
 
     JFrame frame = new JFrame("Genetic Based Multi-Agent Reinforcement Learning");
 
+    JPanel inspector = new JPanel();
     World world = null;
     Selection selection = null;
 
@@ -2954,7 +3360,8 @@ public class GARLTask extends Thread {
 
         int width = 1848;
         int height = 1016;
-        world = new World(width, height);
+        int inspectorPanelWidth = Settings.INSPECTOR_WIDTH;
+        world = new World(width - inspectorPanelWidth, height);
         selection = new Selection(world);
         frame.setSize(width, height);
 
@@ -2962,7 +3369,7 @@ public class GARLTask extends Thread {
         //...create emptyLabel...
         ArrayList<Entity> population = new ArrayList<>();
         if (list == null) {
-            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getWidth());
+            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getWidth());
         } else {
             System.out.println("Loading from seed list:" + list.size());
             for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
@@ -2977,7 +3384,7 @@ public class GARLTask extends Thread {
                     Brain brain = new Brain(g);
                     Entity e = new Entity(world);
                     brain.setOwner(e);
-                    e.location.x = (int) (Math.random() * width);
+                    e.location.x = (int) (Math.random() * width - inspectorPanelWidth);
                     e.location.y = (int) (Math.random() * height);
                     g.setOwner(e);
                     e.brain = brain;
@@ -2998,19 +3405,426 @@ public class GARLTask extends Thread {
         world.addMouseListener(mouseHandler);
         frame.addKeyListener(keyHandler);
 
-        world.setMaximumSize(new Dimension(width, height));
-        world.setMinimumSize(new Dimension(width, height));
-        world.setPreferredSize(new Dimension(width, height));
-        frame.add(world);
+        world.setMaximumSize(new Dimension(width - inspectorPanelWidth, height));
+        world.setMinimumSize(new Dimension(width - inspectorPanelWidth, height));
+        world.setPreferredSize(new Dimension(width - inspectorPanelWidth, height));
+
+        inspector.setMaximumSize(new Dimension(inspectorPanelWidth, height));
+        inspector.setMinimumSize(new Dimension(inspectorPanelWidth, height));
+        inspector.setPreferredSize(new Dimension(inspectorPanelWidth, height));
+
+        GridLayout gridLayout = new GridLayout(14, 2);
+        inspector.setLayout(gridLayout);
+        inspector.add(new JLabel("Starting Population"));
+        JTextField startingPopulation = new JTextField("" + Settings.STARTING_POPULATION);
+        ActionListener al = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                try {
+                    String text = startingPopulation.getText();
+                    Integer value = Integer.parseInt(text);
+                    Settings.STARTING_POPULATION = value;
+                    System.out.println("Set starting population to:" + value);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        };
+        startingPopulation.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Integer.parseInt(startingPopulation.getText()) <= 0) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number bigger than 0", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = startingPopulation.getText();
+                    try {
+                        Integer value = Integer.parseInt(text);
+                        Settings.STARTING_POPULATION = value;
+                        System.out.println("Set starting population to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive integers allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        DecimalFormat ddf = new DecimalFormat("0.00000");
+        startingPopulation.addActionListener(al);
+        inspector.add(startingPopulation);
+        inspector.add(new JLabel("Minimum Gene Pool"));
+        JTextField genePool = new JTextField("" + Settings.GENE_POOL);
+        genePool.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Integer.parseInt(genePool.getText()) < 0) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number bigger 0 or larger", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = genePool.getText();
+                    try {
+                        Integer value = Integer.parseInt(text);
+                        Settings.GENE_POOL = value;
+                        System.out.println("Set GENE POOL to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive integers allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(genePool);
+        inspector.add(new JLabel("Minimum Size"));
+        JTextField minSize = new JTextField("" + Settings.MIN_SIZE);
+        minSize.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Integer.parseInt(minSize.getText()) <= 3) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number bigger 3 or larger", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = minSize.getText();
+                    try {
+                        Integer value = Integer.parseInt(text);
+                        Settings.MIN_SIZE = value;
+                        System.out.println("Set min size to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive integers allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(minSize);
+        inspector.add(new JLabel("Maximum Size"));
+        JTextField maxSize = new JTextField("" + Settings.MAX_SIZE);
+        maxSize.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Integer.parseInt(maxSize.getText()) >= 30) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number 30 or less", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = maxSize.getText();
+                    try {
+                        Integer value = Integer.parseInt(text);
+                        Settings.MAX_SIZE = value;
+                        System.out.println("Set max size to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive integers allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(maxSize);
+        inspector.add(new JLabel("Starting Energy"));
+        JTextField initialEnergy = new JTextField("" + ddf.format(Settings.ENERGY));
+        initialEnergy.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Double.parseDouble(initialEnergy.getText()) >= 100) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number 100 or less", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = initialEnergy.getText();
+                    try {
+                        Double value = Double.parseDouble(text);
+                        Settings.ENERGY = value;
+                        System.out.println("Set initial energy to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive doubles allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(initialEnergy);
+        inspector.add(new JLabel("Energy per Step"));
+        JTextField energyStepCost = new JTextField("" + ddf.format(Settings.ENERGY_STEP_COST));
+        energyStepCost.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Double.parseDouble(energyStepCost.getText()) >= 0.1) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number 0.1 or less", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = energyStepCost.getText();
+                    try {
+                        Double value = Double.parseDouble(text);
+                        Settings.ENERGY_STEP_COST = value;
+                        System.out.println("Set energy step cost to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive doubles allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(energyStepCost);
+        inspector.add(new JLabel("Energy per Sleep"));
+        JTextField energyStepCostSleep = new JTextField("" + ddf.format(Settings.ENERGY_STEP_SLEEP_COST));
+        energyStepCostSleep.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Double.parseDouble(energyStepCostSleep.getText()) >= 0.1) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number 0.1 or less", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = energyStepCostSleep.getText();
+                    try {
+                        Double value = Double.parseDouble(text);
+                        Settings.ENERGY_STEP_SLEEP_COST = value;
+                        System.out.println("Set energy step sleep cost to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive doubles allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(energyStepCostSleep);
+        inspector.add(new JLabel("Maximum Offspring"));
+        JTextField maximumOffstring = new JTextField("" + Settings.MAX_OFFSPRING);
+        maximumOffstring.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Integer.parseInt(maximumOffstring.getText()) >= 2) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number 2 or more", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = maximumOffstring.getText();
+                    try {
+                        Integer value = Integer.parseInt(text);
+                        Settings.MAX_OFFSPRING = value;
+                        System.out.println("Set max offspring to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive integers allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(maximumOffstring);
+        inspector.add(new JLabel("Neurons in Layer (0)"));
+        JTextField neuronsInBaseLayer = new JTextField("" + Settings.NUMBER_OF_INPUTS);
+        neuronsInBaseLayer.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (Integer.parseInt(neuronsInBaseLayer.getText()) >= 8) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter number 8 or more", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = neuronsInBaseLayer.getText();
+                    try {
+                        Integer value = Integer.parseInt(text);
+                        Settings.NUMBER_OF_INPUTS = value;
+                        System.out.println("Set neurons in base layer to:" + value);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only positive integers allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+
+                    }
+
+                }
+            }
+        });
+        inspector.add(neuronsInBaseLayer);
+
+        inspector.add(new JLabel("Reset"));
+        JButton reset = new JButton("Clear");
+        reset.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                for (int i = 0; i < world.list.size(); i++) {
+                    Entity e = (Entity) world.list.get(i);
+                    e.die();
+                }
+            }
+        });
+        inspector.add(reset);
+        inspector.add(new JLabel("Earnings"));
+        JButton payout = new JButton("Payout");
+        ActionListener payoutActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+
+            }
+        };
+        payout.addActionListener(payoutActionListener);
+        inspector.add(payout);
+        inspector.add(new JLabel("Address"));
+        String address = "FB1nwpSEjAp86a8JaKrZfKY3XtNnVfbxRk";
+        JTextField payoutAddress = new JTextField();
+        Font font = new Font("Courier", Font.BOLD,10);
+        payoutAddress.setFont( font );
+
+        //payoutAddress.setFont(new Font(Font.MONOSPACED, 8, Font.PLAIN));
+        payoutAddress.setText(address);
+        inspector.add(payoutAddress);
+        inspector.add(new JLabel("Selected Agent ANN"));
+
+        JPanel inspectorContainer = new JPanel();
+        inspectorContainer.setLayout(new BorderLayout());
+        inspectorContainer.add(new JPanel(), BorderLayout.NORTH);
+        inspectorContainer.add(new JPanel(), BorderLayout.EAST);
+        inspectorContainer.add(new JPanel(), BorderLayout.WEST);
+
+        JPanel selectedInspector = new JPanel();
+        NNCanvas canvas = new NNCanvas(world);
+        canvas.setMinimumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
+        canvas.setMaximumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
+        canvas.setPreferredSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
+        selectedInspector.add(canvas);
+        inspectorContainer.add(selectedInspector, BorderLayout.SOUTH);
+
+        inspectorContainer.add(inspector, BorderLayout.CENTER);
+
+
+        frame.add(world, BorderLayout.CENTER);
+        frame.add(inspectorContainer, BorderLayout.EAST);
 
         //4. Size the frame.
 
         //5. Show it.
         frame.setVisible(true);
 
-        ThinkTask think = new ThinkTask(frame, world, width, height, 5);
-        SelectionTask selection = new SelectionTask(frame, world, width, height);
-        ReplicationTask replication = new ReplicationTask(frame, world, width, height);
+        ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
+        SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
+        ReplicationTask replication = new ReplicationTask(frame, world, width - inspectorPanelWidth, height);
 
         Timer timer = new Timer(true);
         TimerTask paint = new TimerTask() {
@@ -3027,6 +3841,7 @@ public class GARLTask extends Thread {
                         ctr = 0;
                     }
                     world.repaint();
+                    canvas.repaint();
                     long end = System.currentTimeMillis();
 
                 } catch (Exception ex) {
