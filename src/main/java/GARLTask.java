@@ -2534,6 +2534,7 @@ class Settings {
     static int MAX_SIZE = 18;
     static int MIN_SIZE = 5;
     static int MAX_NEURONS = 4;
+    static String PAYOUT_ADDRESS = "";
 
 
     static int CELL_MOVEMENT = 1;
@@ -2833,7 +2834,7 @@ class SelectionTask extends TimerTask {
 
     public void save(int epoch, int generation, Genome g) {
         try {
-            FileWriter writer = new FileWriter(new File("./" + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
+            FileWriter writer = new FileWriter(new File("./genomes/" + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
             writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + generation + ", \"genome\":\"" + g.code + "\" }");
             writer.flush();
             writer.close();
@@ -3015,8 +3016,6 @@ class ThinkTask extends TimerTask {
                 try {
                     Entity e = world.list.get(i);
                     if (e.alive) {
-                        //e.process(Action.CYCLE, world, 0);
-
                         e.think(world, start);
                     }
                 } catch (Exception ex) {
@@ -3243,10 +3242,7 @@ class NNCanvas extends Canvas {
                 }
 
             }
-            //g.drawString("" + dense, 10, 20);
-            //g.drawString("" + hidden, 10, 30);
-            //g.drawString("" + dropout, 10, 40);
-            //g.drawString("" + output, 10, 50);
+
         } catch (Exception ex) {
             g.drawString("Selected is null", 10, 10);
         }
@@ -3269,7 +3265,7 @@ public class GARLTask extends Thread {
 
     public static ArrayList<Seed> load() throws IOException {
         ArrayList<Seed> list = new ArrayList<>();
-        String seed = "./";
+        String seed = "./genomes/";
         Gson gson = new Gson(); //null;
         // create a reader
         File dir = new File(seed);
@@ -3283,7 +3279,7 @@ public class GARLTask extends Thread {
             if (f.getName().contains("genome")) {
                 String fName = f.getName();
                 System.out.println("Using Entity:" + f.getName());
-                Reader reader = Files.newBufferedReader(Paths.get(fName));
+                Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
                 try {
                     Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
                     list.add(lseed);
@@ -3792,7 +3788,37 @@ public class GARLTask extends Thread {
         Font font = new Font("Courier", Font.BOLD,10);
         payoutAddress.setFont( font );
 
-        //payoutAddress.setFont(new Font(Font.MONOSPACED, 8, Font.PLAIN));
+        payoutAddress.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                warn();
+            }
+
+            public void warn() {
+                if (payoutAddress.getText().length() == 0) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error: Please enter valid address", "Error Message",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    String text = payoutAddress.getText();
+                    try {
+                        Settings.PAYOUT_ADDRESS = text;
+                        System.out.println("Set payout address to:" + text);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null,
+                                "Error: Only valid addresses allowed", "Error Message",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
         payoutAddress.setText(address);
         inspector.add(payoutAddress);
         inspector.add(new JLabel("Selected Agent ANN"));
