@@ -10,4 +10,6 @@ java -jar GARL-1.0-SNAPSHOT.jar
 
 This is a work in progress. Payouts *almost work* on this version!
 
+I've provided 20 "fit/train" evolved genomes.
+
 Note: Requires Swing and a Desktop.
