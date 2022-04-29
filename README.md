@@ -3,7 +3,7 @@ Genetic Based Selection Forced Reinforcement Learning
 
 Run using Java 1.8.
 
-Download GARL.zip and extract contents into a folder you intend to use.
+Download GARL-X-XX.zip (latest) and extract contents into a folder you intend to use.
 
 You can start it via:
 ```
