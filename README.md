@@ -5,6 +5,8 @@ Run using Java 1.8.
 
 Download GARL-X-XX.zip (latest) and extract contents into a folder you intend to use.
 
+Note: `Game' Parameters and constantly changing so genomes optimised for previous game criteria may not perform well within the current environment and may require millions of thoughts and epochs to evolve to an optimal solution.
+
 You can start it via:
 ```
 java -jar GARL-1.0-SNAPSHOT-jar-with-dependencies.jar
