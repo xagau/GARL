@@ -374,7 +374,10 @@ public class World extends JLabel {
                 return;
             }
         }
+
         if (e != null && e.selected == true && e.alive == true) {
+            DecimalFormat ddf = new DecimalFormat("0.00000000");
+
             DecimalFormat df = new DecimalFormat("0.00");
             g.setColor(Color.white);
             g.fillRect(mx, my, popupWidth, popupHeight);
@@ -385,8 +388,8 @@ public class World extends JLabel {
             g.drawString("Age:" + e.age, mx + spacing, my + spacing * 3);
             g.drawString("Energy:" + df.format(e.getEnergy()), mx + spacing, my + spacing * 4);
             g.drawString("Degree: " + df.format(Math.abs(e.degree)), mx + spacing, my + spacing * 5);
-            g.drawString("VX: " + df.format(e.location.vx), mx + spacing, my + spacing * 6);
-            g.drawString("VY: " + df.format(e.location.vy), mx + spacing, my + spacing * 7);
+            g.drawString("VX: " + ddf.format(e.location.vx), mx + spacing, my + spacing * 6);
+            g.drawString("VY: " + ddf.format(e.location.vy), mx + spacing, my + spacing * 7);
             g.drawString("Alive: " + e.alive, mx + spacing, my + spacing * 8);
             g.drawString("Reproductive Number: " + (int) e.genome.read(Gene.RR), mx + spacing, my + spacing * 9);
             g.drawString("Kill Gene: " + (int) e.genome.read(Gene.KILL), mx + spacing, my + spacing * 10);

@@ -111,6 +111,7 @@ public class MoneyMQ {
             channel = connection.createChannel();
             payoutAddress = payoutAddress.trim();
 
+            money = money.replaceAll(",", ".");
             Transaction t = new Transaction();
             t.setCurrency("PHL");
             t.setOtp(Property.getProperty("otp"));

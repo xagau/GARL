@@ -413,11 +413,20 @@ public class Entity {
 
     public void process(Action action, World world, int depth) {
 
+        double epsilon = 1.01;
+        depth++;
 
+        if( depth > Settings.MAX_THINK_DEPTH || (Math.abs(location.vx) == Math.abs(0) && Math.abs(location.vy) == Math.abs(0)) ){
+            //System.out.println("Return too much depth");
+            if( action != Action.CONTINUE) {
+                action = ActionFactory.create(Math.random());
+            }
+        }
 
         if (brain != null) {
 
             switch (action) {
+                /*
                 case RANDOM:
                     Action aa = brain.evaluate(this, world);
                     double bo = brain.getOutput();
@@ -428,6 +437,8 @@ public class Entity {
                     Action aaa = ActionFactory.create(r);
                     process(aaa, world, depth++);
                     break;
+
+                 */
                 case NONE:
                 case SIN:
 
@@ -454,8 +465,7 @@ public class Entity {
                         } else {
                             location.vx = 0;
                             location.vy = 0;
-                            process(Action.RANDOM, world, depth);
-
+                            //process(Action.RANDOM, world, depth);
                         }
                         if(  !isTrajectoryGoal() ){
                             process(Action.SCAN, world, depth);
@@ -495,8 +505,12 @@ public class Entity {
                 case CYCLE:
                 case CONTINUE:
                     if (target) {
-                        location.vx = targetvx;
-                        location.vy = targetvy;
+                        if( targetvx != 0) {
+                            location.vx = targetvx;
+                        }
+                        if( targetvy != 0 ) {
+                            location.vy = targetvy;
+                        }
                     }
                     break;
                 case GOAL:
@@ -531,6 +545,7 @@ public class Entity {
                     }
                     if (isTrajectoryGoal()) {
                         goal = 1;
+                        process(Action.CONTINUE, world, depth);
                     } else {
                         register = 0;
                         process(Action.SLOW, world, depth);
@@ -548,6 +563,7 @@ public class Entity {
                     }
 
 
+                    break;
                 case SAVE:
                     brain.input(this, world);
                     brain.ann.input.calc();
@@ -607,7 +623,7 @@ public class Entity {
                 case SCAN:
 
                     try {
-                        if (target == false) {
+                        if (!isTrajectoryGoal()) {
 
                             degree += Math.random() * 360d;
                             if (isTrajectoryDeath()) {
@@ -625,6 +641,7 @@ public class Entity {
                         }
 
                     } catch (Exception ex) {
+                        Log.info(ex);
                     }
                     break;
 
@@ -643,6 +660,7 @@ public class Entity {
                             process(Action.JUMP, world, depth);
                         }
                     } catch (Exception ex) {
+                        Log.info(ex);
                     }
                     break;
 
@@ -659,25 +677,25 @@ public class Entity {
                 case FASTER:
 
                     if( isTrajectoryGoal()) {
-                        location.vx = targetvx;
-                        location.vy = targetvy;
+                        location.vx = Math.max(targetvx * Settings.ACCELERATION, epsilon);; //Math.max(location.vx * Settings.ACCELERATION, epsilon); //targetvx;
+                        location.vy = Math.max(targetvy * Settings.ACCELERATION, epsilon);; //Math.max(location.vy * Settings.ACCELERATION, epsilon);;
 
                         process(Action.FASTER, world, depth);
                         process(Action.CONTINUE, world, depth);
                         break;
                     }
-                    else if( location.vx == Math.abs(0)  ){
+                    else if( Utility.precision(location.vx, Math.abs(0), epsilon )){
                         degree++;
-                        location.vx += Math.random();
+                        location.vx += Math.max(location.vx * Settings.ACCELERATION, epsilon);
                         if( Math.random() > 0.5 ){
                             location.vx = -location.vx;
                             degree = -degree;
                         }
                         break;
                     }
-                    else if( location.vy == Math.abs(0) ){
+                    else if( Utility.precision(location.vy, Math.abs(0), epsilon ) ){
                         degree++;
-                        location.vy += Math.random();
+                        location.vy += Math.max(location.vy * Settings.ACCELERATION, epsilon);
                         if( Math.random() > 0.5 ){
                             degree--;
                             location.vy = -location.vy;
@@ -689,8 +707,8 @@ public class Entity {
 
                     }
 
-                    location.vy = location.vy * (1 + Settings.ACCELERATION);
-                    location.vx = location.vx * (1 + Settings.ACCELERATION);
+                    location.vy = Math.max(location.vy * (1 + Settings.ACCELERATION), epsilon);
+                    location.vx = Math.max(location.vx * (1 + Settings.ACCELERATION), epsilon);
                     break;
 
                 case MOVE_UP: {
@@ -796,7 +814,7 @@ public class Entity {
         degree = degree + World.offset;
 
         if( last == action ){
-            action = Action.RANDOM;
+            action = Action.CONTINUE;
         }
         last = action;
 

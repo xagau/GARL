@@ -7,9 +7,9 @@ public class ActionFactory {
     static Action create(double input) {
         int len = Action.class.getDeclaredFields().length;
 
-        double o = (double) (input % len);
+        double o = (double) (input%1*len);
 
-        int n = (int) Math.round(Math.abs(o));
+        int n = (int) Math.round(o);
         try {
             Field[] list = Action.class.getDeclaredFields();
             String name = list[n].getName();

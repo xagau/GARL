@@ -44,6 +44,9 @@ public class KeyHandler implements KeyListener {
                     Entity e = (Entity) world.list.get(i);
                     e.die();
                 }
+            } else if (keyEvent.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                Log.info("Key K");
+                System.exit(-1);
             }
 
         }

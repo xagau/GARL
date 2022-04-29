@@ -32,6 +32,15 @@ public class Utility {
         return ch;
     }
 
+
+    public static boolean precision(double a, double b, double epsilon)
+    {
+        //double epsilon = 0.00001d;
+        if( Math.abs(a - b) < epsilon  ){
+            return true;
+        }
+        return false;
+    }
     public static double flatten(char c) {
 
         double i = (c - 'a') / 25d;
@@ -39,9 +48,10 @@ public class Utility {
     }
 
     public static void main(String[] args) {
-        double c = flatten('o');
-        DecimalFormat df = new DecimalFormat("0.00000000");
-        Log.info(df.format(c));
+        //double c = flatten('o');
+        //DecimalFormat df = new DecimalFormat("0.00000000");
+        //Log.info(df.format(c));
+        System.out.println(precision(0.00001, 0.00001, 0.00001 ));
     }
 
     public static double flatten(double v, double max) {
