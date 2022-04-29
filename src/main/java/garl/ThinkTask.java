@@ -27,6 +27,7 @@ public class ThinkTask extends TimerTask {
 
         start = System.currentTimeMillis();
 
+        //System.out.println("ThinkTask:" + start);
         try {
             Globals.semaphore.acquire();
 
@@ -47,7 +48,7 @@ public class ThinkTask extends TimerTask {
 
                     ArrayList<Seed> list = GARLTask.load();
 
-                    System.out.println("Recreate population");
+                    Log.info("Recreate population");
                     world.list = new ArrayList<>();
                     ArrayList<Entity> seedList = GARLTask.load(list, world);
                     for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
@@ -69,8 +70,8 @@ public class ThinkTask extends TimerTask {
 
                     world.epoch++;
                     if (world.epoch == 900) {
-                        System.out.println("total controls:" + world.totalControls);
-                        System.out.println("total spawns:" + world.totalSpawns);
+                        Log.info("total controls:" + world.totalControls);
+                        Log.info("total spawns:" + world.totalSpawns);
                         System.exit(-1);
                     }
                     if (livingCount <= Settings.GENE_POOL && seedList.isEmpty()) {
@@ -87,7 +88,7 @@ public class ThinkTask extends TimerTask {
                         try {
                             world.list = Population.create(world, seedList, Math.max(Settings.STARTING_POPULATION, Math.min(seedList.size(), Settings.STARTING_POPULATION)), frame.getWidth(), frame.getHeight());
                             world.selection.makeNewList();
-                            System.out.println("Using seed list:" + seedList.size());
+                            Log.info("Using seed list:" + seedList.size());
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
@@ -103,5 +104,6 @@ public class ThinkTask extends TimerTask {
         }
 
         long end = System.currentTimeMillis();
+        //System.out.println("ThinkTask:" + end);
     }
 }

@@ -45,7 +45,7 @@ public class GARLTask extends Thread {
             File f = files[i];
             if (f.getName().contains("genome")) {
                 String fName = f.getName();
-                System.out.println("Using garl.Entity:" + f.getName());
+                Log.info("Using garl.Entity:" + f.getName());
                 Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
                 try {
                     Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
@@ -73,7 +73,7 @@ public class GARLTask extends Thread {
             }
             try {
                 String genome = list.get(i).genome;
-                System.out.println("Adding:" + i + ":" + genome);
+                Log.info("Adding:" + i + ":" + genome);
                 Genome g = new Genome(genome);
                 Brain brain = new Brain(g);
                 Entity e = new Entity(world);
@@ -85,7 +85,7 @@ public class GARLTask extends Thread {
 
                 e.genome = g;
                 ents.add(e);
-                System.out.println("Added:" + i + " at " + e.location.x + " " + e.location.y);
+                Log.info("Added:" + i + " at " + e.location.x + " " + e.location.y);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -137,7 +137,7 @@ public class GARLTask extends Thread {
         if (list == null) {
             population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getWidth());
         } else {
-            System.out.println("Loading from seed list:" + list.size());
+            Log.info("Loading from seed list:" + list.size());
             for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
                 if (list.get(i).genome.contains("-")) {
 
@@ -145,7 +145,7 @@ public class GARLTask extends Thread {
                 }
                 try {
                     String genome = list.get(i).genome;
-                    System.out.println("Adding:" + i + ":" + genome);
+                    Log.info("Adding:" + i + ":" + genome);
                     Genome g = new Genome(genome);
                     Brain brain = new Brain(g);
                     Entity e = new Entity(world);
@@ -157,7 +157,7 @@ public class GARLTask extends Thread {
 
                     e.genome = g;
                     population.add(e);
-                    System.out.println("Added:" + i + " at " + e.location.x + " " + e.location.y);
+                    Log.info("Added:" + i + " at " + e.location.x + " " + e.location.y);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -165,7 +165,7 @@ public class GARLTask extends Thread {
         }
         world.setPopulation(population);
         world.setSelection(selection);
-        MouseHandler mouseHandler = new MouseHandler(world);
+        MouseHandler mouseHandler = new MouseHandler(world, canvas);
         KeyHandler keyHandler = new KeyHandler(world);
         world.addMouseMotionListener(mouseHandler);
         world.addMouseListener(mouseHandler);
@@ -181,7 +181,7 @@ public class GARLTask extends Thread {
 
         GridLayout gridLayout = new GridLayout(14, 2);
         inspector.setLayout(gridLayout);
-        inspector.add(new JLabel("Starting garl.Population"));
+        inspector.add(new JLabel("Starting GARL Population"));
         JTextField startingPopulation = new JTextField("" + Settings.STARTING_POPULATION);
         ActionListener al = new ActionListener() {
             @Override
@@ -190,7 +190,7 @@ public class GARLTask extends Thread {
                     String text = startingPopulation.getText();
                     Integer value = Integer.parseInt(text);
                     Settings.STARTING_POPULATION = value;
-                    System.out.println("Set starting population to:" + value);
+                    Log.info("Set starting population to:" + value);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -210,24 +210,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Integer.parseInt(startingPopulation.getText()) <= 0) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number bigger than 0", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = startingPopulation.getText();
-                    try {
-                        Integer value = Integer.parseInt(text);
-                        Settings.STARTING_POPULATION = value;
-                        System.out.println("Set starting population to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Integer.parseInt(startingPopulation.getText()) <= 0) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive integers allowed", "Error Message",
+                                "Error: Please enter number bigger than 0", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = startingPopulation.getText();
+                        try {
+                            Integer value = Integer.parseInt(text);
+                            Settings.STARTING_POPULATION = value;
+                            Log.info("Set starting population to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive integers allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) { ex.printStackTrace(); }
             }
         });
         DecimalFormat ddf = new DecimalFormat("0.00000");
@@ -249,24 +251,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Integer.parseInt(genePool.getText()) < 0) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number bigger 0 or larger", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = genePool.getText();
-                    try {
-                        Integer value = Integer.parseInt(text);
-                        Settings.GENE_POOL = value;
-                        System.out.println("Set GENE POOL to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Integer.parseInt(genePool.getText()) < 0) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive integers allowed", "Error Message",
+                                "Error: Please enter number bigger 0 or larger", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = genePool.getText();
+                        try {
+                            Integer value = Integer.parseInt(text);
+                            Settings.GENE_POOL = value;
+                            Log.info("Set GENE POOL to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive integers allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) { ex.printStackTrace(); }
             }
         });
         inspector.add(genePool);
@@ -286,24 +290,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Integer.parseInt(minSize.getText()) <= 3) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number bigger 3 or larger", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = minSize.getText();
-                    try {
-                        Integer value = Integer.parseInt(text);
-                        Settings.MIN_SIZE = value;
-                        System.out.println("Set min size to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Integer.parseInt(minSize.getText()) <= 3) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive integers allowed", "Error Message",
+                                "Error: Please enter number bigger 3 or larger", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = minSize.getText();
+                        try {
+                            Integer value = Integer.parseInt(text);
+                            Settings.MIN_SIZE = value;
+                            Log.info("Set min size to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive integers allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) {ex.printStackTrace();}
             }
         });
         inspector.add(minSize);
@@ -323,24 +329,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Integer.parseInt(maxSize.getText()) >= 30) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number 30 or less", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = maxSize.getText();
-                    try {
-                        Integer value = Integer.parseInt(text);
-                        Settings.MAX_SIZE = value;
-                        System.out.println("Set max size to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Integer.parseInt(maxSize.getText()) >= 30) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive integers allowed", "Error Message",
+                                "Error: Please enter number 30 or less", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = maxSize.getText();
+                        try {
+                            Integer value = Integer.parseInt(text);
+                            Settings.MAX_SIZE = value;
+                            Log.info("Set max size to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive integers allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) { ex.printStackTrace(); }
             }
         });
         inspector.add(maxSize);
@@ -360,24 +368,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Double.parseDouble(initialEnergy.getText()) >= 100) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number 100 or less", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = initialEnergy.getText();
-                    try {
-                        Double value = Double.parseDouble(text);
-                        Settings.ENERGY = value;
-                        System.out.println("Set initial energy to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Double.parseDouble(initialEnergy.getText()) >= 100) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive doubles allowed", "Error Message",
+                                "Error: Please enter number 100 or less", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = initialEnergy.getText();
+                        try {
+                            Double value = Double.parseDouble(text);
+                            Settings.ENERGY = value;
+                            Log.info("Set initial energy to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive doubles allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) {ex.printStackTrace();}
             }
         });
         inspector.add(initialEnergy);
@@ -397,24 +407,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Double.parseDouble(energyStepCost.getText()) >= 0.1) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number 0.1 or less", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = energyStepCost.getText();
-                    try {
-                        Double value = Double.parseDouble(text);
-                        Settings.ENERGY_STEP_COST = value;
-                        System.out.println("Set energy step cost to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Double.parseDouble(energyStepCost.getText()) >= 0.1) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive doubles allowed", "Error Message",
+                                "Error: Please enter number 0.1 or less", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = energyStepCost.getText();
+                        try {
+                            Double value = Double.parseDouble(text);
+                            Settings.ENERGY_STEP_COST = value;
+                            Log.info("Set energy step cost to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive doubles allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) {ex.printStackTrace();}
             }
         });
         inspector.add(energyStepCost);
@@ -434,24 +446,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Double.parseDouble(energyStepCostSleep.getText()) >= 0.1) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number 0.1 or less", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = energyStepCostSleep.getText();
-                    try {
-                        Double value = Double.parseDouble(text);
-                        Settings.ENERGY_STEP_SLEEP_COST = value;
-                        System.out.println("Set energy step sleep cost to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Double.parseDouble(energyStepCostSleep.getText()) >= 0.1) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive doubles allowed", "Error Message",
+                                "Error: Please enter number 0.1 or less", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = energyStepCostSleep.getText();
+                        try {
+                            Double value = Double.parseDouble(text);
+                            Settings.ENERGY_STEP_SLEEP_COST = value;
+                            Log.info("Set energy step sleep cost to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive doubles allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex){ex.printStackTrace();}
             }
         });
         inspector.add(energyStepCostSleep);
@@ -471,24 +485,26 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Integer.parseInt(maximumOffstring.getText()) >= 2) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number 2 or more", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = maximumOffstring.getText();
-                    try {
-                        Integer value = Integer.parseInt(text);
-                        Settings.MAX_OFFSPRING = value;
-                        System.out.println("Set max offspring to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Integer.parseInt(maximumOffstring.getText()) >= 2) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive integers allowed", "Error Message",
+                                "Error: Please enter number 2 or more", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = maximumOffstring.getText();
+                        try {
+                            Integer value = Integer.parseInt(text);
+                            Settings.MAX_OFFSPRING = value;
+                            Log.info("Set max offspring to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive integers allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
-                }
+                } catch(Exception ex) { ex.printStackTrace();}
             }
         });
         inspector.add(maximumOffstring);
@@ -508,23 +524,27 @@ public class GARLTask extends Thread {
             }
 
             public void warn() {
-                if (Integer.parseInt(neuronsInBaseLayer.getText()) >= 8) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error: Please enter number 8 or more", "Error Message",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    String text = neuronsInBaseLayer.getText();
-                    try {
-                        Integer value = Integer.parseInt(text);
-                        Settings.NUMBER_OF_INPUTS = value;
-                        System.out.println("Set neurons in base layer to:" + value);
-                    } catch (Exception ex) {
+                try {
+                    if (Integer.parseInt(neuronsInBaseLayer.getText()) >= 8) {
                         JOptionPane.showMessageDialog(null,
-                                "Error: Only positive integers allowed", "Error Message",
+                                "Error: Please enter number 8 or more", "Error Message",
                                 JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        String text = neuronsInBaseLayer.getText();
+                        try {
+                            Integer value = Integer.parseInt(text);
+                            Settings.NUMBER_OF_INPUTS = value;
+                            Log.info("Set neurons in base layer to:" + value);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Error: Only positive integers allowed", "Error Message",
+                                    JOptionPane.ERROR_MESSAGE);
+
+                        }
 
                     }
-
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         });
@@ -535,9 +555,13 @@ public class GARLTask extends Thread {
         reset.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                for (int i = 0; i < world.list.size(); i++) {
-                    Entity e = (Entity) world.list.get(i);
-                    e.die();
+                try {
+                    for (int i = 0; i < world.list.size(); i++) {
+                        Entity e = (Entity) world.list.get(i);
+                        e.die();
+                    }
+                } catch(Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         });
@@ -548,12 +572,30 @@ public class GARLTask extends Thread {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
 
+                try {
+                    for (int i = 0; i < world.list.size(); i++) {
+                        Entity e = (Entity) world.list.get(i);
+                        e.die();
+                    }
+
+                    MoneyMQ mq = new MoneyMQ();
+                    DecimalFormat df = new DecimalFormat("0.00000000");
+                    mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
+                    world.phl = 0;
+                    world.totalControls = 0;
+                    world.totalSpawns = 0;
+
+                } catch(Exception ex) {
+                    Log.info(ex);
+                    ex.printStackTrace();
+                }
+
             }
         };
         payout.addActionListener(payoutActionListener);
         inspector.add(payout);
         inspector.add(new JLabel("Address"));
-        String address = "FB1nwpSEjAp86a8JaKrZfKY3XtNnVfbxRk";
+        String address = Settings.PAYOUT_ADDRESS;
         JTextField payoutAddress = new JTextField();
         Font font = new Font("Courier", Font.BOLD,10);
         payoutAddress.setFont( font );
@@ -580,7 +622,7 @@ public class GARLTask extends Thread {
                     String text = payoutAddress.getText();
                     try {
                         Settings.PAYOUT_ADDRESS = text;
-                        System.out.println("Set payout address to:" + text);
+                        Log.info("Set payout address to:" + text);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(null,
                                 "Error: Only valid addresses allowed", "Error Message",
@@ -620,6 +662,7 @@ public class GARLTask extends Thread {
         ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
         ReplicationTask replication = new ReplicationTask(frame, world, width - inspectorPanelWidth, height);
+        EntityTask entityTask = new EntityTask(frame, canvas, world, width - inspectorPanelWidth, height);
 
         Timer timer = new Timer(true);
         TimerTask paint = new TimerTask() {
@@ -654,6 +697,7 @@ public class GARLTask extends Thread {
         timer.scheduleAtFixedRate(think, 0, taskTime);
         timer.scheduleAtFixedRate(selection, 50, taskTime);
         timer.scheduleAtFixedRate(replication, 100, taskTime);
+        timer.scheduleAtFixedRate(entityTask, 100, taskTime);
 
     }
 

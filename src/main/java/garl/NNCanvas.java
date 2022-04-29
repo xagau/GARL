@@ -11,21 +11,14 @@ class NNCanvas extends Canvas {
         this.world = world;
     }
 
-    public void setSelected(Entity e) {
-        entity = e;
-    }
-
     boolean NNdebug = false;
 
     public void paint(Graphics g) {
 
         try {
-            if( Globals.img != null ) {
-                System.out.println("img is not null");
-                g.drawImage(Globals.img, 0, 0, GARLTask.world);
-                g.dispose();
-                repaint();
-            }
+            g.setColor(Color.BLACK);
+            g.fillRect(0,0,getWidth(),getHeight());
+            world.drawEntity((Graphics2D)g, world.selected, true );
             if (NNdebug) {
                 return;
             }
@@ -36,6 +29,7 @@ class NNCanvas extends Canvas {
             if (!entity.alive) {
                 return;
             }
+
             boolean b = true;
             if( b){return; }
             int inputs = entity.brain.ann.input.numberOfNeuronsInLayer;
@@ -86,7 +80,7 @@ class NNCanvas extends Canvas {
                     g.drawLine((startingPosX + ((circle) / 2)), startingPosY - ((circle) / 2), hpos , k + offset + space + space + space *j);
                 }
                 startingPosY = (j+initPos);
-                System.out.println("Going down:" + startingPosY + "j" + j + "*pos" + pos);
+                Log.info("Going down:" + startingPosY + "j" + j + "*pos" + pos);
 
             }
 

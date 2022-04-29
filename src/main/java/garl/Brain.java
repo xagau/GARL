@@ -42,7 +42,7 @@ public class Brain {
         ArrayList<Double> list = new ArrayList<>();
         try {
             if (e == null) {
-                System.out.println("garl.Genome is null");
+                Log.info("garl.Genome is null");
             }
             list.add((double) world.getWidth());
             list.add((double) world.getHeight());
@@ -158,7 +158,7 @@ public class Brain {
         Neuron nn = d.neuron.get(0);
         double r = 0;
         if (nn == null) {
-            System.out.println("nn is null");
+            Log.info("nn is null");
         } else {
             r = nn.getOutput();
         }

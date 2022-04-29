@@ -41,7 +41,7 @@ public class Utility {
     public static void main(String[] args) {
         double c = flatten('o');
         DecimalFormat df = new DecimalFormat("0.00000000");
-        System.out.println(df.format(c));
+        Log.info(df.format(c));
     }
 
     public static double flatten(double v, double max) {

@@ -22,6 +22,7 @@ public enum Action {
     SIN,
     TAN,
     SLOW,
+    RANDOM,
     FASTER,
     STOP,
     KILL,

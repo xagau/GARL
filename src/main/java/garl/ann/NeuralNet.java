@@ -8,6 +8,7 @@ import garl.iaf.ActivationFactory;
 import garl.iaf.IActivationFunction;
 import garl.iaf.ReluFunction;
 import garl.iaf.SoftmaxFunction;
+import garl.Log;
 
 
 public class NeuralNet {
@@ -86,7 +87,7 @@ public class NeuralNet {
             dropout.init();
             output.init();
         } catch (Exception ex) {
-            System.out.println("Unable to build Neural Network:" + ex);
+            Log.info("Unable to build Neural Network:" + ex);
         }
 
     }

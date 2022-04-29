@@ -13,33 +13,33 @@ public class KeyHandler implements KeyListener {
     @Override
     public void keyPressed(KeyEvent keyEvent) {
 
-        System.out.println("Key Pressed");
+        Log.info("Key Pressed");
         if (world.selected != null) {
             if (keyEvent.getKeyCode() == KeyEvent.VK_RIGHT) {
-                System.out.println("Key Right");
+                Log.info("Key Right");
                 world.selected.process(Action.MOVE_RIGHT, world, 0);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_LEFT) {
-                System.out.println("Key Left");
+                Log.info("Key Left");
                 world.selected.process(Action.MOVE_LEFT, world, 0);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_UP) {
-                System.out.println("Key Up");
+                Log.info("Key Up");
                 world.selected.process(Action.MOVE_UP, world, 0);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_DOWN) {
-                System.out.println("Key Down");
+                Log.info("Key Down");
                 world.selected.process(Action.MOVE_DOWN, world, 0);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_O) {
-                System.out.println("Key O");
+                Log.info("Key O");
                 World.offset += 1;
-                System.out.println("offset:" + World.offset);
+                Log.info("offset:" + World.offset);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_D) {
-                System.out.println("Key D");
+                Log.info("Key D");
                 World.offset -= 1;
-                System.out.println("offset:" + World.offset);
+                Log.info("offset:" + World.offset);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_S) {
-                System.out.println("Key S");
+                Log.info("Key S");
                 world.selected.process(Action.STOP, world, 0);
             } else if (keyEvent.getKeyCode() == KeyEvent.VK_K) {
-                System.out.println("Key K");
+                Log.info("Key K");
                 for (int i = 0; i < world.list.size(); i++) {
                     Entity e = (Entity) world.list.get(i);
                     e.die();

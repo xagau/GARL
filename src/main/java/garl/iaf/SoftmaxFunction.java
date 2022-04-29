@@ -1,5 +1,6 @@
 package garl.iaf;
 
+import garl.Log;
 import garl.ann.NeuralLayer;
 import garl.ann.Neuron;
 
@@ -26,7 +27,7 @@ public class SoftmaxFunction implements IActivationFunction {
         double max = netInput;
 
         if (layer == null) {
-            System.out.println("Layer is null:");
+            Log.info("Layer is null:");
             return netInput;
         }
         ArrayList<Neuron> list = layer.neuron;

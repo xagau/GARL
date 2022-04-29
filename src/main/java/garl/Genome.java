@@ -48,6 +48,28 @@ public class Genome {
         return c;
     }
 
+    public synchronized char read() {
+        int loc = index;
+        if (loc < 0) {
+            loc = Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION);
+        }
+        if (loc < code.length()) {
+            last = code.charAt(loc);
+            return last;
+        } else if (loc >= code.length()) {
+            try {
+                int more = code.length() - loc;
+                return read(more);
+            } catch (Exception ex) {
+            }
+        }
+        char c = code.charAt(Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION));
+        last = c;
+        advance();
+        return c;
+    }
+
+
     public void recode(int loc, char c) {
 
         if (loc + Settings.GENOME_LENGTH > code.length()) {

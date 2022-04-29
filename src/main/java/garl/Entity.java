@@ -77,8 +77,8 @@ public class Entity {
             }
         }
         if (e.selected) {
-            System.out.println("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
-            System.out.println("garl.Entity:" + e.location.x + "-" + e.location.y);
+            Log.info("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
+            Log.info("garl.Entity:" + e.location.x + "-" + e.location.y);
         }
         if (closest != null) {
             return closest;
@@ -356,14 +356,21 @@ public class Entity {
             setEnergy(getEnergy() - Settings.ENERGY_STEP_SLEEP_COST);
         }
     }
+    int depth = 0;
 
     public Action think(World world, long start) {
+
 
 
         age++;
         consume();
         Action action = null;
         try {
+            action = brain.evaluate(world);
+            long intermediate = System.currentTimeMillis();
+            process(action, world, depth++);
+            world.setState(action);
+
             ArrayList<Obstacle> list = sampleForward(this);
             Obstacle closest = Entity.closest(list, this);
             if( closest != null ) {
@@ -385,28 +392,20 @@ public class Entity {
                     } else {
                         location.vy = location.vy + (ey / ex);
                     }
-                    location.vy = location.vy+(ey/ex);
                     process(Action.FASTER, world, 0);
 
                 }
             }
             if( target && isTrajectoryGoal() ){
                 return Action.FASTER;
-            } else {
-                action = brain.evaluate(world);
-                long intermediate = System.currentTimeMillis();
             }
 
         } catch (Exception ex) {
         }
 
-        int depth = 0;
-        process(action, world, depth);
-        long intermediate = System.currentTimeMillis();
 
-        world.setState(action);
 
-        return action;
+        return Action.CONTINUE;
     }
 
 
@@ -414,45 +413,56 @@ public class Entity {
 
     public void process(Action action, World world, int depth) {
 
-        depth++;
-        if (depth > Settings.MAX_THINK_DEPTH) {
-            if (action != last) {
-                last = Action.SCAN;
-                process(Action.SCAN, world, depth);
-                return;
-            }
-        }
+
 
         if (brain != null) {
 
             switch (action) {
+                case RANDOM:
+                    Action aa = brain.evaluate(this, world);
+                    double bo = brain.getOutput();
+                    Log.setDebug(true);
+                    Log.info("Brain Output:" + bo);
+                    Log.setDebug(false);
+                    double r = bo % Action.values().length;
+                    Action aaa = ActionFactory.create(r);
+                    process(aaa, world, depth++);
+                    break;
                 case NONE:
                 case SIN:
 
                     anglex = Math.sin(anglex);
                     angley = Math.sin(angley);
+                    process(Action.FASTER, world, depth);
                     break;
                 case COS:
                     anglex = Math.cos(anglex);
                     angley = Math.cos(angley);
+                    process(Action.FASTER, world, depth);
                     break;
                 case TAN:
                     anglex = Math.tan(anglex);
                     angley = Math.tan(angley);
+                    process(Action.FASTER, world, depth);
                     break;
 
                 case STOP:
                     // if we're stopped - and we're touching someone, lets move.
-                    if(!target ) {
+                    //if(!target ) {
                         if (isTouching()) {
                             doKill(Action.KILL);
                         } else {
                             location.vx = 0;
                             location.vy = 0;
+                            process(Action.RANDOM, world, depth);
+
                         }
-                    } else if(  !isTrajectoryGoal() ){
-                        process(Action.SCAN, world, depth);
-                    }
+                        if(  !isTrajectoryGoal() ){
+                            process(Action.SCAN, world, depth);
+                            //process(Action.RECODE, world, depth);
+                        } else {
+                            process(Action.SCAN, world, depth);
+                        }
 
                     break;
 
@@ -647,22 +657,42 @@ public class Entity {
                     location.vx = location.vx / 2;
                     break;
                 case FASTER:
+
+                    if( isTrajectoryGoal()) {
+                        location.vx = targetvx;
+                        location.vy = targetvy;
+
+                        process(Action.FASTER, world, depth);
+                        process(Action.CONTINUE, world, depth);
+                        break;
+                    }
+                    else if( location.vx == Math.abs(0)  ){
+                        degree++;
+                        location.vx += Math.random();
+                        if( Math.random() > 0.5 ){
+                            location.vx = -location.vx;
+                            degree = -degree;
+                        }
+                        break;
+                    }
+                    else if( location.vy == Math.abs(0) ){
+                        degree++;
+                        location.vy += Math.random();
+                        if( Math.random() > 0.5 ){
+                            degree--;
+                            location.vy = -location.vy;
+                        }
+                        break;
+                    }
+                    else {
+                        process(Action.SCAN, world, depth);
+
+                    }
+
                     location.vy = location.vy * (1 + Settings.ACCELERATION);
                     location.vx = location.vx * (1 + Settings.ACCELERATION);
                     break;
-                /*
-                case ADJUST:
 
-                    double adjustmentvx = Double.NaN;
-                    double adjustmentvy = Double.NaN;
-
-                    adjustmentvx = Math.sqrt(Math.pow(location.x,2) + Math.pow(targetx,2));
-                    adjustmentvy = Math.sqrt(Math.pow(location.y,2) + Math.pow(targety,2));
-
-                    location.vy = location.vy * adjustmentvy;
-                    location.vx = location.vx * adjustmentvx;
-                    break;
-                 */
                 case MOVE_UP: {
                     double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
                     location.vy -= changey;
@@ -764,6 +794,11 @@ public class Entity {
         double radiansToDegrees = 360d / Math.PI;
         degree = v * radiansToDegrees; //
         degree = degree + World.offset;
+
+        if( last == action ){
+            action = Action.RANDOM;
+        }
+        last = action;
 
 
     }

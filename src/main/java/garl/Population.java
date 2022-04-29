@@ -12,7 +12,7 @@ public class Population {
 
     public static ArrayList<Entity> create(World world, int individuals, int width, int height) {
 
-        System.out.println("Creating population from random");
+        Log.info("Creating population from random");
         ArrayList<Entity> entities = new ArrayList<>();
         Random rand = new Random();
         world.impact = 0;
@@ -29,7 +29,7 @@ public class Population {
     public static ArrayList<Entity> create(World world, ArrayList seedList, int individuals, int width, int height) throws IOException {
 
 
-        System.out.println("Create population from seed list");
+        Log.info("Create population from seed list");
         ArrayList<Entity> entities = new ArrayList<>();
         Random rand = new Random();
         world.impact = 0;
@@ -56,7 +56,7 @@ public class Population {
         int adjustedIndividuals = individuals - seedList.size();
 
         String fileName = System.currentTimeMillis() + "-" + world.epoch + "-epoch.json";
-        System.out.println(fileName);
+        Log.info(fileName);
         FileWriter writer = new FileWriter(new File(fileName));
         writer.write("[");
         for (int i = 0; i < individuals; i++) {

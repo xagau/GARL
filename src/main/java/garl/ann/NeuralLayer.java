@@ -5,6 +5,7 @@ import garl.Utility;
 import garl.iaf.IActivationFunction;
 import garl.iaf.ReluFunction;
 import garl.iaf.SoftmaxFunction;
+import garl.Log;
 
 import java.util.ArrayList;
 
@@ -49,18 +50,18 @@ public abstract class NeuralLayer {
 
     public void calc() {
         if (neuralLayerDebug) {
-            System.out.println(this.name + " calc() " + numberOfNeuronsInLayer);
+            Log.info(this.name + " calc() " + numberOfNeuronsInLayer);
         }
         for (int i = 0; i < numberOfNeuronsInLayer; i++) {
             if (previousLayer != null) {
                 if (neuralLayerDebug) {
-                    System.out.println("input-" + name + ":" + previousLayer.input);
+                    Log.info("input-" + name + ":" + previousLayer.input);
                 }
                 neuron.get(i).setInputs(previousLayer.input);
                 neuron.get(i).calc();
             } else {
                 if (neuralLayerDebug) {
-                    System.out.println("input-" + name + ":" + input);
+                    Log.info("input-" + name + ":" + input);
                 }
                 neuron.get(i).setInputs(input);
                 neuron.get(i).calc();
@@ -73,7 +74,7 @@ public abstract class NeuralLayer {
         }
         if (nextLayer != null) {
             if (neuralLayerDebug) {
-                System.out.println("Compute next Layer:");
+                Log.info("Compute next Layer:");
             }
             nextLayer.input = output;
             nextLayer.calc();

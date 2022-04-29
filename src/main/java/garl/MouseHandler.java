@@ -9,17 +9,12 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
 
     World world = null;
 
-    public MouseHandler(World world) {
+    NNCanvas canvas = null;
+    public MouseHandler(World world, NNCanvas canvas) {
         this.world = world;
+        this.canvas = canvas;
     }
 
-    int startx = -1;
-    int starty = -1;
-    int endx = -1;
-    int endy = -1;
-
-    boolean dragging = false;
-    Obstacle current = null;
 
     @Override
     public void mouseDragged(MouseEvent mouseEvent) {
@@ -31,18 +26,24 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
     public void mouseMoved(MouseEvent mouseEvent) {
         this.world.mx = mouseEvent.getX();
         this.world.my = mouseEvent.getY();
-        ArrayList<Entity> list = world.list;
-        for (int i = 0; i < list.size(); i++) {
-            Entity e = list.get(i);
-            if (e != null) {
-                if (e.isTouching(this.world.mx, this.world.my)) {
-                    this.world.selected = e;
-                    e.selected = true;
-                    this.world.repaint();
-                    return;
+        try {
+            ArrayList<Entity> list = world.list;
+            for (int i = 0; i < list.size(); i++) {
+                Entity e = list.get(i);
+                if (e != null) {
+                    if (e.isTouching(this.world.mx, this.world.my)) {
+                        try {
+                            this.world.selected = e;
+                            e.selected = true;
+                            this.world.repaint();
+                            this.canvas.repaint();
+                        } catch (Exception ex) {
+                        }
+                        return;
+                    }
                 }
             }
-        }
+        } catch(Exception ex){}
     }
 
     @Override

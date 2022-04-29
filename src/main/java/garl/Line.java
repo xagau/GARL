@@ -36,13 +36,13 @@ public class Line {
         boolean shareAnyPoint = shareAnyPoint(temp1, temp2, temp3, temp4);
 
         if (intersects && shareAnyPoint) {
-            //System.out.println("Lines share an endpoint.");
+            //Log.info("Lines share an endpoint.");
             //return true;
         } else if (intersects && !shareAnyPoint) {
-            //System.out.println("Lines intersect.");
+            //Log.info("Lines intersect.");
             return true;
         } else {
-            //System.out.println("Lines neither intersect nor share a share an endpoint.");
+            //Log.info("Lines neither intersect nor share a share an endpoint.");
         }
 
         return false;
