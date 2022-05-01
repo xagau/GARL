@@ -117,7 +117,7 @@ public class MoneyMQ {
             t.setOtp(Property.getProperty("otp"));
             t.setClientId("NONE");
             t.setTerminalId(Property.getProperty("terminalid"));
-            t.setAmount(Double.parseDouble(money));
+            t.setAmount(money);
             t.setRecipient(payoutAddress);
             t.setTransactionId("MC" + System.currentTimeMillis());
 
@@ -154,7 +154,9 @@ public class MoneyMQ {
             ex.printStackTrace();
         } finally {
             try {
-                channel.close();
+                if(channel.isOpen()) {
+                    channel.close();
+                }
                 //Globals.lag();
             } catch (Exception ex) {
                 Log.payment(ex.toString(), Level.ALL);

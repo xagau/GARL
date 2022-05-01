@@ -55,7 +55,7 @@ public class Population {
 
         int adjustedIndividuals = individuals - seedList.size();
 
-        String fileName = System.currentTimeMillis() + "-" + world.epoch + "-epoch.json";
+        String fileName = "./genomes/" + System.currentTimeMillis() + "-" + world.epoch + "-epoch.json";
         Log.info(fileName);
         FileWriter writer = new FileWriter(new File(fileName));
         writer.write("[");

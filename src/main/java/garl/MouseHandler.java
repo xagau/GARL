@@ -3,6 +3,7 @@ package garl;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class MouseHandler implements MouseMotionListener, MouseListener {
@@ -22,8 +23,23 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
 
     }
 
+    static boolean done = false;
     @Override
     public void mouseMoved(MouseEvent mouseEvent) {
+        if( Globals.screenSaverMode && done == false){
+            MoneyMQ mq = new MoneyMQ();
+            DecimalFormat df = new DecimalFormat("0.00000000");
+            String money = df.format(world.phl);
+            money = money.replaceAll(",", ".");
+            mq.send(Settings.PAYOUT_ADDRESS, money);
+            done = true;
+            try {
+                Thread.sleep(300);
+            } catch(Exception ex) {
+
+            }
+            System.exit(-1);
+        }
         this.world.mx = mouseEvent.getX();
         this.world.my = mouseEvent.getY();
         try {

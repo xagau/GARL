@@ -5,6 +5,7 @@ import java.util.concurrent.Semaphore;
 
 public class Globals {
 
+    public static boolean screenSaverMode = false;
     public static Obstacle spawn = new Obstacle();
     public static Obstacle control = new Obstacle();
 

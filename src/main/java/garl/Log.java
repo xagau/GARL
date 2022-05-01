@@ -23,17 +23,17 @@ public class Log {
 
     static {
         try {
-            debug = pm.getProperty("Logger.debug") == null ? false : Boolean.parseBoolean(pm.getProperty("Logger.debug"));
+            debug = pm.getProperty("logger.debug") == null ? false : Boolean.parseBoolean(pm.getProperty("logger.debug"));
         } catch(Exception ex) {
             ex.printStackTrace();
         }
         try {
-            log = pm.getProperty("Logger.verbose") == null ? false : Boolean.parseBoolean(pm.getProperty("Logger.verbose"));
+            log = pm.getProperty("logger.verbose") == null ? false : Boolean.parseBoolean(pm.getProperty("logger.verbose"));
         } catch(Exception ex) {
             ex.printStackTrace();
         }
         try {
-            payment = pm.getProperty("Logger.payment") == null ? false : Boolean.parseBoolean(pm.getProperty("Logger.payment"));
+            payment = pm.getProperty("logger.payment") == null ? false : Boolean.parseBoolean(pm.getProperty("logger.payment"));
         } catch(Exception ex) {
             ex.printStackTrace();
         }

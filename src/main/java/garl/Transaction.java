@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 public class Transaction {
     private String terminalId = null;
     private Timestamp ts = null;
-    private double amount = 0;
+    private String amount = "0.00000000";
     private String currency = null;
     private String recipient = null;
     private String clientId = null;
@@ -46,14 +46,14 @@ public class Transaction {
     /**
      * @return the amount
      */
-    public double getAmount() {
+    public String getAmount() {
         return amount;
     }
 
     /**
      * @param amount the amount to set
      */
-    public void setAmount(double amount) {
+    public void setAmount(String amount) {
         this.amount = amount;
     }
 

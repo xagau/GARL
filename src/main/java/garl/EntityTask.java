@@ -26,7 +26,7 @@ public class EntityTask extends TimerTask {
             if (ctr > 100) {
                 ctr = 0;
             }
-            canvas.repaint();
+            //canvas.repaint();
             long end = System.currentTimeMillis();
 
         } catch (Exception ex) {
