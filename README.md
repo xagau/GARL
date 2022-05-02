@@ -7,12 +7,17 @@ Download GARL-X-XX.zip (latest) and extract contents into a folder you intend to
 
 Note: `Game' Parameters and constantly changing so genomes optimised for previous game criteria may not perform well within the current environment and may require millions of thoughts and epochs to evolve to an optimal solution.
 
-You can start it via:
+For screen saver mode: You can start it via:
 ```
 java -jar GARL-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
-This is a work in progress. Payouts *work* on this version!
+For interactive mode: You can start it via:
+```
+java -jar GARL-1.0-SNAPSHOT-jar-with-dependencies.jar garl.GARLTask
+```
+
+This is a work in progress. Payouts *work* on this version! Make sure to change your config.properties file to suite your own wallet.
 
 I've provided hundreds of "fit/train" evolved genomes. To use these, expand a folder in the top level ./genomes/ inside of this directory should be the collection of hundreds of genomes
 
