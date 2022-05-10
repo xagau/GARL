@@ -32,3 +32,4 @@ You must also add the config.properties file to your root. Your program should l
      /genomes/...
 ```
 Note: Requires Java Swing Installed and a Desktop.
+Note: For support please visit https://discord.gg/qMkfbxG
