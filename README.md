@@ -18,7 +18,7 @@ java -cp GARL-1.0-SNAPSHOT-jar-with-dependencies.jar garl.GARLTask
 ```
 Note: While in interactive mode, you may need to manually run payouts if you're running 1.30 or earlier. 
 This is a work in progress. Payouts *work* on this version! Make sure to change your config.properties file to suite your own wallet.
-A formal windows ScreenSaver is being worked on, it will be a compiled SCR file with a setup file that will allow you to specify your wallet details and location of genomes / config as it is not possible to install other files due to administrative rights to Windows/System32 where a SCR file must reside.
+A formal windows ScreenSaver is being worked on, it will be a compiled SCR file with a setup file that will allow you to specify your wallet details and location of genomes / config as it is not possible to install other files due to administrative rights to C:/GARL where a SCR file must reside.
 
 I've provided hundreds of "fit/train" evolved genomes. To use these, expand a folder in the top level ./genomes/ inside of this directory should be the collection of hundreds of genomes
 
