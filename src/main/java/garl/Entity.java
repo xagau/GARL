@@ -88,6 +88,9 @@ public class Entity {
     }
 
     public boolean isTrajectoryGoal() {
+        if( !alive ){
+            return false;
+        }
         ArrayList<Obstacle> mwalls = sampleForward(this);
 
         Obstacle first = closest(mwalls, this);
@@ -107,7 +110,7 @@ public class Entity {
         Obstacle goal = Globals.spawn;
         Line line1 = new Line(goal.x, goal.y, goal.x + goal.width, goal.y + goal.height);
 
-        if (walls == 1 && first == Globals.spawn) {
+        if ( first == Globals.spawn) {
             target = true;
             targetvx = location.vx;
             targetvy = location.vy;
@@ -152,6 +155,9 @@ public class Entity {
 
     public boolean isTrajectoryDeath() {
 
+        if( !alive){
+            return true;
+        }
         if (isTrajectoryGoal()) {
             return false;
         }
@@ -165,6 +171,8 @@ public class Entity {
             return false;
         } else if (!first.spawner) {
             return true;
+        } else if (first.spawner){
+            return false;
         } else {
             return true;
         }
@@ -208,6 +216,9 @@ public class Entity {
         genome.code = Genome.DEAD;
         touching = null;
         brain = null;
+        try {
+            Runtime.getRuntime().gc();
+        } catch(Exception ex) { ex.printStackTrace(); Log.info(ex.getMessage()); }
     }
 
     public boolean intersects(Entity a, Entity b) {
@@ -256,6 +267,9 @@ public class Entity {
     }
 
     public ArrayList<Entity> sampleForward() {
+        if( !alive ){
+            return null;
+        }
         ArrayList<Entity> list = new ArrayList<>();
         for (int i = 0; i < world.list.size(); i++) {
             Entity ent = world.list.get(i);
@@ -360,8 +374,6 @@ public class Entity {
 
     public Action think(World world, long start) {
 
-
-
         age++;
         consume();
         Action action = null;
@@ -401,9 +413,9 @@ public class Entity {
             }
 
         } catch (Exception ex) {
+            ex.printStackTrace();
+            Log.info(ex);
         }
-
-
 
         return Action.CONTINUE;
     }
@@ -415,6 +427,9 @@ public class Entity {
 
         double epsilon = 1.01;
         depth++;
+        if(!alive ){
+            return;
+        }
 
         if( depth > Settings.MAX_THINK_DEPTH || (Math.abs(location.vx) == Math.abs(0) && Math.abs(location.vy) == Math.abs(0)) ){
             //System.out.println("Return too much depth");
@@ -454,6 +469,11 @@ public class Entity {
                 case TAN:
                     anglex = Math.tan(anglex);
                     angley = Math.tan(angley);
+                    process(Action.FASTER, world, depth);
+                    break;
+                case TANH:
+                    anglex = Math.tanh(anglex);
+                    angley = Math.tanh(angley);
                     process(Action.FASTER, world, depth);
                     break;
 
@@ -671,8 +691,10 @@ public class Entity {
                     break;
                 }
                 case SLOW:
-                    location.vy = location.vy / 2;
-                    location.vx = location.vx / 2;
+                    if( !isTrajectoryGoal()) {
+                        location.vy = location.vy / 2;
+                        location.vx = location.vx / 2;
+                    }
                     break;
                 case FASTER:
 

@@ -1,7 +1,8 @@
 package garl;
 
 public class Seed {
-    int epoch;
-    int generation;
-    String genome;
+    public String seedName;
+    public int epoch;
+    public int generation;
+    public String genome;
 }

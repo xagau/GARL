@@ -1,6 +1,7 @@
 package garl;
 
 import javax.swing.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.TimerTask;
 
@@ -48,20 +49,27 @@ public class ThinkTask extends TimerTask {
 
                     ArrayList<Seed> list = GARLTask.load();
 
-                    Log.info("Recreate population");
+                    Log.info("Recreate population:" + list.size());
+                    ArrayList entList = new ArrayList();
+                    if( list.size() == 0 ){
+                        entList = Population.create(world, Settings.STARTING_POPULATION, world.width, world.height);
+                    } else {
+                        entList = Population.create(world, list, Settings.MAX_POPULATION, width, height);
+                    }
                     world.list = new ArrayList<>();
-                    ArrayList<Entity> seedList = GARLTask.load(list, world);
+                    //ArrayList<Entity> seedList = GARLTask.load(list, world);
                     for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
                         try {
-                            Entity a = seedList.get(i);
+                            Entity a = (Entity)entList.get(i);
                             if (a.alive) {
                                 world.list.add(a);
                             }
                         } catch (Exception ex) {
+                            ex.printStackTrace();
+                            Log.info(ex);
                         }
 
                     }
-
 
                     world.children = 0;
                     world.impact = 0;
@@ -74,7 +82,7 @@ public class ThinkTask extends TimerTask {
                         Log.info("total spawns:" + world.totalSpawns);
                         System.exit(-1);
                     }
-                    if (livingCount <= Settings.GENE_POOL && seedList.isEmpty()) {
+                    if (livingCount <= Settings.GENE_POOL && list.isEmpty()) {
                         try {
                             world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
                             world.selection.makeNewList();
@@ -83,12 +91,12 @@ public class ThinkTask extends TimerTask {
                         }
                     }
 
-                    if (livingCount <= Settings.GENE_POOL && !seedList.isEmpty()) {
+                    if (livingCount <= Settings.GENE_POOL && !list.isEmpty()) {
 
                         try {
-                            world.list = Population.create(world, seedList, Math.max(Settings.STARTING_POPULATION, Math.min(seedList.size(), Settings.STARTING_POPULATION)), frame.getWidth(), frame.getHeight());
+                            world.list = Population.create(world, list, Math.max(Settings.STARTING_POPULATION, Math.min(list.size(), Settings.STARTING_POPULATION)), frame.getWidth(), frame.getHeight());
                             world.selection.makeNewList();
-                            Log.info("Using seed list:" + seedList.size());
+                            Log.info("Using seed list:" + list.size());
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }

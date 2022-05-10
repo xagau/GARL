@@ -23,22 +23,28 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
 
     }
 
-    static boolean done = false;
+    static int done = 0;
     @Override
     public void mouseMoved(MouseEvent mouseEvent) {
-        if( Globals.screenSaverMode && done == false){
-            MoneyMQ mq = new MoneyMQ();
-            DecimalFormat df = new DecimalFormat("0.00000000");
-            String money = df.format(world.phl);
-            money = money.replaceAll(",", ".");
-            mq.send(Settings.PAYOUT_ADDRESS, money);
-            done = true;
-            try {
-                Thread.sleep(300);
-            } catch(Exception ex) {
+        try {
+            Log.info("Mouse Movement Detected");
+            done++;
+            if (Globals.screenSaverMode && done > 5) {
+                MoneyMQ mq = new MoneyMQ();
+                DecimalFormat df = new DecimalFormat("0.00000000");
+                String money = df.format(world.phl);
+                money = money.replaceAll(",", ".");
+                mq.send(Settings.PAYOUT_ADDRESS, money);
+                //done = true;
+                try {
+                    Thread.sleep(300);
+                } catch (Exception ex) {
 
+                }
+                System.exit(-1);
             }
-            System.exit(-1);
+        } catch(Exception ex) {
+            ex.printStackTrace();
         }
         this.world.mx = mouseEvent.getX();
         this.world.my = mouseEvent.getY();
@@ -59,7 +65,12 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
                     }
                 }
             }
-        } catch(Exception ex){}
+        } catch(Exception ex){
+            Log.info(ex);
+            ex.printStackTrace();
+        } catch(Error e){
+            e.printStackTrace();
+        }
     }
 
     @Override

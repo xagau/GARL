@@ -21,6 +21,7 @@ public enum Action {
     COS,
     SIN,
     TAN,
+    TANH,
     SLOW,
     RANDOM,
     FASTER,

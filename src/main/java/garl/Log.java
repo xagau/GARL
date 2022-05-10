@@ -60,6 +60,18 @@ public class Log {
     /**
      * garl.Log the text to the logger.
      *
+     * @param er the text to be logged
+     */
+    public static void info(Error er) {
+        if(Globals.verbose ) {
+            er.printStackTrace();
+        }
+        info(er.toString(), Level.ALL);
+    }
+
+    /**
+     * garl.Log the text to the logger.
+     *
      */
     public static void info() {
         info("\n", Level.ALL);

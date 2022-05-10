@@ -16,5 +16,8 @@ public class Globals {
     public static BufferedImage img = null;
     public static boolean debug = false;
 
+    public static double maxPayout = 5.00;
+    public static boolean installed = false;
+
 }
 

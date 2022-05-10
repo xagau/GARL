@@ -19,6 +19,7 @@ public class Settings {
     public static int MAX_NEURONS = 4;
     public static String PAYOUT_ADDRESS = "";
     public static String RABBIT_ADDRESS = "";
+    public static int GENOME_PERSISTANCE = 500;
 
 
     public static int CELL_MOVEMENT = 1;
@@ -66,6 +67,12 @@ public class Settings {
         } catch(Exception ex) {
             ex.printStackTrace();
         }
+        try {
+            World.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
     }
 
     public static void main(String[] args){

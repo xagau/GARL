@@ -31,12 +31,12 @@ public class GARLTask extends Thread {
 
 
     public static ArrayList<Seed> load() throws IOException {
-        ArrayList<Seed> list = new ArrayList<>();
+        ArrayList<Seed> list = new ArrayList<Seed>();
         String seed = "./genomes/";
         Gson gson = new Gson(); //null;
         // create a reader
         File dir = new File(seed);
-        //File[] listFiles = dir.listFiles();
+
         File[] listFiles = dir.listFiles();
         File[] files = dir.listFiles();
         Arrays.sort(files, Comparator.comparingLong(File::lastModified));
@@ -49,15 +49,49 @@ public class GARLTask extends Thread {
                 Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
                 try {
                     Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
+                    lseed.seedName = f.getName();
                     list.add(lseed);
                     ctr++;
                 } catch (Exception ex) {
                 }
             }
-            if (ctr >= Settings.STARTING_POPULATION) {
+            //if (ctr >= Settings.STARTING_POPULATION) {
+            //    break;
+            //}
+            // convert JSON string to User object
+        }
+
+        Comparator comparator = new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                Seed s1 = (Seed)o1;
+                Seed s2 = (Seed)o2;
+
+
+                    if( s1.generation>s2.generation){
+                        return -1;
+                    } else if( s1.generation == s2.generation ){
+                        return 0;
+                    }
+                    return 1;
+            }
+        };
+        Seed[] arr = new Seed[list.size()];
+        for(int i=0; i < list.size(); i++ ){
+            try {
+                arr[i] = list.get(i);
+            } catch(Exception ex){}
+        }
+        Arrays.sort(arr, comparator);
+        for(int i =0; i < arr.length; i++ ){
+            if( i > 20){
                 break;
             }
-            // convert JSON string to User object
+            System.out.println(arr[i].generation + " " + arr[i].genome);
+        }
+        list = new ArrayList<>();
+        for(int i =0; i < Math.min(Settings.GENOME_PERSISTANCE, arr.length); i++ ){
+            list.add(arr[i]);
         }
         return list;
     }
@@ -235,7 +269,7 @@ public class GARLTask extends Thread {
         DecimalFormat ddf = new DecimalFormat("0.00000");
         startingPopulation.addActionListener(al);
         inspector.add(startingPopulation);
-        inspector.add(new JLabel("Minimum garl.Gene Pool"));
+        inspector.add(new JLabel("Minimum GARL Gene Pool"));
         JTextField genePool = new JTextField("" + Settings.GENE_POOL);
         genePool.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
@@ -580,14 +614,24 @@ public class GARLTask extends Thread {
 
                     MoneyMQ mq = new MoneyMQ();
                     DecimalFormat df = new DecimalFormat("0.00000000");
-                    mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
-                    world.phl = 0;
-                    world.totalControls = 0;
-                    world.totalSpawns = 0;
+                    if(world.phl<Globals.maxPayout) {
+                        mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
+                        world.phl = 0;
+                        world.totalControls = 0;
+                        world.totalSpawns = 0;
+                    } else {
+                        mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(Globals.maxPayout));
+                        world.phl = 0;
+                        world.totalControls = 0;
+                        world.totalSpawns = 0;
+                    }
 
                 } catch(Exception ex) {
                     Log.info(ex);
                     ex.printStackTrace();
+                } catch(Error e){
+                    Log.info(e);
+                    e.printStackTrace();
                 }
 
             }
@@ -646,7 +690,7 @@ public class GARLTask extends Thread {
         canvas.setMaximumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
         canvas.setPreferredSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
         selectedInspector.add(canvas);
-        inspectorContainer.add(selectedInspector, BorderLayout.SOUTH);
+        //inspectorContainer.add(selectedInspector, BorderLayout.SOUTH);
 
         inspectorContainer.add(inspector, BorderLayout.CENTER);
 
@@ -679,7 +723,6 @@ public class GARLTask extends Thread {
                         ctr = 0;
                     }
                     world.repaint();
-                    //canvas.repaint();
                     long end = System.currentTimeMillis();
 
                 } catch (Exception ex) {
@@ -692,12 +735,53 @@ public class GARLTask extends Thread {
             }
         };
 
-        long taskTime = 120;
-        timer.scheduleAtFixedRate(paint, 0, 1000 / FPS);
-        timer.scheduleAtFixedRate(think, 0, taskTime);
-        timer.scheduleAtFixedRate(selection, 50, taskTime);
-        timer.scheduleAtFixedRate(replication, 100, taskTime);
-        timer.scheduleAtFixedRate(entityTask, 100, taskTime);
+        TimerTask payoutTask = new TimerTask() {
+            @Override
+            public void run() {
+
+                try {
+                    long start = System.currentTimeMillis();
+                    Globals.semaphore.acquire();
+
+                    double phl = world.phl;
+                    world.phl = 0;
+                    DecimalFormat df = new DecimalFormat("0.00000000");
+                    MoneyMQ moneyMQ = new MoneyMQ();
+                    if( phl < Globals.maxPayout ) {
+                        moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
+                        Runtime.getRuntime().gc();
+                    } else {
+                        moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(Globals.maxPayout));
+                        Runtime.getRuntime().gc();
+                    }
+                    long end = System.currentTimeMillis();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                } catch (Error e) {
+                    e.printStackTrace();
+                } finally {
+                    Globals.semaphore.release();
+                }
+            }
+        };
+
+        try {
+            long HOUR = 1000 * 60 * 60;
+            long taskTime = 120;
+            timer.scheduleAtFixedRate(paint, 0, 1000 / FPS);
+            timer.scheduleAtFixedRate(think, 0, taskTime);
+            timer.scheduleAtFixedRate(selection, 50, taskTime);
+            timer.scheduleAtFixedRate(replication, 100, taskTime);
+            timer.scheduleAtFixedRate(entityTask, 100, taskTime);
+            timer.scheduleAtFixedRate(payoutTask, 100, HOUR);
+
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Log.info(ex);
+        } catch(Error er){
+            er.printStackTrace();
+            Log.info(er);
+        }
 
     }
 

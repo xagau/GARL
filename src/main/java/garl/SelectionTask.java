@@ -24,7 +24,7 @@ public class SelectionTask extends TimerTask {
 
     public void save(int epoch, int generation, Genome g) {
         try {
-            FileWriter writer = new FileWriter(new File("./genomes/" + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
+            FileWriter writer = new FileWriter(new File(Property.getProperty("settings.genomes") + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
             writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + generation + ", \"genome\":\"" + g.code + "\" }");
             writer.flush();
             writer.close();

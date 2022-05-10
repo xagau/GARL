@@ -2,7 +2,9 @@ package garl;
 
 import garl.iaf.Sigmoid;
 
+import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -51,13 +53,48 @@ public class Utility {
         //double c = flatten('o');
         //DecimalFormat df = new DecimalFormat("0.00000000");
         //Log.info(df.format(c));
-        System.out.println(precision(0.00001, 0.00001, 0.00001 ));
+        //System.out.println(precision(0.00001, 0.00001, 0.00001 ));
+        cleanup();
     }
 
     public static double flatten(double v, double max) {
         v = v % max;
         return v;
     }
+
+    public static void cleanup() {
+
+        String genomePath = Property.getProperty("settings.genomes");
+        try {
+            File dir = new File(genomePath);
+            boolean f = dir.isDirectory();
+            File[] list = dir.listFiles();
+
+            ArrayList<Seed> slist = GARLTask.load();
+            if(slist.isEmpty()){
+                return;
+            }
+            System.out.println(f + " " + genomePath + " " + list.length);
+            System.out.println(f + " " + genomePath + " " + slist.size());
+            for(int i = 0; i < list.length; i++ ) {
+                String name = list[i].getName();
+                for(int k = 0; k < slist.size(); k++){
+                    if(!slist.get(k).seedName.equals(name)){
+                        list[i].delete();
+                    }
+                }
+            }
+
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Log.info(ex);
+        } catch(Error e){
+            e.printStackTrace();
+            Log.info(e);
+        }
+
+    }
+
 
 }
 
