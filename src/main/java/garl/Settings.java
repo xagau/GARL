@@ -3,11 +3,13 @@ package garl;
 import java.util.Base64;
 
 public class Settings {
+    public static int MAX_ENTITIES = 1000;
+
     public static int INSPECTOR_WIDTH = 420;
     public static double ACCELERATION = 0.5;
     public static int CHAR_SET = 62;
     public static int GENOME_LENGTH = 32;
-    public static int STARTING_POPULATION = 30;
+    public static int STARTING_POPULATION = 40;
     public static int MAX_OFFSPRING = 2;
     public static boolean NATURAL_REPLICATION = true;
     public static int MAX_THINK_DEPTH = 4;
@@ -27,7 +29,7 @@ public class Settings {
 
     public static int CELL_MOVEMENT = 1;
     public static int MAX_SPEED = 3;
-    public static int MAX_POPULATION = 50;
+    public static int MAX_POPULATION = 60;
 
     public static double ENERGY = 150.0 ;
     public static double ENERGY_STEP_COST = 0.00001;

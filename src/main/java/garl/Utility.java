@@ -95,13 +95,18 @@ public class Utility {
             if(slist.isEmpty()){
                 return;
             }
-            System.out.println(f + " " + genomePath + " " + list.length);
-            System.out.println(f + " " + genomePath + " " + slist.size());
+            int limit = Settings.MAX_ENTITIES;
+            int count = 0;
+            Log.info(f + " " + genomePath + " " + list.length);
+            Log.info(f + " " + genomePath + " " + slist.size());
             for(int i = 0; i < list.length; i++ ) {
                 String name = list[i].getName();
                 for(int k = 0; k < slist.size(); k++){
                     if(!slist.get(k).seedName.equals(name)){
-                        list[i].delete();
+                        if( count++ > limit ) {
+                            // TODO Filter by fitness.
+                            list[i].delete();
+                        }
                     }
                 }
             }
