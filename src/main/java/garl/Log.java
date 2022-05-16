@@ -110,7 +110,7 @@ public class Log {
 
                 double G = 10000000;
                 Date dt = new Date(System.currentTimeMillis());
-                String logline = df.format(fm/G) + "G/" + df.format(tm/G) + "G:" + sdf.format(dt) + ":L:" + text + "\n";
+                String logline = Globals.minimum + "." + Globals.major + "-" + df.format(fm/G) + "G/" + df.format(tm/G) + "G:" + sdf.format(dt) + ":L:" + text + "\n";
                 System.out.println(logline);
 
                 if( log ) {

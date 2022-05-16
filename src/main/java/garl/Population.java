@@ -17,10 +17,19 @@ public class Population {
         Random rand = new Random();
         world.impact = 0;
         for (int i = 0; i < individuals; i++) {
-            Entity e = new Entity(world);
-            e.location.x = rand.nextInt(width);
-            e.location.y = rand.nextInt(height);
-            entities.add(e);
+            try {
+                Entity e = new Entity(world);
+                e.location.x = rand.nextInt(width);
+                e.location.y = rand.nextInt(height);
+                if( !world.selection.isTouching(e)) {
+                    entities.add(e);
+                } else {
+                    // HACK. Some will be lost.
+                    e.location.x = rand.nextInt(world.width);
+                    e.location.y = rand.nextInt(world.height);
+                    entities.add(e);
+                }
+            } catch(Exception ex) {}
         }
 
         return entities;

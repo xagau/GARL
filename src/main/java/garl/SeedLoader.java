@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Set;
 
 public class SeedLoader {
 
@@ -46,6 +47,7 @@ public class SeedLoader {
         }
 
         Log.info("list size:" + list.size());
+
 
 
         // CODE BELOW SELECTS MOST FIT INDIVIDUALS BASED ON METRICS - REQUIRES REFACTORING
@@ -118,6 +120,10 @@ public class SeedLoader {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        }
+
+        if( list.size() < Settings.STARTING_POPULATION){
+            ents = Population.create(world, Settings.STARTING_POPULATION, world.getWidth(), world.getHeight());
         }
 
         return ents;
