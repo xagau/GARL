@@ -511,10 +511,17 @@ public class GARLTask extends Thread {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
 
+                Log.info("Payout called using:" + Settings.PAYOUT_ADDRESS);
                 try {
-                    for (int i = 0; i < world.list.size(); i++) {
-                        Entity e = (Entity) world.list.get(i);
-                        e.die();
+                    try {
+                        for (int i = 0; i < world.list.size(); i++) {
+                            Entity e = (Entity) world.list.get(i);
+                            e.die();
+                        }
+                    } catch(Exception ex){
+                        if(Globals.verbose){
+                            Log.info(ex);
+                        }
                     }
 
                     MoneyMQ mq = new MoneyMQ();
