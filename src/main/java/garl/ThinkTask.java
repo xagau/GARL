@@ -61,7 +61,7 @@ public class ThinkTask extends TimerTask {
 
                     Log.info("Recreate population:" + list.size());
                     ArrayList entList = new ArrayList();
-                    if( list.size() == 0 ){
+                    if( list.size() < Settings.STARTING_POPULATION ){
                         entList = Population.create(world, Settings.STARTING_POPULATION, world.width, world.height);
                     } else {
                         entList = Population.create(world, list, Settings.STARTING_POPULATION, world.width, world.height);
@@ -106,7 +106,11 @@ public class ThinkTask extends TimerTask {
 
                         try {
                             world.selection.makeNewList();
-                            world.list = Population.create(world, list, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                            if( list.size() < Settings.STARTING_POPULATION ) {
+                                world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                            } else {
+                                world.list = Population.create(world, list, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                            }
                             Log.info("Using seed list:" + list.size());
                         } catch (Exception ex) {
                             if(Globals.verbose) {

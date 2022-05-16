@@ -122,9 +122,9 @@ public final class ScreenSaver {
             if (args.length >= 0) {
                 list = SeedLoader.load();
                 if (list != null) {
-                    System.out.println(list.size());
+                    Log.info(list.size());
                 } else {
-                    System.out.println("List is null");
+                    Log.info("List is null");
                 }
             }
 
@@ -143,11 +143,14 @@ public final class ScreenSaver {
             //3. Create components and put them in the frame.
             //...create emptyLabel...
             ArrayList<Entity> population = new ArrayList<>();
-            if (list == null) {
-                population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getWidth());
+            if (list == null ) {
+                population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+            } else if( list.size() < Settings.STARTING_POPULATION) {
+                population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
             } else {
                 Log.info("Loading from seed list:" + list.size());
-                for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
+
+                for (int i = 0; i < Math.min(list.size(), Settings.MAX_POPULATION); i++) {
                     if (list.get(i).genome.contains("-")) {
 
                         continue;

@@ -44,7 +44,7 @@ public class GARLTask extends Thread {
 
     }
 
-    static GARLFrame frame = new GARLFrame("Genetic Based Multi-Agent Reinforcement Learning");
+    static GARLFrame frame = new GARLFrame(Globals.title);
 
     JPanel inspector = new JPanel();
     public static World world = null;
@@ -71,8 +71,10 @@ public class GARLTask extends Thread {
         //3. Create components and put them in the frame.
         //...create emptyLabel...
         ArrayList<Entity> population = new ArrayList<>();
-        if (list == null) {
-            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getWidth());
+        if (list == null ) {
+            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getHeight());
+        } else if( list.size() < Settings.STARTING_POPULATION) {
+            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getHeight());
         } else {
             Log.info("Loading from seed list:" + list.size());
             for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
