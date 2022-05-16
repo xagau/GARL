@@ -28,7 +28,7 @@ public class World extends JLabel {
     static ArrayList<Entity> prospectSeeds = new ArrayList<>();
     int step = 0;
     double phl = 0;
-    static double increment = 0.00000100;
+    static double increment = 0.00001000;
     int mx = 0;
     int my = 0;
     static Entity selected = null;

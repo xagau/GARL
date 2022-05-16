@@ -20,17 +20,19 @@ public class Property {
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB;     rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13 (.NET CLR 3.5.30729)");
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 String line = in.readLine();
-                System.out.println(line);
+                Log.info("Loaded from remote:" + line);
 
                 return line;
             } catch (Exception e) {
+                Log.info(e);
                 e.printStackTrace();
             }
 
         } catch(Exception ex) {
+            Log.info(ex);
             ex.printStackTrace();
         } finally {
-            return "0.0000001";
+            return "0.0000100";
         }
     }
 
