@@ -35,9 +35,10 @@ public class SelectionTask extends TimerTask {
     }
 
 
+    int ctr = 0;
     @Override
     public void run() {
-        // Perform garl.Selection.
+
         try {
             Globals.semaphore.acquire();
 
@@ -84,6 +85,7 @@ public class SelectionTask extends TimerTask {
                                     }
                                     e.reachedGoal = true;
                                     e.die();
+
                                 } else if (rect.kill) {
                                     if (rect.control) {
                                         world.controls += Settings.MAX_OFFSPRING;
@@ -91,6 +93,7 @@ public class SelectionTask extends TimerTask {
                                     }
                                     world.impact++;
                                     e.die();
+
                                 }
                             }
                         }
@@ -101,6 +104,10 @@ public class SelectionTask extends TimerTask {
                     e.die();
                 }
 
+                if( ctr++ > Globals.cleanupTime ) {
+                    Runtime.getRuntime().gc();
+                    ctr = 0;
+                }
                 long end = System.currentTimeMillis();
             }
         } catch (Exception ex) {

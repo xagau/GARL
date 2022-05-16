@@ -1,0 +1,6 @@
+357.51G/585.68G:202204119T185276:L:Routing Key:transactions-mc
+
+357.51G/585.68G:202204119T185278:L: [x] Sent '{"amount":0.0,"currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE","transactionId":"MC1651272756030"}'
+
+350.97G/585.68G:202204119T1852113:L:com.rabbitmq.client.AlreadyClosedException: channel is already closed due to clean channel shutdown; protocol method: #method<channel.close>(reply-code=200, reply-text=OK, class-id=0, method-id=0)
+

@@ -28,36 +28,47 @@ public class ThinkTask extends TimerTask {
 
         start = System.currentTimeMillis();
 
-        //System.out.println("ThinkTask:" + start);
+
+
         try {
             Globals.semaphore.acquire();
 
-            int livingCount = world.getLivingCount();
-
+            int ctr = 0;
             for (int i = 0; i < world.list.size(); i++) {
                 try {
+                    ctr++;
+                    if( ctr > 20 ){
+                        ctr = 0;
+                        Runtime.getRuntime().gc();
+                    }
                     Entity e = world.list.get(i);
                     if (e.alive) {
                         e.think(world, start);
                     }
                 } catch (Exception ex) {
+                    Log.info(ex);
                 }
             }
+
+
+            int livingCount = world.getLivingCount();
+
 
             if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
                 try {
 
-                    ArrayList<Seed> list = GARLTask.load();
+                    ArrayList<Seed> list = SeedLoader.load();
 
                     Log.info("Recreate population:" + list.size());
                     ArrayList entList = new ArrayList();
                     if( list.size() == 0 ){
                         entList = Population.create(world, Settings.STARTING_POPULATION, world.width, world.height);
                     } else {
-                        entList = Population.create(world, list, Settings.MAX_POPULATION, width, height);
+                        entList = Population.create(world, list, Settings.STARTING_POPULATION, world.width, world.height);
                     }
                     world.list = new ArrayList<>();
-                    //ArrayList<Entity> seedList = GARLTask.load(list, world);
+                    Runtime.getRuntime().gc();
+
                     for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
                         try {
                             Entity a = (Entity)entList.get(i);
@@ -77,15 +88,15 @@ public class ThinkTask extends TimerTask {
                     world.controls = 0;
 
                     world.epoch++;
-                    if (world.epoch == 900) {
+                    if (world.epoch == Settings.MAX_EPOCH) {
                         Log.info("total controls:" + world.totalControls);
                         Log.info("total spawns:" + world.totalSpawns);
                         System.exit(-1);
                     }
                     if (livingCount <= Settings.GENE_POOL && list.isEmpty()) {
                         try {
-                            world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
                             world.selection.makeNewList();
+                            world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
@@ -94,24 +105,30 @@ public class ThinkTask extends TimerTask {
                     if (livingCount <= Settings.GENE_POOL && !list.isEmpty()) {
 
                         try {
-                            world.list = Population.create(world, list, Math.max(Settings.STARTING_POPULATION, Math.min(list.size(), Settings.STARTING_POPULATION)), frame.getWidth(), frame.getHeight());
                             world.selection.makeNewList();
+                            world.list = Population.create(world, list, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
                             Log.info("Using seed list:" + list.size());
                         } catch (Exception ex) {
-                            ex.printStackTrace();
+                            if(Globals.verbose) {
+                                ex.printStackTrace();
+                            }
                         }
                     }
 
                 } catch (Exception ex) {
+                    if(Globals.verbose) {
+                        ex.printStackTrace();
+                    }
                 }
 
             }
         } catch (Exception ex) {
         } finally {
+            Runtime.getRuntime().gc();
             Globals.semaphore.release();
         }
 
         long end = System.currentTimeMillis();
-        //System.out.println("ThinkTask:" + end);
+
     }
 }

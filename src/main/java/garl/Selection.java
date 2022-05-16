@@ -133,6 +133,17 @@ public class Selection  {
         }
     }
 
+    public boolean isTouching(Entity e){
+        try {
+            for (int i = 0; i < world.selection.rlist.size(); i++) {
+                if( insideRect(world.selection.rlist.get(i), (int)e.location.x, (int)e.location.y) ){
+                    return true;
+                }
+            }
+            return false;
+        } catch(Exception ex) { }
+        return false;
+    }
 
     public boolean insideRect(Obstacle rect, int x, int y) {
         if (x > rect.x && x < rect.x + rect.width && y > rect.y && y < rect.y + rect.height) {

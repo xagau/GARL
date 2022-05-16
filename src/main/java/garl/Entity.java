@@ -7,8 +7,11 @@ import java.util.ArrayList;
 public class Entity {
     Brain brain = null;
     Coord location = new Coord();
+    Coord previous = new Coord();
+
     Genome genome = null;
     int generation = 0;
+    int epoch = 0;
     boolean fertile = false;
     private double energy = Settings.ENERGY * 2 * Math.random();
     int size = Settings.MIN_SIZE;
@@ -31,7 +34,7 @@ public class Entity {
     double register = 0;
     double goal = 0;
     double direction = 1;
-    double cycle = 0;
+
 
     double anglex = 0;
     double angley = 0;
@@ -43,6 +46,11 @@ public class Entity {
 
     double targetx = Double.NaN;
     double targety = Double.NaN;
+
+    int depth = 0;
+
+
+
 
     public static Obstacle closest(ArrayList<Obstacle> list, Entity e) {
         int distX = Integer.MAX_VALUE;
@@ -77,8 +85,8 @@ public class Entity {
             }
         }
         if (e.selected) {
-            Log.info("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
-            Log.info("garl.Entity:" + e.location.x + "-" + e.location.y);
+            //Log.info("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
+            //Log.info("Entity:" + e.location.x + "-" + e.location.y);
         }
         if (closest != null) {
             return closest;
@@ -87,6 +95,33 @@ public class Entity {
         return null;
     }
 
+    public static boolean isCloser(double t, double n, double o)
+    {
+        n = Math.abs(n);
+        //ny = Math.abs(ny);
+        o = Math.abs(o);
+        //oy = Math.abs(oy);
+        t = Math.abs(t);
+        //ty = Math.abs(ty);
+
+        double od = t - o;
+        //double ody = ty - oy;
+
+        double nd = t - n;
+        //double ndy = ty - ny;
+        nd = Math.abs(nd);
+        od = Math.abs(od);
+
+        //Log.info("new difference:" + nd);
+        //Log.info("old difference:" + od);
+
+        if( nd < od ){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
     public boolean isTrajectoryGoal() {
         if( !alive ){
             return false;
@@ -108,16 +143,33 @@ public class Entity {
 
 
         Obstacle goal = Globals.spawn;
-        Line line1 = new Line(goal.x, goal.y, goal.x + goal.width, goal.y + goal.height);
+        Line2D line1 = new Line2D.Double(goal.x, goal.y, goal.x + goal.width, goal.y + goal.height);
+        if( line.intersectsLine(line1) && first == Globals.spawn) {
 
-        if ( first == Globals.spawn) {
+
+
             target = true;
-            targetvx = location.vx;
-            targetvy = location.vy;
+
+            if( isCloser(goal.x, location.x, previous.x)){
+                if( goal.x >= location.x ) {
+                    targetx = location.x;
+                    targetvx = location.vx;
+                } else {
+                    targetx = previous.x;
+                    targetvx = previous.vx;
+                }
+            }
+            if( isCloser(goal.y, location.y, previous.y)){
+                targety = location.y;
+                targetvy = location.vy;
+            } else {
+                targety = previous.y;
+                targetvy = previous.vy;
+            }
 
             this.goal = 1;
-            targetx = location.x;
             targety = location.y;
+            targetDegree = degree;
 
             return true;
 
@@ -126,6 +178,7 @@ public class Entity {
         return false;
     }
 
+    double targetDegree = -1;
     public ArrayList<Obstacle> sampleForward(Entity e) {
         double direction = e.degree;
         int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d)))); //);
@@ -155,9 +208,7 @@ public class Entity {
 
     public boolean isTrajectoryDeath() {
 
-        if( !alive){
-            return true;
-        }
+
         if (isTrajectoryGoal()) {
             return false;
         }
@@ -216,6 +267,10 @@ public class Entity {
         genome.code = Genome.DEAD;
         touching = null;
         brain = null;
+        //location = null;
+        previous = null;
+        last = null;
+        world = null;
         try {
             Runtime.getRuntime().gc();
         } catch(Exception ex) { ex.printStackTrace(); Log.info(ex.getMessage()); }
@@ -242,7 +297,7 @@ public class Entity {
 
         direction = b.degree;
 
-        //r = b.size / 2;
+
         int xbe = (int) ((int) (b.location.x + r) + (b.size * Math.cos(direction * ((Math.PI) / 360d)))); //);
         int ybe = (int) ((int) (b.location.y + r) - (b.size * Math.sin(direction * ((Math.PI) / 360d)))); //);
 
@@ -370,10 +425,14 @@ public class Entity {
             setEnergy(getEnergy() - Settings.ENERGY_STEP_SLEEP_COST);
         }
     }
-    int depth = 0;
+
 
     public Action think(World world, long start) {
 
+        depth = 0;
+        if( !alive ){
+            return Action.STOP;
+        }
         age++;
         consume();
         Action action = null;
@@ -382,6 +441,8 @@ public class Entity {
             long intermediate = System.currentTimeMillis();
             process(action, world, depth++);
             world.setState(action);
+
+            //return action;
 
             ArrayList<Obstacle> list = sampleForward(this);
             Obstacle closest = Entity.closest(list, this);
@@ -404,10 +465,11 @@ public class Entity {
                     } else {
                         location.vy = location.vy + (ey / ex);
                     }
-                    process(Action.FASTER, world, 0);
-
+                    //process(Action.FASTER, world, 0);
+                    //return Action.CONTINUE;
                 }
             }
+
             if( target && isTrajectoryGoal() ){
                 return Action.FASTER;
             }
@@ -417,7 +479,7 @@ public class Entity {
             Log.info(ex);
         }
 
-        return Action.CONTINUE;
+        return Action.SCAN;
     }
 
 
@@ -425,36 +487,54 @@ public class Entity {
 
     public void process(Action action, World world, int depth) {
 
+        try {
         double epsilon = 1.01;
         depth++;
-        if(!alive ){
+        if (!alive) {
             return;
         }
 
-        if( depth > Settings.MAX_THINK_DEPTH || (Math.abs(location.vx) == Math.abs(0) && Math.abs(location.vy) == Math.abs(0)) ){
-            //System.out.println("Return too much depth");
-            if( action != Action.CONTINUE) {
-                action = ActionFactory.create(Math.random());
-            }
+
+        if (depth >= Settings.MAX_THINK_DEPTH) {
+            return;
         }
 
+        if ((Math.abs(location.vx) == Math.abs(0) && Math.abs(location.vy) == Math.abs(0))) {
+            //System.out.println("Return too much depth");
+            //action = ActionFactory.create((double)Action.values().length%genome.read(33));
+
+            /*
+            if( Math.random() > 0.5 ){
+                location.vx = Settings.ACCELERATION;
+            } else {
+                location.vx = -Settings.ACCELERATION;
+            }
+            if( Math.random() > 0.5 ){
+                location.vy = Settings.ACCELERATION;
+            } else {
+                location.vy = -Settings.ACCELERATION;
+            }
+            action = Action.NONE;
+             */
+            double d = brain.getOutput();
+            action = ActionFactory.create(d);
+            input = d;
+            location.vx = Math.random();
+            location.vy = Math.random();
+            //Log.info("Action:" + action.toString());
+        }
+
+        if (action == last) {
+            double d = Math.random() * Action.values().length;
+            action = ActionFactory.create(d);
+            input = d;
+        }
+
+
+        //Log.info("Action:" + action.toString());
         if (brain != null) {
 
             switch (action) {
-                /*
-                case RANDOM:
-                    Action aa = brain.evaluate(this, world);
-                    double bo = brain.getOutput();
-                    Log.setDebug(true);
-                    Log.info("Brain Output:" + bo);
-                    Log.setDebug(false);
-                    double r = bo % Action.values().length;
-                    Action aaa = ActionFactory.create(r);
-                    process(aaa, world, depth++);
-                    break;
-
-                 */
-                case NONE:
                 case SIN:
 
                     anglex = Math.sin(anglex);
@@ -480,19 +560,18 @@ public class Entity {
                 case STOP:
                     // if we're stopped - and we're touching someone, lets move.
                     //if(!target ) {
-                        if (isTouching()) {
-                            doKill(Action.KILL);
-                        } else {
-                            location.vx = 0;
-                            location.vy = 0;
-                            //process(Action.RANDOM, world, depth);
-                        }
-                        if(  !isTrajectoryGoal() ){
-                            process(Action.SCAN, world, depth);
-                            //process(Action.RECODE, world, depth);
-                        } else {
-                            process(Action.SCAN, world, depth);
-                        }
+                    if (isTouching()) {
+                        doKill(Action.KILL);
+                    } else {
+                        location.vx = 0;
+                        location.vy = 0;
+                        process(Action.SCAN, world, depth);
+                        break;
+                    }
+                    if (!isTrajectoryGoal()) {
+                        //process(Action.SCAN, world, depth);
+                        process(Action.RECODE, world, depth);
+                    }
 
                     break;
 
@@ -525,65 +604,26 @@ public class Entity {
                 case CYCLE:
                 case CONTINUE:
                     if (target) {
-                        if( targetvx != 0) {
-                            location.vx = targetvx;
-                        }
-                        if( targetvy != 0 ) {
-                            location.vy = targetvy;
-                        }
-                    }
-                    break;
-                case GOAL:
+                        // should revert back to origin of location where goal was set, set degree, then set vx, and vy
+                        //degree = targetDegree;
 
-                    if (isTrajectoryGoal()) {
-
-                        goal = 1;
-                        target = true;
-
-                    } else {
-                        if (target) {
-                            if (isTrajectoryGoal()) {
-                                process(Action.CONTINUE, world, depth);
+                        if (targetvx != 0) {
+                            if (targetx > location.x) {
+                                location.vx = -Settings.ACCELERATION;
                             } else {
-                                process(Action.SCAN, world, depth);
+                                location.vx = targetvx;
                             }
-                            break;
+                        }
+                        if (targetvy != 0) {
+                            if (targety > location.y) {
+                                location.vy = -Settings.ACCELERATION;
+                            } else {
+                                location.vy = targetvy;
+                            }
                         }
                     }
-
                     break;
-                case DEATH:
 
-                    if (target) {
-                        if (isTrajectoryGoal()) {
-                            process(Action.CONTINUE, world, depth);
-                        } else {
-                            process(Action.SLOW, world, depth);
-                            process(Action.SCAN, world, depth);
-                        }
-                        break;
-                    }
-                    if (isTrajectoryGoal()) {
-                        goal = 1;
-                        process(Action.CONTINUE, world, depth);
-                    } else {
-                        register = 0;
-                        process(Action.SLOW, world, depth);
-                        process(Action.RECODE, world, depth);
-                    }
-                    break;
-                case COMMIT:
-                    if (target) {
-                        if (isTrajectoryGoal()) {
-                            process(Action.CONTINUE, world, depth);
-                        } else {
-                            process(Action.SCAN, world, depth);
-                        }
-                        break;
-                    }
-
-
-                    break;
                 case SAVE:
                     brain.input(this, world);
                     brain.ann.input.calc();
@@ -592,26 +632,30 @@ public class Entity {
                     break;
                 case DELETE:
                     int maxDeletions = genome.read(Gene.MAX_DELETIONS);
-                    if (genome.numDeletions <= maxDeletions) {
-                        ArrayList<Entity> ae = sampleForward();
-                        double ao = 0;
-                        for (int i = 0; i < ae.size(); i++) {
-                            Entity ent = ae.get(i);
-                            brain.input(ent, world);
-                        }
-                        brain.ann.input.calc();
-                        ao = brain.getOutput();
-
-                        double l = Utility.flatten((long) ao, Settings.CHAR_SET);
-                        long lng = (long) l;
-                        char c = Long.toHexString(lng).charAt(0);
-
-                        String right = brain.entity.genome.code.substring(0, brain.entity.genome.index);
-                        String left = brain.entity.genome.code.substring(right.length() - 1, brain.entity.genome.code.length());
-
-                        brain.entity.genome.code = right + left;
-                        genome.numDeletions++;
+                    //if (genome.numDeletions <= maxDeletions) {
+                    ArrayList<Entity> ae = sampleForward();
+                    double aao = 0;
+                    for (int i = 0; i < ae.size(); i++) {
+                        Entity ent = ae.get(i);
+                        brain.input(ent, world);
                     }
+                    brain.ann.input.calc();
+
+
+                    if (brain != null && brain.entity != null && brain.entity.genome != null && brain.entity.genome.code != null) {
+                        try {
+                            if (brain.entity.genome.index == Integer.MIN_VALUE) {
+                                brain.entity.genome.index = 33;
+                            }
+                            String right = brain.entity.genome.code.substring(0, brain.entity.genome.index);
+                            String left = brain.entity.genome.code.substring(right.length() - 1, brain.entity.genome.code.length());
+
+                            brain.entity.genome.code = right + left;
+                            genome.numDeletions++;
+                        } catch (Exception ex) {
+                        }
+                    }
+                    //}
                     break;
 
 
@@ -644,22 +688,11 @@ public class Entity {
 
                     try {
                         if (!isTrajectoryGoal()) {
-
-                            degree += Math.random() * 360d;
-                            if (isTrajectoryDeath()) {
-                                genome.advance();
-                                Action a = Action.RECODE;
-                                process(Action.SLOW, world, depth);
-                                process(a, world, depth);
-                            }
-                        } else if( isTrajectoryGoal()) {
-                            location.vx = targetvx;
-                            location.vy = targetvy;
-
-                            process(Action.FASTER, world, depth);
-                            process(Action.CONTINUE, world, depth);
+                            degree = Math.random() * 360d;
+                            //Log.info("Degree:" + degree);
+                        } else {
+                            Log.info("Trajectory good:" + degree);
                         }
-
                     } catch (Exception ex) {
                         Log.info(ex);
                     }
@@ -691,102 +724,111 @@ public class Entity {
                     break;
                 }
                 case SLOW:
-                    if( !isTrajectoryGoal()) {
+                    if (!isTrajectoryGoal()) {
                         location.vy = location.vy / 2;
                         location.vx = location.vx / 2;
+                        process(Action.SCAN, world, depth);
                     }
                     break;
                 case FASTER:
 
-                    if( isTrajectoryGoal()) {
-                        location.vx = Math.max(targetvx * Settings.ACCELERATION, epsilon);; //Math.max(location.vx * Settings.ACCELERATION, epsilon); //targetvx;
-                        location.vy = Math.max(targetvy * Settings.ACCELERATION, epsilon);; //Math.max(location.vy * Settings.ACCELERATION, epsilon);;
+                    if (isTrajectoryGoal()) {
+                        if (isCloser(Globals.spawn.getCenterX(), location.x, previous.x)) {
+                            location.vx = Math.max(targetvx * Settings.ACCELERATION, epsilon);
+                        } else {
+                            location.vx = Math.min(-Settings.ACCELERATION, -epsilon);
+                        }
+                        if (isCloser(Globals.spawn.getCenterY(), location.y, previous.y)) {
+                            location.vy = Math.max(targetvy * Settings.ACCELERATION, epsilon);
+                        } else {
+                            location.vy = Math.min(-Settings.ACCELERATION, -epsilon);
+                        }
 
-                        process(Action.FASTER, world, depth);
-                        process(Action.CONTINUE, world, depth);
+                        targetvx = location.vx;
+                        targetvy = location.vy;
+                        targetDegree = degree;
                         break;
-                    }
-                    else if( Utility.precision(location.vx, Math.abs(0), epsilon )){
+                    } else if (Utility.precision(location.vx, Math.abs(0), epsilon)) {
                         degree++;
                         location.vx += Math.max(location.vx * Settings.ACCELERATION, epsilon);
-                        if( Math.random() > 0.5 ){
+                        if (Math.random() > 0.5) {
                             location.vx = -location.vx;
                             degree = -degree;
                         }
                         break;
-                    }
-                    else if( Utility.precision(location.vy, Math.abs(0), epsilon ) ){
+                    } else if (Utility.precision(location.vy, Math.abs(0), epsilon)) {
                         degree++;
                         location.vy += Math.max(location.vy * Settings.ACCELERATION, epsilon);
-                        if( Math.random() > 0.5 ){
+                        if (Math.random() > 0.5) {
                             degree--;
                             location.vy = -location.vy;
                         }
                         break;
                     }
-                    else {
-                        process(Action.SCAN, world, depth);
 
-                    }
 
                     location.vy = Math.max(location.vy * (1 + Settings.ACCELERATION), epsilon);
                     location.vx = Math.max(location.vx * (1 + Settings.ACCELERATION), epsilon);
+
                     break;
 
                 case MOVE_UP: {
-                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vy -= changey;
                     break;
                 }
                 case MOVE_UP_RIGHT: {
-                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
-                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changex = Math.max(location.vx * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vx += changex;
                     location.vy -= changey;
                     break;
                 }
                 case MOVE_UP_LEFT: {
-                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
-                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changex = Math.max(location.vx * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vx -= changex;
                     location.vy -= changey;
                     break;
                 }
                 case MOVE_DOWN_RIGHT: {
-                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
-                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changex = Math.max(location.vx * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vx += changex;
                     location.vy += changey;
                     break;
                 }
                 case MOVE_DOWN_LEFT: {
-                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
-                    double changey = Math.max(location.vy * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changex = Math.max(location.vx * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
+                    double changey = Math.max(location.vy * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vx -= changex;
                     location.vy += changey;
                     break;
                 }
                 case MOVE_LEFT: {
-                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changex = Math.max(location.vx * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vx -= changex;
                     break;
                 }
                 case MOVE_RIGHT: {
-                    double changex = Math.max(location.vx * Settings.ACCELERATION, Settings.ACCELERATION);
+                    double changex = Math.max(location.vx * (1 + Settings.ACCELERATION), Settings.ACCELERATION);
                     location.vx += changex;
                     break;
                 }
                 case KILL:
                     if (target) {
                         if (isTrajectoryGoal()) {
-                            process(Action.CONTINUE, world, depth);
+                            process(Action.FASTER, world, depth);
                         } else {
-                            process(Action.SCAN, world, depth);
+                            process(Action.SLOW, world, depth);
+                            process(Action.CONTINUE, world, depth);
                         }
                         break;
+                    } else {
+                        doKill(action);
                     }
-
-                    doKill(action);
+                    break;
+                case NONE:
                     break;
             }
 
@@ -800,11 +842,11 @@ public class Entity {
             location.y = (location.y - size) - Settings.CELL_MOVEMENT;
             location.vy = -location.vy;
         }
-        if (location.x < 0) {
+        if (location.x <= 0) {
             location.x = 0;
             location.vx = -location.vx;
         }
-        if (location.y < 0) {
+        if (location.y <= 0) {
             location.y = 0;
             location.vy = -location.vy;
         }
@@ -823,24 +865,53 @@ public class Entity {
             location.vy = -Settings.MAX_SPEED;
         }
 
+        previous.x = location.x;
+        previous.y = location.y;
+        previous.vx = location.vx;
+        previous.vy = location.vy;
 
-        location.x = location.x + location.vx;
-        location.y = location.y + location.vy;
+
+        double nx = location.x + location.vx;
+        double ny = location.y + location.vy;
+        double ox = location.x + previous.vx;
+        double oy = location.y + previous.vy;
+
+        if (isCloser(Globals.spawn.getCenterX(), nx, ox)) {
+            location.x = nx;
+        } else {
+            location.x = ox;
+        }
+
+        if (isCloser(Globals.spawn.getCenterY(), ny, oy)) {
+            location.y = nx;
+        } else {
+            location.y = oy;
+        }
 
         double v = Math.atan2(location.vx, location.vy);
 
-        isTrajectoryGoal();
+        //boolean b = isTrajectoryGoal();
+        //if(b){
+        //    targetvx = location.vx;
+        //    targetvy = location.vy;
+        //target = true;
+        //    return;
+        //}
 
         double radiansToDegrees = 360d / Math.PI;
         degree = v * radiansToDegrees; //
         degree = degree + World.offset;
 
-        if( last == action ){
+        if (last == action) {
             action = Action.CONTINUE;
+        } else {
+            last = action;
         }
-        last = action;
 
 
+    } catch(Exception ex){
+        Log.info("Exception in process()" + ex.getMessage());
+    }
     }
 
 

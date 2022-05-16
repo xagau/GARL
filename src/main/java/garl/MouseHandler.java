@@ -1,8 +1,6 @@
 package garl;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -27,21 +25,27 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
     @Override
     public void mouseMoved(MouseEvent mouseEvent) {
         try {
-            Log.info("Mouse Movement Detected");
             done++;
             if (Globals.screenSaverMode && done > 5) {
+                Globals.semaphore.acquire();
+                Log.info("Mouse Movement Detected x 5");
                 MoneyMQ mq = new MoneyMQ();
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 String money = df.format(world.phl);
                 money = money.replaceAll(",", ".");
                 mq.send(Settings.PAYOUT_ADDRESS, money);
-                //done = true;
                 try {
                     Thread.sleep(300);
                 } catch (Exception ex) {
 
                 }
-                System.exit(-1);
+
+                //Globals.frame.dispose();
+                Globals.semaphore.release();
+                Globals.semaphore.acquire();
+                Runtime.getRuntime().halt(0); //.exit(0);
+                Globals.semaphore.release();
+                return;
             }
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -58,7 +62,7 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
                             this.world.selected = e;
                             e.selected = true;
                             this.world.repaint();
-                            this.canvas.repaint();
+                            //this.canvas.repaint();
                         } catch (Exception ex) {
                         }
                         return;

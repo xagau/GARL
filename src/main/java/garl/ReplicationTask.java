@@ -18,6 +18,7 @@ public class ReplicationTask extends TimerTask {
         this.frame = frame;
     }
 
+    int ctr =0;
     @Override
     public void run() {
 
@@ -59,6 +60,12 @@ public class ReplicationTask extends TimerTask {
                 }
             }
         }
+
+        if( ctr++ > Globals.cleanupTime ) {
+            Runtime.getRuntime().gc();
+            ctr = 0;
+        }
+
 
         long end = System.currentTimeMillis();
         Globals.semaphore.release();

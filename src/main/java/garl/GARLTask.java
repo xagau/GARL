@@ -21,7 +21,6 @@ public class GARLTask extends Thread {
 
     public static UUID run = UUID.randomUUID();
     ArrayList<Seed> list = null;
-    final static int FPS = 64;
 
     public GARLTask(ArrayList<Seed> list) {
         if (list != null) {
@@ -30,103 +29,6 @@ public class GARLTask extends Thread {
     }
 
 
-    public static ArrayList<Seed> load() throws IOException {
-        ArrayList<Seed> list = new ArrayList<Seed>();
-        String seed = "./genomes/";
-        Gson gson = new Gson(); //null;
-        // create a reader
-        File dir = new File(seed);
-
-        File[] listFiles = dir.listFiles();
-        File[] files = dir.listFiles();
-        Arrays.sort(files, Comparator.comparingLong(File::lastModified));
-        int ctr = 0;
-        for (int i = files.length - 1; i >= 0; i--) {
-            File f = files[i];
-            if (f.getName().contains("genome")) {
-                String fName = f.getName();
-                Log.info("Using garl.Entity:" + f.getName());
-                Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
-                try {
-                    Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
-                    lseed.seedName = f.getName();
-                    list.add(lseed);
-                    ctr++;
-                } catch (Exception ex) {
-                }
-            }
-            //if (ctr >= Settings.STARTING_POPULATION) {
-            //    break;
-            //}
-            // convert JSON string to User object
-        }
-
-        Comparator comparator = new Comparator() {
-            @Override
-            public int compare(Object o1, Object o2) {
-                Seed s1 = (Seed)o1;
-                Seed s2 = (Seed)o2;
-
-
-                    if( s1.generation>s2.generation){
-                        return -1;
-                    } else if( s1.generation == s2.generation ){
-                        return 0;
-                    }
-                    return 1;
-            }
-        };
-        Seed[] arr = new Seed[list.size()];
-        for(int i=0; i < list.size(); i++ ){
-            try {
-                arr[i] = list.get(i);
-            } catch(Exception ex){}
-        }
-        Arrays.sort(arr, comparator);
-        for(int i =0; i < arr.length; i++ ){
-            if( i > 20){
-                break;
-            }
-            System.out.println(arr[i].generation + " " + arr[i].genome);
-        }
-        list = new ArrayList<>();
-        for(int i =0; i < Math.min(Settings.GENOME_PERSISTANCE, arr.length); i++ ){
-            list.add(arr[i]);
-        }
-        return list;
-    }
-
-    public static ArrayList<Entity> load(ArrayList<Seed> seeds, World world) throws IOException {
-        ArrayList<Seed> list = seeds;
-        ArrayList<Entity> ents = new ArrayList<>();
-
-        for (int i = 0; i < Math.min(list.size() > Settings.STARTING_POPULATION ? list.size() : Settings.STARTING_POPULATION, Settings.STARTING_POPULATION); i++) {
-            if (list.get(i).genome.contains("-")) {
-
-                continue;
-            }
-            try {
-                String genome = list.get(i).genome;
-                Log.info("Adding:" + i + ":" + genome);
-                Genome g = new Genome(genome);
-                Brain brain = new Brain(g);
-                Entity e = new Entity(world);
-                brain.setOwner(e);
-                e.location.x = (int) (Math.random() * world.getWidth());
-                e.location.y = (int) (Math.random() * world.getHeight());
-                g.setOwner(e);
-                e.brain = brain;
-
-                e.genome = g;
-                ents.add(e);
-                Log.info("Added:" + i + " at " + e.location.x + " " + e.location.y);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return ents;
-    }
 
 
     public static void main(String[] args) throws IOException {
@@ -134,7 +36,7 @@ public class GARLTask extends Thread {
 
         ArrayList<Seed> list = new ArrayList<>();
         if (args.length > 0) {
-            list = load();
+            list = SeedLoader.load();
         }
 
         GARLTask task = new GARLTask(list);
@@ -142,7 +44,7 @@ public class GARLTask extends Thread {
 
     }
 
-    static JFrame frame = new JFrame("Genetic Based Multi-Agent Reinforcement Learning");
+    static GARLFrame frame = new GARLFrame("Genetic Based Multi-Agent Reinforcement Learning");
 
     JPanel inspector = new JPanel();
     public static World world = null;
@@ -162,6 +64,7 @@ public class GARLTask extends Thread {
         int height = 1000;
         int inspectorPanelWidth = Settings.INSPECTOR_WIDTH;
         world = new World(width - inspectorPanelWidth, height);
+        Globals.world = world;
         selection = new Selection(world);
         frame.setSize(width, height);
 
@@ -213,7 +116,7 @@ public class GARLTask extends Thread {
         inspector.setMinimumSize(new Dimension(inspectorPanelWidth, height));
         inspector.setPreferredSize(new Dimension(inspectorPanelWidth, height));
 
-        GridLayout gridLayout = new GridLayout(14, 2);
+        GridLayout gridLayout = new GridLayout(14, 2, 2, 32);
         inspector.setLayout(gridLayout);
         inspector.add(new JLabel("Starting GARL Population"));
         JTextField startingPopulation = new JTextField("" + Settings.STARTING_POPULATION);
@@ -614,17 +517,11 @@ public class GARLTask extends Thread {
 
                     MoneyMQ mq = new MoneyMQ();
                     DecimalFormat df = new DecimalFormat("0.00000000");
-                    if(world.phl<Globals.maxPayout) {
-                        mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
-                        world.phl = 0;
-                        world.totalControls = 0;
-                        world.totalSpawns = 0;
-                    } else {
-                        mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(Globals.maxPayout));
-                        world.phl = 0;
-                        world.totalControls = 0;
-                        world.totalSpawns = 0;
-                    }
+                    mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
+                    world.phl = 0;
+                    world.totalControls = 0;
+                    world.totalSpawns = 0;
+
 
                 } catch(Exception ex) {
                     Log.info(ex);
@@ -677,7 +574,7 @@ public class GARLTask extends Thread {
         });
         payoutAddress.setText(address);
         inspector.add(payoutAddress);
-        inspector.add(new JLabel("Selected Agent ANN"));
+        //inspector.add(new JLabel("Selected Agent ANN"));
 
         inspectorContainer.setLayout(new BorderLayout());
         inspectorContainer.add(new JPanel(), BorderLayout.NORTH);
@@ -719,7 +616,8 @@ public class GARLTask extends Thread {
                     long start = System.currentTimeMillis();
                     Globals.semaphore.acquire();
                     ctr++;
-                    if (ctr > 100) {
+                    if (ctr > Globals.cleanupTime) {
+                        Runtime.getRuntime().gc();
                         ctr = 0;
                     }
                     world.repaint();
@@ -747,13 +645,8 @@ public class GARLTask extends Thread {
                     world.phl = 0;
                     DecimalFormat df = new DecimalFormat("0.00000000");
                     MoneyMQ moneyMQ = new MoneyMQ();
-                    if( phl < Globals.maxPayout ) {
-                        moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
-                        Runtime.getRuntime().gc();
-                    } else {
-                        moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(Globals.maxPayout));
-                        Runtime.getRuntime().gc();
-                    }
+                    moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
+                    Runtime.getRuntime().gc();
                     long end = System.currentTimeMillis();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -766,14 +659,14 @@ public class GARLTask extends Thread {
         };
 
         try {
-            long HOUR = 1000 * 60 * 60;
-            long taskTime = 120;
-            timer.scheduleAtFixedRate(paint, 0, 1000 / FPS);
-            timer.scheduleAtFixedRate(think, 0, taskTime);
-            timer.scheduleAtFixedRate(selection, 50, taskTime);
-            timer.scheduleAtFixedRate(replication, 100, taskTime);
-            timer.scheduleAtFixedRate(entityTask, 100, taskTime);
-            timer.scheduleAtFixedRate(payoutTask, 100, HOUR);
+
+
+            timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
+            timer.scheduleAtFixedRate(think, 0, Globals.taskTime);
+            timer.scheduleAtFixedRate(selection, 10, 80);
+            timer.scheduleAtFixedRate(replication, 150, Globals.taskTime);
+            timer.scheduleAtFixedRate(entityTask, 150, Globals.taskTime);
+            timer.scheduleAtFixedRate(payoutTask, 100, Globals.HOUR);
 
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -782,6 +675,47 @@ public class GARLTask extends Thread {
             er.printStackTrace();
             Log.info(er);
         }
+
+        ShutdownHook hook = new ShutdownHook(frame);
+        frame.addWindowListener(new WindowListener() {
+            @Override
+            public void windowOpened(WindowEvent windowEvent) {
+
+            }
+
+            @Override
+            public void windowClosing(WindowEvent windowEvent) {
+
+            }
+
+            @Override
+            public void windowClosed(WindowEvent windowEvent) {
+                timer.purge();
+                frame.setVisible(false);
+                frame.dispose();
+                Runtime.getRuntime().exit(0);
+            }
+
+            @Override
+            public void windowIconified(WindowEvent windowEvent) {
+
+            }
+
+            @Override
+            public void windowDeiconified(WindowEvent windowEvent) {
+
+            }
+
+            @Override
+            public void windowActivated(WindowEvent windowEvent) {
+
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent windowEvent) {
+
+            }
+        });
 
     }
 

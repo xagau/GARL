@@ -18,6 +18,11 @@
             <artifactId>gson</artifactId>
             <version>2.9.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -45,7 +50,7 @@
                 <archive>
                     <manifest>
                         <addClasspath>true</addClasspath>
-                        <mainClass>garl.GARLTask</mainClass>
+                        <mainClass>garl.ScreenSaver</mainClass>
                     </manifest>
                 </archive>
                 <descriptorRefs>
@@ -61,7 +66,7 @@
                 <archive>
                     <manifest>
                         <addClasspath>true</addClasspath>
-                        <mainClass>garl.GARLTask</mainClass>
+                        <mainClass>garl.ScreenSaver</mainClass>
                     </manifest>
                 </archive>
             </configuration>

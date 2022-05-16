@@ -397,6 +397,7 @@ public class World extends JLabel {
             try {
                 g.drawString("Thought: " + e.last.toString() + " " + df.format(e.input), mx + spacing, my + spacing * 11);
             } catch (Exception ex) {
+                Log.info(ex);
             }
             g.drawString("Genome:", mx + spacing, my + spacing * 12);
             g.drawString(e.genome.code.substring(0, 32), mx + spacing, my + spacing * 13);

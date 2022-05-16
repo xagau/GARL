@@ -3,6 +3,8 @@ package garl;
 import garl.iaf.Sigmoid;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.zip.CRC32;
@@ -62,6 +64,25 @@ public class Utility {
         return v;
     }
 
+    public static String getMACAddress() {
+
+        try {
+            InetAddress localHost = InetAddress.getLocalHost();
+            NetworkInterface ni = NetworkInterface.getByInetAddress(localHost);
+            byte[] hardwareAddress = ni.getHardwareAddress();
+
+            String[] hexadecimal = new String[hardwareAddress.length];
+            for (int i = 0; i < hardwareAddress.length; i++) {
+                hexadecimal[i] = String.format("%02X", hardwareAddress[i]);
+            }
+            String macAddress = String.join("-", hexadecimal);
+        } catch(Exception ex) {
+            Log.info(ex);
+        } finally {
+            return "NONE-NO-MAC";
+        }
+    }
+
     public static void cleanup() {
 
         String genomePath = Property.getProperty("settings.genomes");
@@ -70,7 +91,7 @@ public class Utility {
             boolean f = dir.isDirectory();
             File[] list = dir.listFiles();
 
-            ArrayList<Seed> slist = GARLTask.load();
+            ArrayList<Seed> slist = SeedLoader.load();
             if(slist.isEmpty()){
                 return;
             }

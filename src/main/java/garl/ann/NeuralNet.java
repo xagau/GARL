@@ -22,9 +22,9 @@ public class NeuralNet {
     public NeuralNet(Genome g) {
         owner = g;
         int numInputs = Settings.NUMBER_OF_INPUTS;
-        int numDense = Math.min(Settings.MAX_NEURONS, Math.max(2, (int) g.read(Gene.DENSE)) );
-        int numHidden = Math.min(Settings.MAX_NEURONS, Math.max(2,(int) g.read(Gene.HIDDEN)) );
-        int numDropout = 2;
+        int numDense = Settings.MAX_NEURONS; //, Math.max(8, (int) g.read(Gene.DENSE)) );
+        int numHidden = Settings.MAX_NEURONS; //, Math.max(8,(int) g.read(Gene.HIDDEN)) );
+        int numDropout = Settings.MAX_DROPOUT;
 
         SoftmaxFunction softmax = new SoftmaxFunction(Action.values().length);
         try {
@@ -37,19 +37,10 @@ public class NeuralNet {
         }
 
         try {
-            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
-            dropout = new HiddenLayer(numDropout, relu, numHidden);
-            dropout.setNeuralNet(this);
-            dropout.nextLayer = output;
-            dropout.name = "dropout";
-        } catch (Exception ex) {
-        }
-
-        try {
             ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_0));
             hidden = new HiddenLayer(numHidden, relu, numDense);
             hidden.setNeuralNet(this);
-            hidden.nextLayer = dropout;
+            hidden.nextLayer = output;
             hidden.name = "hidden";
         } catch (Exception ex) {
         }
@@ -58,10 +49,21 @@ public class NeuralNet {
             ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
             dense = new HiddenLayer(numHidden, relu, numInputs);
             dense.setNeuralNet(this);
-            dense.nextLayer = hidden;
+            dense.nextLayer = dropout;
             dense.name = "dense";
         } catch (Exception ex) {
         }
+
+        try {
+            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
+            dropout = new HiddenLayer(numDropout, relu, numHidden);
+            dropout.setNeuralNet(this);
+            dropout.nextLayer = hidden;
+            dropout.name = "dropout";
+        } catch (Exception ex) {
+        }
+
+
 
 
         IActivationFunction iaf2 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_2));
@@ -77,14 +79,14 @@ public class NeuralNet {
         try {
             input.previousLayer = null;
             dense.previousLayer = input;
-            hidden.previousLayer = dense;
-            dropout.previousLayer = hidden;
-            output.previousLayer = dropout;
+            dropout.previousLayer = dense;
+            hidden.previousLayer = dropout;
+            output.previousLayer = hidden;
 
             input.init();
             dense.init();
-            hidden.init();
             dropout.init();
+            hidden.init();
             output.init();
         } catch (Exception ex) {
             Log.info("Unable to build Neural Network:" + ex);

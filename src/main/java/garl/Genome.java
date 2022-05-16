@@ -72,10 +72,14 @@ public class Genome {
 
     public void recode(int loc, char c) {
 
+        if( c == '-'){
+            return;
+        }
         if (loc + Settings.GENOME_LENGTH > code.length()) {
             return;
         }
         char[] g = code.toCharArray();
+
         g[Settings.GENOME_LENGTH + loc] = c; //garl.Utility.flatten(c, 26);
         code = String.valueOf(g);
         numRecodes++;

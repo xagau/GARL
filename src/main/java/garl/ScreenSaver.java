@@ -8,6 +8,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -21,15 +23,19 @@ public final class ScreenSaver {
 
     public static UUID run = UUID.randomUUID();
     ArrayList<Seed> list = null;
-    final static int FPS = 64;
 
+
+    /*
     public static ArrayList<Seed> load() throws IOException {
         ArrayList<Seed> list = new ArrayList<>();
         String seed = Property.getProperty("settings.genomes"); //"./genomes/";
-        Gson gson = new Gson(); //null;
+        if( seed == null ){
+            seed = "./genomes/";
+        }
+        Gson gson = new Gson();
         // create a reader
         File dir = new File(seed);
-        //File[] listFiles = dir.listFiles();
+
         File[] listFiles = dir.listFiles();
         File[] files = dir.listFiles();
         Arrays.sort(files, Comparator.comparingLong(File::lastModified));
@@ -86,8 +92,9 @@ public final class ScreenSaver {
 
         return ents;
     }
+    */
 
-    static JFrame frame = new JFrame();
+    static GARLFrame frame = new GARLFrame();
 
     static JPanel inspector = new JPanel();
     public static World world = null;
@@ -107,13 +114,13 @@ public final class ScreenSaver {
                 ex.printStackTrace();
             }
 
-            System.out.println("Running in Screen Saver Mode:");
+            Log.info("Running in Screen Saver Mode:");
             Globals.screenSaverMode = true;
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
             ArrayList<Seed> list = new ArrayList<>();
             if (args.length >= 0) {
-                list = load();
+                list = SeedLoader.load();
                 if (list != null) {
                     System.out.println(list.size());
                 } else {
@@ -127,8 +134,11 @@ public final class ScreenSaver {
             int height = screenSize.height;
             //int inspectorPanelWidth = Settings.INSPECTOR_WIDTH;
             world = new World(width, height);
+            Globals.world = world;
+
             selection = new Selection(world);
             frame.setSize(width, height);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
             //3. Create components and put them in the frame.
             //...create emptyLabel...
@@ -181,6 +191,7 @@ public final class ScreenSaver {
             //5. Show it.
             frame.setDefaultCloseOperation(
                     WindowConstants.EXIT_ON_CLOSE);
+
             frame.setUndecorated(true);
             frame.setResizable(false);
             //frame.add(new JLabel("This is a Java Screensaver!",
@@ -209,11 +220,11 @@ public final class ScreenSaver {
                         long start = System.currentTimeMillis();
                         Globals.semaphore.acquire();
                         ctr++;
-                        if (ctr > 100) {
+                        if (ctr > Globals.cleanupTime) {
+                            Runtime.getRuntime().gc();
                             ctr = 0;
                         }
                         world.repaint();
-                        //canvas.repaint();
                         long end = System.currentTimeMillis();
 
                     } catch (Exception ex) {
@@ -227,6 +238,7 @@ public final class ScreenSaver {
             };
 
             TimerTask payoutTask = new TimerTask() {
+                int ctr = 0;
                 @Override
                 public void run() {
 
@@ -238,12 +250,10 @@ public final class ScreenSaver {
                         world.phl = 0;
                         DecimalFormat df = new DecimalFormat("0.00000000");
                         MoneyMQ moneyMQ = new MoneyMQ();
-                        if( phl < Globals.maxPayout ) {
-                            moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
+                        moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
+                        if( ctr++ > Globals.cleanupTime ) {
                             Runtime.getRuntime().gc();
-                        } else {
-                            moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(Globals.maxPayout));
-                            Runtime.getRuntime().gc();
+                            ctr = 0;
                         }
 
                         long end = System.currentTimeMillis();
@@ -259,14 +269,12 @@ public final class ScreenSaver {
 
 
             try {
-                long HOUR = 1000 * 60 * 60;
-                long taskTime = 120;
-                timer.scheduleAtFixedRate(paint, 0, 1000 / FPS);
-                timer.scheduleAtFixedRate(think, 0, taskTime);
-                timer.scheduleAtFixedRate(selection, 50, taskTime);
-                timer.scheduleAtFixedRate(replication, 100, taskTime);
-                timer.scheduleAtFixedRate(entityTask, 100, taskTime);
-                timer.scheduleAtFixedRate(payoutTask, 100, HOUR);
+                timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
+                timer.scheduleAtFixedRate(think, 0, Globals.taskTime);
+                timer.scheduleAtFixedRate(selection, 50, 50);
+                timer.scheduleAtFixedRate(replication, 100, Globals.taskTime);
+                timer.scheduleAtFixedRate(entityTask, 100, Globals.taskTime);
+                timer.scheduleAtFixedRate(payoutTask, 100, Globals.HOUR);
 
             } catch(Exception ex) {
                 ex.printStackTrace();
@@ -275,6 +283,52 @@ public final class ScreenSaver {
                 e.printStackTrace();
                 Log.info(e.getMessage());
             }
+
+            ShutdownHook hook = new ShutdownHook(frame);
+            Runtime.getRuntime().addShutdownHook(hook);
+            frame.addWindowListener(new WindowListener() {
+
+                @Override
+                public void windowOpened(WindowEvent windowEvent) {
+
+                }
+
+                @Override
+                public void windowClosing(WindowEvent windowEvent) {
+
+
+                }
+
+                @Override
+                public void windowClosed(WindowEvent windowEvent) {
+                    timer.purge();
+                    frame.setVisible(false);
+                    frame.dispose();
+                    Runtime.getRuntime().exit(0);
+                }
+
+                @Override
+                public void windowIconified(WindowEvent windowEvent) {
+
+                }
+
+                @Override
+                public void windowDeiconified(WindowEvent windowEvent) {
+
+                }
+
+                @Override
+                public void windowActivated(WindowEvent windowEvent) {
+
+                }
+
+                @Override
+                public void windowDeactivated(WindowEvent windowEvent) {
+
+                }
+            });
+
+
 
         } catch(Exception ex) {
             Log.info(ex);

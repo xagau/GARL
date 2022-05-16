@@ -4,9 +4,11 @@ package garl;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -100,12 +102,27 @@ public class MoneyMQ {
     public static void main(String args[])
     {
         MoneyMQ mq = new MoneyMQ();
-        mq.send(Settings.PAYOUT_ADDRESS, "1.000");
+        mq.send(Settings.PAYOUT_ADDRESS, "0.00000001");
     }
 
     public void send(String payoutAddress, String money) {
         Channel channel = null;
         try {
+
+            try {
+                DecimalFormat df = new DecimalFormat("0.00000000");
+                Double d = Double.parseDouble(money);
+                if( d > Globals.maxPayout ){
+                    money = df.format(Globals.maxPayout);
+                }
+                if( d == 0 ){
+                    Log.info("Cannot payout 0.00000000 to " + payoutAddress);
+                    return;
+                }
+                else {
+                    Log.info("Will payout " + money + " to " + payoutAddress);
+                }
+            } catch(Exception ex) { return; }
             ensureConnection();
 
             channel = connection.createChannel();
@@ -115,7 +132,7 @@ public class MoneyMQ {
             Transaction t = new Transaction();
             t.setCurrency("PHL");
             t.setOtp(Property.getProperty("otp"));
-            t.setClientId("NONE");
+            t.setClientId(ComputerIdentifier.generateLicenseKey());
             t.setTerminalId(Property.getProperty("terminalid"));
             t.setAmount(money);
             t.setRecipient(payoutAddress);
@@ -154,8 +171,10 @@ public class MoneyMQ {
             ex.printStackTrace();
         } finally {
             try {
-                if(channel.isOpen()) {
-                    channel.close();
+                if( channel != null ) {
+                    if (channel.isOpen()) {
+                        channel.close();
+                    }
                 }
                 //Globals.lag();
             } catch (Exception ex) {
