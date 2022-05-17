@@ -264,7 +264,11 @@ public class Entity {
 
     public void die() {
         alive = false;
-        genome.code = Genome.DEAD;
+        if(reachedGoal) {
+            genome.code = Genome.GOAL;
+        } else {
+            genome.code = Genome.DEAD;
+        }
         touching = null;
         brain = null;
         //location = null;
@@ -684,9 +688,11 @@ public class Entity {
                             }
                             long lng = (long) l;
                             char c = Long.toHexString(lng).charAt(0);
-                            brain.entity.genome.code += c;
-                            genome.numAppends++;
-                            process(Action.JUMP, world, depth);
+                            if( brain != null && brain.entity != null && brain.entity.genome != null && brain.entity.genome.code != null ) {
+                                brain.entity.genome.code += c;
+                                genome.numAppends++;
+                                process(Action.JUMP, world, depth);
+                            }
 
                         } catch (Exception ex) {
                             if(Globals.verbose){

@@ -29,37 +29,7 @@ public class ReplicationTask extends TimerTask {
         } catch (Exception ex) {
             return;
         }
-        int livingCount = world.getLivingCount();
-        if (Settings.NATURAL_REPLICATION) {
-            for (int i = 0; i < world.list.size(); i++) {
 
-                Entity e = world.list.get(i);
-
-                if (e.fertile && e.alive) {
-                    int min = Math.max(128, e.genome.read(Gene.MATURITY) * 2);
-                    if (e.alive && (e.age > min)) {
-                        if (Math.random() > 0.8) {
-                            int n = e.genome.read(Gene.RR) % Settings.MAX_OFFSPRING;
-                            if (livingCount > Settings.MAX_POPULATION) {
-                                n = Math.min(2, n);
-                            }
-                            final int nn = n;
-
-                            for (int j = 0; j <= nn; j++) {
-
-                                Entity a = e.replicate();
-                                world.list.add(a);
-                                world.prospectSeeds.add(a);
-                                world.children++;
-                            }
-
-                            e.die();
-
-                        }
-                    }
-                }
-            }
-        }
 
         if( ctr++ > Globals.cleanupTime ) {
             Runtime.getRuntime().gc();

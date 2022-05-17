@@ -29,11 +29,10 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
             if (Globals.screenSaverMode && done > 5) {
                 Globals.semaphore.acquire();
                 Log.info("Mouse Movement Detected x 5");
-                MoneyMQ mq = new MoneyMQ();
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 String money = df.format(world.phl);
                 money = money.replaceAll(",", ".");
-                mq.send(Settings.PAYOUT_ADDRESS, money);
+                Globals.mq.send(Settings.PAYOUT_ADDRESS, "" + money);
                 try {
                     Thread.sleep(300);
                 } catch (Exception ex) {

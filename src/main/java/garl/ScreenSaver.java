@@ -252,8 +252,7 @@ public final class ScreenSaver {
                         double phl = world.phl;
                         world.phl = 0;
                         DecimalFormat df = new DecimalFormat("0.00000000");
-                        MoneyMQ moneyMQ = new MoneyMQ();
-                        moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
+                        Globals.mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(phl));
                         if( ctr++ > Globals.cleanupTime ) {
                             Runtime.getRuntime().gc();
                             ctr = 0;
@@ -275,7 +274,7 @@ public final class ScreenSaver {
                 timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
                 timer.scheduleAtFixedRate(think, 0, Globals.taskTime);
                 timer.scheduleAtFixedRate(selection, 50, 50);
-                timer.scheduleAtFixedRate(replication, 100, Globals.taskTime);
+                //timer.scheduleAtFixedRate(replication, 100, Globals.taskTime);
                 timer.scheduleAtFixedRate(entityTask, 100, Globals.taskTime);
                 timer.scheduleAtFixedRate(payoutTask, 100, Globals.HOUR);
 

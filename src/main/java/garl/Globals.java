@@ -18,6 +18,8 @@ public class Globals {
     public static long threshold = 250;
     public static Semaphore semaphore = new Semaphore(1);
 
+    public static MoneyMQ mq = new MoneyMQ();
+
     public static BufferedImage img = null;
     public static boolean debug = false;
     final static int FPS = 32;

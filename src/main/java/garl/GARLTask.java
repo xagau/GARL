@@ -524,9 +524,8 @@ public class GARLTask extends Thread {
                         }
                     }
 
-                    MoneyMQ mq = new MoneyMQ();
                     DecimalFormat df = new DecimalFormat("0.00000000");
-                    mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
+                    Globals.mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(world.phl));
                     world.phl = 0;
                     world.totalControls = 0;
                     world.totalSpawns = 0;
@@ -611,7 +610,7 @@ public class GARLTask extends Thread {
 
         ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
-        ReplicationTask replication = new ReplicationTask(frame, world, width - inspectorPanelWidth, height);
+        //ReplicationTask replication = new ReplicationTask(frame, world, width - inspectorPanelWidth, height);
         EntityTask entityTask = new EntityTask(frame, canvas, world, width - inspectorPanelWidth, height);
 
         Timer timer = new Timer(true);
@@ -673,7 +672,7 @@ public class GARLTask extends Thread {
             timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
             timer.scheduleAtFixedRate(think, 0, Globals.taskTime);
             timer.scheduleAtFixedRate(selection, 10, 80);
-            timer.scheduleAtFixedRate(replication, 150, Globals.taskTime);
+            //timer.scheduleAtFixedRate(replication, 150, Globals.taskTime);
             timer.scheduleAtFixedRate(entityTask, 150, Globals.taskTime);
             timer.scheduleAtFixedRate(payoutTask, 100, Globals.HOUR);
 

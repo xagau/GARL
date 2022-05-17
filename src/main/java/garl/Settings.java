@@ -6,13 +6,13 @@ public class Settings {
     public static int MAX_ENTITIES = 1000;
 
     public static int INSPECTOR_WIDTH = 420;
-    public static double ACCELERATION = 0.5;
+    public static double ACCELERATION = 0.3;
     public static int CHAR_SET = 62;
     public static int GENOME_LENGTH = 32;
     public static int STARTING_POPULATION = 40;
     public static int MAX_OFFSPRING = 2;
     public static boolean NATURAL_REPLICATION = true;
-    public static int MAX_THINK_DEPTH = 4;
+    public static int MAX_THINK_DEPTH = 3;
     public static int NUMBER_OF_INPUTS = 32; //STARTING_POPULATION * 12; // garl.Action.values().length;
     public static int DEATH_MULTIPLIER = 25;
     public static int GENE_POOL = 2;
