@@ -933,7 +933,8 @@ public class Entity {
 
         } catch (Exception ex) {
             if( Globals.verbose ) {
-                Log.info("Exception in process()" + ex.getMessage());
+                Log.info("Exception in process() ");
+                ex.printStackTrace();
             }
         }
     }

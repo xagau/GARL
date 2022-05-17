@@ -395,9 +395,13 @@ public class World extends JLabel {
             g.drawString("Kill Gene: " + (int) e.genome.read(Gene.KILL), mx + spacing, my + spacing * 10);
 
             try {
-                g.drawString("Thought: " + e.last.toString() + " " + df.format(e.input), mx + spacing, my + spacing * 11);
+                if( e.last != null ) {
+                    g.drawString("Thought: " + e.last.toString() + " " + df.format(e.input), mx + spacing, my + spacing * 11);
+                }
             } catch (Exception ex) {
-                Log.info(ex);
+                if( Globals.verbose) {
+                    Log.info(ex);
+                }
             }
             g.drawString("Genome:", mx + spacing, my + spacing * 12);
             g.drawString(e.genome.code.substring(0, 32), mx + spacing, my + spacing * 13);
@@ -412,7 +416,13 @@ public class World extends JLabel {
             g.setColor(Color.black);
             g.drawString("Deletions: " + e.genome.numDeletions, mx + spacing, my + spacing * 19);
             int sz = UUID.randomUUID().toString().replaceAll("-", "").length();
-            g.drawString("KIN: " + KinFactory.create(e.genome.read(Gene.KIN)) + ":" + e.genome.read(Gene.KIN), mx + spacing, my + spacing * 21);
+            try {
+                g.drawString("KIN: " + KinFactory.create(e.genome.read(Gene.KIN)) + ":" + e.genome.read(Gene.KIN), mx + spacing, my + spacing * 21);
+            } catch(Exception ex) {
+                if( Globals.verbose ){
+                    Log.info(ex);
+                }
+            }
             g.drawString("Fertile: " + e.fertile, mx + spacing, my + spacing * 22);
             g.drawString("Read Position: "+ " char:" + e.genome.read() + " " + e.genome.index( ) , mx + spacing, my + spacing * 23);
             g.drawString("Death: " + Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE), mx + spacing, my + spacing * 24);

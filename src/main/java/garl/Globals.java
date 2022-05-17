@@ -7,14 +7,14 @@ import java.util.concurrent.Semaphore;
 public class Globals {
 
     public static int minimum = 1;
-    public static int major = 34;
+    public static int major = 35;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + minimum + "." + major;
     public static boolean screenSaverMode = false;
     public static Obstacle spawn = new Obstacle();
     public static Obstacle control = new Obstacle();
 
-    public static boolean verbose = true;
+    public static boolean verbose = false;
     public static long threshold = 250;
     public static Semaphore semaphore = new Semaphore(1);
 
