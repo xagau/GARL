@@ -12,3 +12,7 @@
 
 1041.40G/1214.04G:202205136T1333427:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.00111000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652722435389"}'
 
+1020.25G/1214.20G:202205147T0207435:L:Routing Key:transactions-mc
+
+1020.25G/1214.20G:202205147T0207437:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.01323000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1653631668401"}'
+
