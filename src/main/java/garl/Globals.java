@@ -30,7 +30,7 @@ import java.util.concurrent.Semaphore;
 public class Globals {
 
     public static int minimum = 1;
-    public static int major = 36;
+    public static int major = 37;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + minimum + "." + major;
     public static boolean screenSaverMode = false;

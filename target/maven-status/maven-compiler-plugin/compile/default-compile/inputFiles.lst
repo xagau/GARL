@@ -30,6 +30,7 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Selection.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ReplicationTask.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ActionFactory.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/ExpectedSarsaFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/Linear.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ShutdownHook.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/KinFactory.java
@@ -42,6 +43,7 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/SeedList.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/IActivationFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ann/Neuron.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/QLearningFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/LinearCombinationFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Globals.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Tester.java
@@ -52,6 +54,7 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/Sigmoid.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ann/InputLayer.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/KeyHandler.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/SarsaFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ThinkTask.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Utility.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Entity.java

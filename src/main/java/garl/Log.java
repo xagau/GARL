@@ -143,9 +143,12 @@ public class Log {
                     BufferedWriter bw = new BufferedWriter(logger);
                     bw.write(logline + "\n");
                     bw.flush();
-                    //Closing BufferedWriter Stream
                     bw.close();
                 }
+
+
+
+
             } catch (Exception ex) {ex.printStackTrace();}
         } catch (Error err) {err.printStackTrace();}
     }
@@ -169,7 +172,37 @@ public class Log {
                 System.out.println(logline);
 
                 if( payment ) {
-                    FileWriter logger = new FileWriter(new File("./output.log"), true);
+                    FileWriter logger = new FileWriter(new File("./payment.log"), true);
+                    BufferedWriter bw = new BufferedWriter(logger);
+                    bw.write(logline + "\n");
+                    bw.flush();
+                    //Closing BufferedWriter Stream
+                    bw.close();
+                }
+            } catch (Exception ex) {ex.printStackTrace();}
+        } catch (Error err) {err.printStackTrace();}
+    }
+
+    public static void debug(String text, Level level) {
+        if (isDebug()) {
+            Logger.getAnonymousLogger().info(text + "\n");
+        }
+
+        try {
+            try {
+
+                long fm = Runtime.getRuntime().freeMemory();
+                long tm = Runtime.getRuntime().totalMemory();
+                double dfm = (double)fm;
+                double dtm = (double)tm;
+
+                double G = 10000000;
+                Date dt = new Date(System.currentTimeMillis());
+                String logline = df.format(fm/G) + "G/" + df.format(tm/G) + "G:" + sdf.format(dt) + ":L:" + text + "\n";
+                System.out.println(logline);
+
+                if( debug ) {
+                    FileWriter logger = new FileWriter(new File("./debug.log"), true);
                     BufferedWriter bw = new BufferedWriter(logger);
                     bw.write(logline + "\n");
                     bw.flush();

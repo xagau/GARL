@@ -24,6 +24,7 @@ garl/GARLTask$14.class
 garl/ThinkTask.class
 garl/iaf/LinearCombinationFunction.class
 garl/MouseHandler.class
+garl/iaf/ExpectedSarsaFunction.class
 garl/GARLTask$10.class
 garl/GenomeFactory.class
 garl/GARLTask.class
@@ -43,7 +44,9 @@ garl/GARLTask$13.class
 garl/GARLTask$4.class
 garl/ann/NeuralNet.class
 garl/Obstacle.class
+garl/iaf/SarsaFunction.class
 garl/Transaction.class
+garl/iaf/QLearningFunction.class
 garl/iaf/ActivationFactory.class
 garl/ReplicationTask.class
 garl/ScreenSaver.class
