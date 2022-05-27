@@ -1,5 +1,28 @@
 package garl;
-
+/** Copyright (c) 2019-2022 placeh.io,
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @author xagau
+ * @email seanbeecroft@gmail.com
+ *
+ */
 import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
@@ -63,6 +86,15 @@ public class SelectionTask extends TimerTask {
                             if (selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
                                 if (rect.spawner) {
                                     Globals.spawn = rect;
+                                    //Globals.spawn.x = (int)(Math.random() * world.width) - rect.width;
+                                    //Globals.spawn.y = (int)(Math.random() * world.height) - rect.height;
+
+                                    Log.info("Spawn:X" + Globals.spawn.x);
+                                    Log.info("Spawn:Y" + Globals.spawn.y);
+
+                                    //rect.x = Globals.spawn.x;
+                                    //rect.y = Globals.spawn.y;
+
                                     save(world.epoch, e.generation, e.genome);
                                     for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
                                         Entity n = e.clone();

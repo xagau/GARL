@@ -22,3 +22,23 @@
 
 1188.49G/1214.15G:202205137T0018588:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.00954000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652761114374"}'
 
+1188.64G/1214.20G:202205137T0039671:L:Routing Key:transactions-mc
+
+1188.64G/1214.20G:202205137T0039673:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.00673000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652762340286"}'
+
+1102.18G/1213.88G:202205137T0226536:L:Routing Key:transactions-mc
+
+1102.18G/1213.88G:202205137T0226537:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.04000000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652768812509"}'
+
+1132.26G/1214.20G:202205137T0435409:L:Routing Key:transactions-mc
+
+1132.26G/1214.20G:202205137T0435409:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.03525000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652776535383"}'
+
+1131.13G/1213.83G:202205137T0545272:L:Routing Key:transactions-mc
+
+1131.13G/1213.83G:202205137T0545273:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.02880000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652780737243"}'
+
+1149.86G/1214.20G:202205137T0711625:L:Routing Key:transactions-mc
+
+1149.86G/1214.20G:202205137T0711625:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.05592000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"99389849839490390493090390403","transactionId":"MC1652785870597"}'
+
