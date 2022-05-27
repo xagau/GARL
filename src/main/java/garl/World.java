@@ -61,6 +61,11 @@ public class World extends JLabel {
     int impact = 0;
     int epoch = 1;
 
+    public void reset(){
+        list = null;
+        Runtime.getRuntime().gc();
+    }
+
     World(int w, int h) {
         width = w;
         height = h;
