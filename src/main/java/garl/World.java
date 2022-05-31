@@ -301,7 +301,7 @@ public class World extends JLabel {
         g2.setColor(Color.BLACK);
         g2.fillRect(0, getHeight() - 24, getWidth(), getHeight());
         g2.setColor(Color.YELLOW);
-        g2.drawString("Think:" + step + " population:" + livingCount + " killed:" + (list.size() - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " best seed:" + bestSpawn, 10, (getHeight() - 10));
+        g2.drawString("V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " killed:" + (list.size() - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " best seed:" + bestSpawn, 10, (getHeight() - 10));
         g2.dispose();
     }
 

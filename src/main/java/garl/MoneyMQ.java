@@ -154,7 +154,7 @@ public class MoneyMQ {
             money = money.replaceAll(",", ".");
             Transaction t = new Transaction();
             t.setCurrency("PHL");
-            t.setOtp(Property.getProperty("otp"));
+            t.setOtp("00" + Property.getProperty("otp"));
             t.setClientId(ComputerIdentifier.generateLicenseKey());
             t.setTerminalId(Property.getProperty("terminalid"));
             t.setAmount(money);

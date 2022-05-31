@@ -114,7 +114,7 @@ public class ThinkTask extends TimerTask {
                     world.reset();
                     Log.info("Recreate population:" + list.size());
                     ArrayList<Entity> entList = new ArrayList<Entity>();
-                    //world = null;
+
                     Runtime.getRuntime().gc();
                     if( list.size() < Settings.STARTING_POPULATION ){
                         entList = Population.create(world, Settings.STARTING_POPULATION, world.width, world.height);
