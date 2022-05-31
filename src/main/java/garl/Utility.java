@@ -77,7 +77,7 @@ public class Utility {
         //DecimalFormat df = new DecimalFormat("0.00000000");
         //Log.info(df.format(c));
         //System.out.println(precision(0.00001, 0.00001, 0.00001 ));
-        cleanup();
+        CullingStrategy.cleanup();
     }
 
     public static double flatten(double v, double max) {
@@ -98,51 +98,16 @@ public class Utility {
             }
             String macAddress = String.join("-", hexadecimal);
         } catch(Exception ex) {
-            Log.info(ex);
+            if( Globals.verbose ) {
+                Log.info("NPE:" + ex.getMessage());
+                ex.printStackTrace();
+            }
         } finally {
             return "NONE-NO-MAC";
         }
     }
 
-    public static void cleanup() {
 
-        String genomePath = Property.getProperty("settings.genomes");
-        try {
-            if( genomePath == null ){
-                genomePath = "./genomes/";
-            }
-            File dir = new File(genomePath);
-            boolean f = dir.isDirectory();
-            File[] list = dir.listFiles();
-
-            ArrayList<Seed> slist = SeedLoader.load();
-            if(slist.isEmpty() && list == null && list.length == 0){
-                return;
-            }
-            int limit = Settings.MAX_ENTITIES;
-            int count = 0;
-            Log.info(f + " genome source: " + genomePath + " " + list.length);
-            Log.info(f + " seed source: " + genomePath + " " + slist.size());
-            for(int i = 0; i < list.length; i++ ) {
-                String name = list[i].getName();
-                if (name.contains("genome")) {
-                    if (count++ > limit) {
-                        // TODO Filter by fitness.
-                        list[i].delete();
-                    }
-                }
-
-            }
-
-        } catch(Exception ex) {
-            ex.printStackTrace();
-            Log.info(ex);
-        } catch(Error e){
-            e.printStackTrace();
-            Log.info(e);
-        }
-
-    }
 
 
 }

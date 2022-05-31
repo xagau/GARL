@@ -617,7 +617,7 @@ public class GARLTask extends Thread {
         canvas.setMinimumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
         canvas.setMaximumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
         canvas.setPreferredSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
-        selectedInspector.add(canvas);
+        //selectedInspector.add(canvas);
         //inspectorContainer.add(selectedInspector, BorderLayout.SOUTH);
 
         inspectorContainer.add(inspector, BorderLayout.CENTER);
@@ -645,7 +645,7 @@ public class GARLTask extends Thread {
 
                 try {
                     long start = System.currentTimeMillis();
-                    Globals.semaphore.acquire();
+                    //Globals.semaphore.acquire();
                     ctr++;
                     if (ctr > Globals.cleanupTime) {
                         Runtime.getRuntime().gc();
@@ -655,9 +655,13 @@ public class GARLTask extends Thread {
                     long end = System.currentTimeMillis();
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    if( Globals.verbose) {
+                        ex.printStackTrace();
+                    }
                 } catch (Error e) {
-                    e.printStackTrace();
+                    if( Globals.verbose) {
+                        e.printStackTrace();
+                    }
                 } finally {
                     Globals.semaphore.release();
                 }
@@ -693,11 +697,9 @@ public class GARLTask extends Thread {
 
 
             timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
-            timer.scheduleAtFixedRate(think, 0, Globals.taskTime);
-            timer.scheduleAtFixedRate(selection, 10, 80);
-            //timer.scheduleAtFixedRate(replication, 150, Globals.taskTime);
-            //timer.scheduleAtFixedRate(entityTask, 150, Globals.taskTime);
-            timer.scheduleAtFixedRate(payoutTask, 100, Globals.HOUR);
+            timer.scheduleAtFixedRate(think, 0, Globals.thinkTime);
+            timer.scheduleAtFixedRate(selection, 0, Globals.selectionTime);
+            timer.scheduleAtFixedRate(payoutTask, 0, Globals.HOUR);
 
         } catch(Exception ex) {
             ex.printStackTrace();

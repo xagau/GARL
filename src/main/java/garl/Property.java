@@ -81,12 +81,13 @@ public class Property {
             return value;
 
         } catch(Exception ex) {
+            Log.info("getProperty:"+ ex.getMessage());
             ex.printStackTrace();
         }
         return null;
     }
 
     public static void main(String[] args){
-        System.out.println(getRemoteProperty("settings.increment"));
+        Log.info(getRemoteProperty("settings.increment"));
     }
 }

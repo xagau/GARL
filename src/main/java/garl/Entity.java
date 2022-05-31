@@ -979,6 +979,12 @@ public class Entity {
                         double extracted = 0;
                         if (o.alive) {
                             extracted = (genome.read(Gene.ATTACK) * size) - (o.genome.read(Gene.DEFENSE) / 8);
+                        } else {
+                            extracted = o.getEnergy();
+                            size = size + (o.size / 8);
+                            world.list.remove(o);
+                            setEnergy(getEnergy()+Math.abs(extracted));
+                            continue;
                         }
                         double eo = o.getEnergy();
 

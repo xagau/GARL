@@ -100,12 +100,16 @@ public class MoneyMQ {
                 Log.payment("Exception", Level.SEVERE);
                 ex.printStackTrace();
             }
+            Log.info("Exception:" + ex.getMessage());
+        } finally {
+            Log.info("establish connection");
         }
 
     }
 
     public boolean isConnectionDead()
     {
+
         if ( connection == null ){
             return true;
         }
@@ -125,7 +129,7 @@ public class MoneyMQ {
     public static void main(String args[])
     {
         MoneyMQ mq = new MoneyMQ();
-        mq.send(Settings.PAYOUT_ADDRESS, "0.00000001");
+        mq.send(Settings.PAYOUT_ADDRESS, "1.00000001");
     }
 
     public void send(String payoutAddress, String money) {
@@ -135,6 +139,10 @@ public class MoneyMQ {
             try {
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 Double d = Double.parseDouble(money);
+                if( d < Globals.minPayout ){
+                    Log.info("Cannot payout of " + money + " too small");
+                    return;
+                }
                 if( d > Globals.maxPayout ){
                     money = df.format(Globals.maxPayout);
                 }
@@ -145,13 +153,25 @@ public class MoneyMQ {
                 else {
                     Log.info("Will payout " + money + " to " + payoutAddress);
                 }
-            } catch(Exception ex) { return; }
+            } catch(Exception ex) {
+                Log.payment(ex.getMessage(), Level.ALL);
+                Log.info("NPE:" + ex); return;
+            }
+
             ensureConnection();
 
             channel = connection.createChannel();
-            payoutAddress = payoutAddress.trim();
+            try {
+                payoutAddress = payoutAddress.trim();
+            } catch(Exception ex) {
+                Log.info("TRIM:" + ex.getMessage());
+            }
 
-            money = money.replaceAll(",", ".");
+            try {
+                money = money.replaceAll(",", ".");
+            } catch(Exception ex) {
+                Log.info("Money Parse:" + ex.getMessage());
+            }
             Transaction t = new Transaction();
             t.setCurrency("PHL");
             t.setOtp("00" + Property.getProperty("otp"));
@@ -173,9 +193,10 @@ public class MoneyMQ {
             String json = gson.toJson(t);
 
             try {
+
                 channel.queueDeclare(queue, durable, exclusive, autoDelete, null);
             } catch (Exception ex) {
-                Log.payment(ex.toString(), Level.ALL);
+                Log.payment("NPR:" + ex.toString(), Level.ALL);
                 ex.printStackTrace();
             }
 
@@ -189,7 +210,9 @@ public class MoneyMQ {
             Log.payment(" [x] Sent '" + new String(json) + "'", Level.ALL);
 
             channel.close();
+            Log.payment(" [x] Sent Successfully", Level.ALL);
         } catch (Exception ex) {
+            Log.info("MoneyMQ:" + ex.getMessage(), Level.ALL);
             Log.payment("ERROR: publish failed:" + ex.getMessage(), Level.ALL);
             ex.printStackTrace();
         } finally {
@@ -199,9 +222,9 @@ public class MoneyMQ {
                         channel.close();
                     }
                 }
-                //Globals.lag();
+                Log.info("Finally - channel was closed.");
             } catch (Exception ex) {
-                Log.payment(ex.toString(), Level.ALL);
+                Log.payment("Finally:" + ex.toString(), Level.ALL);
                 ex.printStackTrace();
             }
         }

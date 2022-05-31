@@ -70,26 +70,29 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
                 return;
             }
         } catch(Exception ex) {
+            Log.info(ex);
             ex.printStackTrace();
         }
         this.world.mx = mouseEvent.getX();
         this.world.my = mouseEvent.getY();
         try {
-            ArrayList<Entity> list = world.list;
-            for (int i = 0; i < list.size(); i++) {
-                Entity e = list.get(i);
-                if (e != null) {
-                    if (e.isTouching(this.world.mx, this.world.my)) {
-                        try {
-                            this.world.selected = e;
-                            e.selected = true;
-                            this.world.repaint();
-                            //this.canvas.repaint();
-                        } catch (Exception ex) {
+            if( this.world != null && this.world.list != null ) {
+                ArrayList<Entity> list = this.world.list;
+                for (int i = 0; i < list.size(); i++) {
+                    Entity e = list.get(i);
+                    if (e != null) {
+                        if (e.isTouching(this.world.mx, this.world.my)) {
+                            try {
+                                this.world.selected = e;
+                                e.selected = true;
+                            } catch (Exception ex) {
+                            }
+                            //continue;
                         }
-                        return;
                     }
                 }
+                this.world.repaint();
+
             }
         } catch(Exception ex){
             Log.info(ex);
@@ -101,8 +104,10 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent mouseEvent) {
-        Globals.control.x = mouseEvent.getX();
-        Globals.control.y = mouseEvent.getY();
+        try {
+            Globals.control.x = mouseEvent.getX();
+            Globals.control.y = mouseEvent.getY();
+        } catch(Exception ex) {}
 
     }
 

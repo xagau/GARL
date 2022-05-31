@@ -129,7 +129,7 @@ public final class ScreenSaver {
 
     public static final void main(final String[] args)  {
         try {
-            Utility.cleanup();
+            CullingStrategy.cleanup();
 
             try {
                 World.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
@@ -295,11 +295,9 @@ public final class ScreenSaver {
 
             try {
                 timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
-                timer.scheduleAtFixedRate(think, 0, Globals.taskTime);
-                timer.scheduleAtFixedRate(selection, 50, Globals.selectionTime);
-                //timer.scheduleAtFixedRate(replication, 100, Globals.taskTime);
-                //timer.scheduleAtFixedRate(entityTask, 100, Globals.taskTime);
-                timer.scheduleAtFixedRate(payoutTask, 100, Globals.HOUR);
+                timer.scheduleAtFixedRate(think, 0, Globals.thinkTime);
+                timer.scheduleAtFixedRate(selection, 0, Globals.selectionTime);
+                timer.scheduleAtFixedRate(payoutTask, 0, Globals.HOUR);
 
             } catch(Exception ex) {
                 ex.printStackTrace();

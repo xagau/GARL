@@ -82,8 +82,14 @@ public class World extends JLabel {
 
     public int getLivingCount() {
         int livingCount = 0;
-        for (int i = 0; i < list.size(); i++) {
-            Entity e = (Entity) list.get(i);
+        if( this.list == null ){
+            return 0;
+        }
+        if( this.list.isEmpty()) {
+            return 0;
+        }
+        for (int i = 0; i < this.list.size(); i++) {
+            Entity e = (Entity) this.list.get(i);
             if (e.alive) {
                 livingCount++;
             }
@@ -93,8 +99,11 @@ public class World extends JLabel {
 
     public int getDeadCount() {
         int deadCount = 0;
-        for (int i = 0; i < list.size(); i++) {
-            Entity e = (Entity) list.get(i);
+        if( this.list.isEmpty()) {
+            return 0;
+        }
+        for (int i = 0; i < this.list.size(); i++) {
+            Entity e = (Entity) this.list.get(i);
             if (!e.alive) {
                 deadCount++;
             }
@@ -287,9 +296,11 @@ public class World extends JLabel {
         }
 
         int livingCount = getLivingCount();
+        if( list != null ){
         for (int i = 0; i < list.size(); i++) {
             Entity e = list.get(i);
             drawEntity(g2, e, false);
+        }
         }
 
 

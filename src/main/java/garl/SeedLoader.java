@@ -61,10 +61,12 @@ public class SeedLoader {
                         list.add(lseed);
                         ctr++;
                     } catch (Exception ex) {
-                        Log.info(ex);
+                        if( Globals.verbose ) {
+                            Log.info(ex);
+                        }
                     }
             }
-            if (ctr >= Settings.STARTING_POPULATION) {
+            if (ctr >= CullingStrategy.MAX_ENTITIES) {
                 break;
             }
         }
@@ -75,7 +77,7 @@ public class SeedLoader {
 
         // CODE BELOW SELECTS MOST FIT INDIVIDUALS BASED ON METRICS - REQUIRES REFACTORING
 
-        /*
+
         Comparator comparator = new Comparator() {
             @Override
             public int compare(Object o1, Object o2) {
@@ -90,8 +92,8 @@ public class SeedLoader {
             }
         };
 
-         */
-        /*
+
+
         Seed[] arr = new Seed[list.size()];
         for(int i=0; i < list.size(); i++ ){
             try {
@@ -103,17 +105,16 @@ public class SeedLoader {
         }
         Arrays.sort(arr, comparator);
         for(int i =0; i < arr.length; i++ ){
-            if( i > 20){
+            if( i > Settings.STARTING_POPULATION){
                 break;
             }
             Log.info(arr[i].generation + " " + arr[i].genome);
         }
         list = new ArrayList<>();
-        for(int i =0; i < Math.min(Settings.GENOME_PERSISTANCE, arr.length); i++ ){
+        for(int i =0; i < arr.length; i++ ){
             list.add(arr[i]);
         }
 
-         */
         return list;
     }
 

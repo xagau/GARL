@@ -26,7 +26,7 @@ package garl;
 import java.util.Base64;
 
 public class Settings {
-    public static int MAX_ENTITIES = 1000;
+
 
     public static int INSPECTOR_WIDTH = 420;
     public static double ACCELERATION = 0.3;
@@ -98,6 +98,7 @@ public class Settings {
         try {
             World.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
         } catch(Exception ex) {
+            World.increment = Globals.increment;
             ex.printStackTrace();
         }
 

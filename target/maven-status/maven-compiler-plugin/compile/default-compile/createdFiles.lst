@@ -52,6 +52,7 @@ garl/ReplicationTask.class
 garl/ScreenSaver.class
 garl/ann/InputLayer.class
 garl/SelectionTask.class
+garl/SeedLoader$1.class
 garl/Line.class
 garl/iaf/ActivationFactory$1.class
 garl/iaf/IActivationFunction.class
@@ -69,6 +70,7 @@ garl/Property.class
 garl/GARLTask$3.class
 garl/Brain.class
 garl/Seed.class
+garl/CullingStrategy.class
 garl/KeyHandler.class
 garl/iaf/HTANFunction.class
 garl/Gene.class
