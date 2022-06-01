@@ -72,9 +72,14 @@ public class World extends JLabel {
 
     }
 
+
     World(ArrayList<Entity> population, Selection selection, int w, int h) {
+
         this.list = population;
         this.selection = selection;
+        //GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        //GraphicsDevice myDevice = env.getDefaultScreenDevice();
+
         width = w;
         height = h;
 
