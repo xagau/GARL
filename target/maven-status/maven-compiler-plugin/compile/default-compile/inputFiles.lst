@@ -37,9 +37,9 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Seed.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/CullingStrategy.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Population.java
-/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/NNCanvas.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/SeedLoader.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ScreenSaver.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/AWTThreadManager.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ann/OutputLayer.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/SeedList.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/IActivationFunction.java

@@ -87,30 +87,23 @@ public class Entity {
 
         for (int i = 0; i < list.size(); i++) {
             Obstacle g = list.get(i);
-
-            //if (g.getCenterX()+g.width/2 < (e.location.x+e.size/2) && (g.getCenterY()+g.height/2 < e.location.y+e.size/2)) {
             int tdistX = (int) (g.x + g.width ) - ((int) e.location.x + e.size / 2);
             int tdistY = (int) (g.y + g.height ) - ((int) e.location.y + e.size / 2);
             tdistX = Math.abs(tdistX);
             tdistY = Math.abs(tdistY);
 
-            //if( g.spawner) {
+
             if (tdistX < distX && tdistY < distY) {
                 distX = tdistX;
                 distY = tdistY;
                 closest = g;
             }
-            //}
             if( g.spawner){
-
                 e.distanceX = tdistX;
                 e.distanceY = tdistY;
             }
         }
-        if (e.selected) {
-            //Log.info("Closest:" + closest.x + "-" + closest.y + " w:" + closest.width + " h:" + closest.height + " spawn:" + closest.spawner);
-            //Log.info("Entity:" + e.location.x + "-" + e.location.y);
-        }
+
         if (closest != null) {
             return closest;
         }
@@ -121,23 +114,13 @@ public class Entity {
     public static boolean isCloser(double t, double n, double o)
     {
         n = Math.abs(n);
-        //ny = Math.abs(ny);
         o = Math.abs(o);
-        //oy = Math.abs(oy);
         t = Math.abs(t);
-        //ty = Math.abs(ty);
 
         double od = t - o;
-        //double ody = ty - oy;
-
         double nd = t - n;
-        //double ndy = ty - ny;
         nd = Math.abs(nd);
         od = Math.abs(od);
-
-        //Log.info("new difference:" + nd);
-        //Log.info("old difference:" + od);
-
         if( nd < od ){
             return true;
         }
@@ -163,13 +146,9 @@ public class Entity {
         int y = (int) location.y + ((size / 2) / 2);
 
         Line2D line = new Line2D.Double((double) x, (double) y, (double) _xs, (double) _ys);
-
-
         Obstacle goal = Globals.spawn;
         Line2D line1 = new Line2D.Double(goal.x, goal.y, goal.x + goal.width, goal.y + goal.height);
         if( line.intersectsLine(line1) && first == Globals.spawn) {
-
-
 
             target = true;
 
@@ -204,8 +183,14 @@ public class Entity {
     double targetDegree = -1;
     public ArrayList<Obstacle> sampleForward(Entity e) {
         double direction = e.degree;
-        int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d)))); //);
-        int _ys = (int) ((int) (e.location.y + (e.size / 2)) - (e.size * world.getHeight() * Math.sin(direction * ((Math.PI) / 360d)))); //);
+        if( world == null ){
+            return null;
+        }
+        if( e == null ) {
+            return null;
+        }
+        int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d))));
+        int _ys = (int) ((int) (e.location.y + (e.size / 2)) - (e.size * world.getHeight() * Math.sin(direction * ((Math.PI) / 360d))));
 
         int x = (int) e.location.x + ((e.size / 2) / 2);
         int y = (int) e.location.y + ((e.size / 2) / 2);
@@ -229,28 +214,6 @@ public class Entity {
         return walls;
     }
 
-    public boolean isTrajectoryDeath() {
-
-
-        if (isTrajectoryGoal()) {
-            return false;
-        }
-
-        ArrayList<Obstacle> walls = sampleForward(this);
-        // check to see if wall with closest trajectory is spawn or not.
-        Obstacle first = closest(walls, this);
-
-        this.walls = walls.size();
-        if (walls.isEmpty()) {
-            return false;
-        } else if (!first.spawner) {
-            return true;
-        } else if (first.spawner){
-            return false;
-        } else {
-            return true;
-        }
-    }
 
     public boolean isTouching(Entity e) {
         if (e == null) {
@@ -294,7 +257,6 @@ public class Entity {
         }
         touching = null;
         brain = null;
-        //location = null;
         previous = null;
         last = null;
         world = null;
@@ -305,9 +267,7 @@ public class Entity {
 
     public boolean intersects(Entity a, Entity b) {
 
-        if (!a.alive || !b.alive) {
-            return false;
-        }
+
 
         int a_startX = (int) a.location.x;
         int a_startY = (int) a.location.y;
@@ -426,6 +386,10 @@ public class Entity {
                     move++;
                 }
             }
+            if( isTouching()) {
+                tryAgain = true;
+                move++;
+            }
 
         } while(tryAgain);
 
@@ -469,35 +433,10 @@ public class Entity {
             process(action, world, depth++);
             world.setState(action);
 
-            //return action;
-
-            ArrayList<Obstacle> list = sampleForward(this);
-            Obstacle closest = Entity.closest(list, this);
-            if( closest != null ) {
-                if (closest.getName().equals("spawner")) {
-                    double cx = location.x + size/2;
-                    double cy = location.y + size/2;
-                    double ex = closest.getCenterX();
-                    double ey = closest.getCenterY();
-
-                    Line line = new Line((int)cx, (int)cy,(int) ex,(int) ey);
-
-                    if( ex < cx ) {
-                        location.vx = location.vx - (ex / ey);
-                    } else {
-                        location.vx = location.vx + (ex / ey);
-                    }
-                    if( ey < cy ) {
-                        location.vy = location.vy - (ey / ex);
-                    } else {
-                        location.vy = location.vy + (ey / ex);
-                    }
-
-                }
-            }
-
             if( target && isTrajectoryGoal() ){
                 return Action.FASTER;
+            } else {
+                sample();
             }
 
         } catch (Exception ex) {
@@ -510,6 +449,33 @@ public class Entity {
         return Action.SCAN;
     }
 
+    public void sample(){
+        ArrayList<Obstacle> list = sampleForward(this);
+        Obstacle closest = Entity.closest(list, this);
+        if( closest != null ) {
+            if (closest.getName().equals("spawner")) {
+                double cx = location.x + size/2;
+                double cy = location.y + size/2;
+                double ex = closest.getCenterX();
+                double ey = closest.getCenterY();
+
+                Line line = new Line((int)cx, (int)cy,(int) ex,(int) ey);
+
+                if( ex < cx ) {
+                    location.vx = location.vx - (ex / ey);
+                } else {
+                    location.vx = location.vx + (ex / ey);
+                }
+                if( ey < cy ) {
+                    location.vy = location.vy - (ey / ex);
+                } else {
+                    location.vy = location.vy + (ey / ex);
+                }
+
+            }
+        }
+
+    }
 
 
 
@@ -528,28 +494,13 @@ public class Entity {
             }
 
             if ((Math.abs(location.vx) == Math.abs(0) && Math.abs(location.vy) == Math.abs(0))) {
-                //System.out.println("Return too much depth");
-                //action = ActionFactory.create((double)Action.values().length%genome.read(33));
 
-                /*
-                if( Math.random() > 0.5 ){
-                    location.vx = Settings.ACCELERATION;
-                } else {
-                    location.vx = -Settings.ACCELERATION;
-                }
-                if( Math.random() > 0.5 ){
-                    location.vy = Settings.ACCELERATION;
-                } else {
-                    location.vy = -Settings.ACCELERATION;
-                }
-                action = Action.NONE;
-                 */
                 double d = brain.getOutput();
                 action = ActionFactory.create(d);
                 input = d;
                 location.vx = Math.random();
                 location.vy = Math.random();
-                //Log.info("Action:" + action.toString());
+
             }
 
             if (action == last) {

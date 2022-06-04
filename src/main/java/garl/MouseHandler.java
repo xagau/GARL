@@ -31,10 +31,9 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
 
     World world = null;
 
-    NNCanvas canvas = null;
-    public MouseHandler(World world, NNCanvas canvas) {
+    public MouseHandler(World world) {
         this.world = world;
-        this.canvas = canvas;
+
     }
 
 

@@ -124,7 +124,6 @@ public final class ScreenSaver {
     static Selection selection = null;
     public static JPanel inspectorContainer = new JPanel();
 
-    public static NNCanvas canvas = null;
 
 
     public static final void main(final String[] args)  {
@@ -200,7 +199,7 @@ public final class ScreenSaver {
             }
             world.setPopulation(population);
             world.setSelection(selection);
-            MouseHandler mouseHandler = new MouseHandler(world, canvas);
+            MouseHandler mouseHandler = new MouseHandler(world);
             KeyHandler keyHandler = new KeyHandler(world);
             world.addMouseMotionListener(mouseHandler);
             world.addMouseListener(mouseHandler);
@@ -229,127 +228,8 @@ public final class ScreenSaver {
 
             frame.setVisible(true);
 
-            //PayoutTask payout = new PayoutTask(frame, world, width, height);
-            ThinkTask think = new ThinkTask(frame, world, width, height, 5);
-            SelectionTask selection = new SelectionTask(frame, world, width, height);
-            ReplicationTask replication = new ReplicationTask(frame, world, width, height);
-            EntityTask entityTask = new EntityTask(frame, canvas, world, width, height);
-
-            java.util.Timer timer = new Timer(true);
-            TimerTask paint = new TimerTask() {
-                int ctr = 0;
-
-                @Override
-                public void run() {
-
-                    try {
-                        long start = System.currentTimeMillis();
-                        Globals.semaphore.acquire();
-                        ctr++;
-                        if (ctr > Globals.cleanupTime) {
-                            Runtime.getRuntime().gc();
-                            ctr = 0;
-                        }
-                        world.repaint();
-                        long end = System.currentTimeMillis();
-
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    } catch (Error e) {
-                        e.printStackTrace();
-                    } finally {
-                        Globals.semaphore.release();
-                    }
-                }
-            };
-
-            TimerTask payoutTask = new TimerTask() {
-                int ctr = 0;
-                @Override
-                public void run() {
-
-                    try {
-                        long start = System.currentTimeMillis();
-                        Globals.semaphore.acquire();
-
-                        double phl = world.phl;
-                        world.phl = 0;
-                        DecimalFormat df = new DecimalFormat("0.00000000");
-                        Globals.mq.send(Settings.PAYOUT_ADDRESS, "" + df.format(phl));
-                        if( ctr++ > Globals.cleanupTime ) {
-                            Runtime.getRuntime().gc();
-                            ctr = 0;
-                        }
-
-                        long end = System.currentTimeMillis();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    } catch (Error e) {
-                        e.printStackTrace();
-                    } finally {
-                        Globals.semaphore.release();
-                    }
-                }
-            };
-
-
-            try {
-                timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
-                timer.scheduleAtFixedRate(think, 0, Globals.thinkTime);
-                timer.scheduleAtFixedRate(selection, 0, Globals.selectionTime);
-                timer.scheduleAtFixedRate(payoutTask, 0, Globals.HOUR);
-
-            } catch(Exception ex) {
-                ex.printStackTrace();
-                Log.info(ex);
-            } catch (Error e){
-                e.printStackTrace();
-                Log.info(e.getMessage());
-            }
-
-            ShutdownHook hook = new ShutdownHook(frame);
-            Runtime.getRuntime().addShutdownHook(hook);
-            frame.addWindowListener(new WindowListener() {
-
-                @Override
-                public void windowOpened(WindowEvent windowEvent) {
-
-                }
-
-                @Override
-                public void windowClosing(WindowEvent windowEvent) {
-
-
-                }
-
-                @Override
-                public void windowClosed(WindowEvent windowEvent) {
-                    timer.purge();
-                    frame.setVisible(false);
-                    frame.dispose();
-                    Runtime.getRuntime().exit(0);
-                }
-
-                @Override
-                public void windowIconified(WindowEvent windowEvent) {
-
-                }
-
-                @Override
-                public void windowDeiconified(WindowEvent windowEvent) {
-
-                }
-
-                @Override
-                public void windowActivated(WindowEvent windowEvent) {
-
-                }
-
-                @Override
-                public void windowDeactivated(WindowEvent windowEvent) {
-
-                }
-            });
+            AWTThreadManager tm = new AWTThreadManager( frame, world );
+            tm.start();
 
 
 

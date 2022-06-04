@@ -92,7 +92,6 @@ public class Brain {
 
             list.add((double) (e.fertile ? 1d : 0d));
             list.add((double) (e.isTrajectoryGoal() ? 1d : 0d));
-            list.add((double) (e.isTrajectoryDeath() ? 1d : 0d));
             list.add((double) (e.walls));
             list.add((double) e.size);
             list.add(e.getEnergy());

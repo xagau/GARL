@@ -74,7 +74,7 @@ public class GARLTask extends Thread {
     Selection selection = null;
     public static JPanel inspectorContainer = new JPanel();
 
-    public static NNCanvas canvas = null;
+
 
     public void run() {
 
@@ -127,7 +127,7 @@ public class GARLTask extends Thread {
         }
         world.setPopulation(population);
         world.setSelection(selection);
-        MouseHandler mouseHandler = new MouseHandler(world, canvas);
+        MouseHandler mouseHandler = new MouseHandler(world);
         KeyHandler keyHandler = new KeyHandler(world);
         world.addMouseMotionListener(mouseHandler);
         world.addMouseListener(mouseHandler);
@@ -613,10 +613,6 @@ public class GARLTask extends Thread {
         inspectorContainer.add(new JPanel(), BorderLayout.WEST);
 
         JPanel selectedInspector = new JPanel();
-        canvas = new NNCanvas(world);
-        canvas.setMinimumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
-        canvas.setMaximumSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
-        canvas.setPreferredSize(new Dimension(inspectorPanelWidth, inspectorPanelWidth));
         //selectedInspector.add(canvas);
         //inspectorContainer.add(selectedInspector, BorderLayout.SOUTH);
 
@@ -631,124 +627,9 @@ public class GARLTask extends Thread {
         //5. Show it.
         frame.setVisible(true);
 
-        ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
-        SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
-        //ReplicationTask replication = new ReplicationTask(frame, world, width - inspectorPanelWidth, height);
-        EntityTask entityTask = new EntityTask(frame, canvas, world, width - inspectorPanelWidth, height);
+        AWTThreadManager tm = new AWTThreadManager( frame, world );
+        tm.start();
 
-        Timer timer = new Timer(true);
-        TimerTask paint = new TimerTask() {
-            int ctr = 0;
-
-            @Override
-            public void run() {
-
-                try {
-                    long start = System.currentTimeMillis();
-                    //Globals.semaphore.acquire();
-                    ctr++;
-                    if (ctr > Globals.cleanupTime) {
-                        Runtime.getRuntime().gc();
-                        ctr = 0;
-                    }
-                    world.repaint();
-                    long end = System.currentTimeMillis();
-
-                } catch (Exception ex) {
-                    if( Globals.verbose) {
-                        ex.printStackTrace();
-                    }
-                } catch (Error e) {
-                    if( Globals.verbose) {
-                        e.printStackTrace();
-                    }
-                } finally {
-                    Globals.semaphore.release();
-                }
-            }
-        };
-
-        TimerTask payoutTask = new TimerTask() {
-            @Override
-            public void run() {
-
-                try {
-                    long start = System.currentTimeMillis();
-                    Globals.semaphore.acquire();
-
-                    double phl = world.phl;
-                    world.phl = 0;
-                    DecimalFormat df = new DecimalFormat("0.00000000");
-                    MoneyMQ moneyMQ = new MoneyMQ();
-                    moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
-                    Runtime.getRuntime().gc();
-                    long end = System.currentTimeMillis();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                } catch (Error e) {
-                    e.printStackTrace();
-                } finally {
-                    Globals.semaphore.release();
-                }
-            }
-        };
-
-        try {
-
-
-            timer.scheduleAtFixedRate(paint, 0, 1000 / Globals.FPS);
-            timer.scheduleAtFixedRate(think, 0, Globals.thinkTime);
-            timer.scheduleAtFixedRate(selection, 0, Globals.selectionTime);
-            timer.scheduleAtFixedRate(payoutTask, 0, Globals.HOUR);
-
-        } catch(Exception ex) {
-            ex.printStackTrace();
-            Log.info(ex);
-        } catch(Error er){
-            er.printStackTrace();
-            Log.info(er);
-        }
-
-        ShutdownHook hook = new ShutdownHook(frame);
-        frame.addWindowListener(new WindowListener() {
-            @Override
-            public void windowOpened(WindowEvent windowEvent) {
-
-            }
-
-            @Override
-            public void windowClosing(WindowEvent windowEvent) {
-
-            }
-
-            @Override
-            public void windowClosed(WindowEvent windowEvent) {
-                timer.purge();
-                frame.setVisible(false);
-                frame.dispose();
-                Runtime.getRuntime().exit(0);
-            }
-
-            @Override
-            public void windowIconified(WindowEvent windowEvent) {
-
-            }
-
-            @Override
-            public void windowDeiconified(WindowEvent windowEvent) {
-
-            }
-
-            @Override
-            public void windowActivated(WindowEvent windowEvent) {
-
-            }
-
-            @Override
-            public void windowDeactivated(WindowEvent windowEvent) {
-
-            }
-        });
 
     }
 

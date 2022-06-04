@@ -62,10 +62,11 @@ public class SelectionTask extends TimerTask {
     @Override
     public void run() {
 
+        long start = System.currentTimeMillis();
         try {
             Globals.semaphore.acquire();
 
-            long start = System.currentTimeMillis();
+
             Selection selection = world.selection;
 
             ArrayList<Obstacle> rlist = world.selection.rlist;
@@ -86,14 +87,12 @@ public class SelectionTask extends TimerTask {
                             if (selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
                                 if (rect.spawner) {
                                     Globals.spawn = rect;
-                                    //Globals.spawn.x = (int)(Math.random() * world.width) - rect.width;
-                                    //Globals.spawn.y = (int)(Math.random() * world.height) - rect.height;
 
-                                    Log.info("Spawn:X" + Globals.spawn.x);
-                                    Log.info("Spawn:Y" + Globals.spawn.y);
+                                    if( Globals.verbose ) {
+                                        Log.info("Spawn:X" + Globals.spawn.x);
+                                        Log.info("Spawn:Y" + Globals.spawn.y);
+                                    }
 
-                                    //rect.x = Globals.spawn.x;
-                                    //rect.y = Globals.spawn.y;
 
                                     save(world.epoch, e.generation, e.genome);
                                     for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
@@ -110,10 +109,7 @@ public class SelectionTask extends TimerTask {
                                             world.bestSeeds.add(e.clone());
                                             world.bestSpawn = world.spawns;
                                         }
-                                        long intermediate = System.currentTimeMillis();
-                                        if (intermediate - start > Globals.threshold) {
-                                            return;
-                                        }
+
                                     }
                                     e.reachedGoal = true;
                                     e.die();
@@ -140,12 +136,14 @@ public class SelectionTask extends TimerTask {
                     Runtime.getRuntime().gc();
                     ctr = 0;
                 }
-                long end = System.currentTimeMillis();
             }
         } catch (Exception ex) {
 
         } finally {
             Globals.semaphore.release();
+            long end = System.currentTimeMillis();
+            //System.out.println(end-start + " selection");
+
         }
     }
 }

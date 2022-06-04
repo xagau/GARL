@@ -24,16 +24,15 @@ package garl;
  *
  */
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.TimerTask;
 
 public class EntityTask extends TimerTask {
 
     World world = null;
-    NNCanvas canvas= null;
     int width, height;
     JFrame frame = null;
-    public EntityTask(JFrame frame, NNCanvas canvas, World world, int width, int height){
-        this.canvas = canvas;
+    public EntityTask(JFrame frame,  World world, int width, int height){
         this.world = world;
         this.height = height;
         this.width = width;
@@ -44,20 +43,16 @@ public class EntityTask extends TimerTask {
     public void run() {
         try {
             long start = System.currentTimeMillis();
-            Globals.semaphore.acquire();
-            ctr++;
-            if (ctr > 100) {
-                ctr = 0;
-            }
-            //canvas.repaint();
+            //Globals.semaphore.acquire();
             long end = System.currentTimeMillis();
 
         } catch (Exception ex) {
+
             ex.printStackTrace();
         } catch (Error e) {
             e.printStackTrace();
         } finally {
-            Globals.semaphore.release();
+            //Globals.semaphore.release();
         }
 
     }

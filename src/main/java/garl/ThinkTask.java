@@ -55,17 +55,21 @@ public class ThinkTask extends TimerTask {
             Globals.semaphore.acquire();
 
             int ctr = 0;
-            for (int i = 0; i < world.list.size(); i++) {
+            int sz = world.list.size();
+
+            for (int i = 0; i < sz; i++) {
                 try {
                     ctr++;
-                    if( ctr > 20 ){
+                    if( ctr > 200 ){
                         ctr = 0;
                         Runtime.getRuntime().gc();
                     }
+
                     Entity e = world.list.get(i);
                     if (e.alive) {
                         e.think(world, start);
                     }
+
                 } catch (Exception ex) {
                     Log.info(ex);
                 }
@@ -186,10 +190,14 @@ public class ThinkTask extends TimerTask {
         } catch (Exception ex) {
         } finally {
             Runtime.getRuntime().gc();
+            long end = System.currentTimeMillis();
             Globals.semaphore.release();
+
+            //System.out.println(end-start + " think");
+
         }
 
-        long end = System.currentTimeMillis();
+
 
     }
 }
