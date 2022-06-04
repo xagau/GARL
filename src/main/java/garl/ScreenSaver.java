@@ -166,9 +166,9 @@ public final class ScreenSaver {
             //...create emptyLabel...
             ArrayList<Entity> population = new ArrayList<>();
             if (list == null ) {
-                population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                population = Population.create(world, Settings.STARTING_POPULATION);
             } else if( list.size() < Settings.STARTING_POPULATION) {
-                population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
+                population = Population.create(world, Settings.STARTING_POPULATION);
             } else {
                 Log.info("Loading from seed list:" + list.size());
 

@@ -27,8 +27,8 @@ import java.util.ArrayList;
 
 public class Selection  {
 
-    public static ArrayList<Obstacle> rlist = new ArrayList<>();
-    World world = null;
+    public static volatile ArrayList<Obstacle> rlist = new ArrayList<>();
+    volatile World world = null;
 
     Selection(World world) {
         this.world = world;
@@ -156,7 +156,7 @@ public class Selection  {
         }
     }
 
-    public boolean isTouching(Entity e){
+    public synchronized boolean isTouching(Entity e){
         try {
             for (int i = 0; i < world.selection.rlist.size(); i++) {
                 if( insideRect(world.selection.rlist.get(i), (int)e.location.x, (int)e.location.y) ){
@@ -168,7 +168,7 @@ public class Selection  {
         return false;
     }
 
-    public boolean insideRect(Obstacle rect, int x, int y) {
+    public synchronized boolean insideRect(Obstacle rect, int x, int y) {
         if (x > rect.x && x < rect.x + rect.width && y > rect.y && y < rect.y + rect.height) {
             return true;
         } else {

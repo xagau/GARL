@@ -120,7 +120,7 @@ public class Log {
     static DecimalFormat df = new DecimalFormat("0.00");
     static SimpleDateFormat sdf =new SimpleDateFormat("YYYYMMDD'T'HHmmSS");
 
-    public static void info(String text, Level level) {
+    public synchronized static void info(String text, Level level) {
         if (isDebug()) {
             Logger.getAnonymousLogger().info(text + "\n");
         }
@@ -153,7 +153,7 @@ public class Log {
         } catch (Error err) {err.printStackTrace();}
     }
 
-    public static void payment(String text, Level level) {
+    public synchronized static void payment(String text, Level level) {
         if (isDebug()) {
             Logger.getAnonymousLogger().info(text + "\n");
         }
@@ -183,7 +183,7 @@ public class Log {
         } catch (Error err) {err.printStackTrace();}
     }
 
-    public static void debug(String text, Level level) {
+    public synchronized static void debug(String text, Level level) {
         if (isDebug()) {
             Logger.getAnonymousLogger().info(text + "\n");
         }

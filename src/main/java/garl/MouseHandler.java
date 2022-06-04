@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 public class MouseHandler implements MouseMotionListener, MouseListener {
 
-    World world = null;
+    volatile World world = null;
 
     public MouseHandler(World world) {
         this.world = world;
@@ -57,11 +57,6 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 String money = df.format(world.phl);
                 Globals.mq.send(Settings.PAYOUT_ADDRESS, "" + money);
-                try {
-                    Thread.sleep(300);
-                } catch (Exception ex) {
-
-                }
                 Runtime.getRuntime().halt(0); //.exit(0);
                 Globals.semaphore.release();
                 return;

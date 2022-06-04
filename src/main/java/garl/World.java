@@ -35,33 +35,33 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class World extends Canvas {
-    static ArrayList<Entity> list = new ArrayList<>();
+    volatile static ArrayList<Entity> list = new ArrayList<>();
 
     Selection selection = null;
 
-    static double offset = -180;
-    int controls = 0;
-    static int totalControls = 0;
-    static int totalSpawns = 0;
+    volatile static double offset = -180;
+    volatile int controls = 0;
+    volatile static int totalControls = 0;
+    volatile static int totalSpawns = 0;
 
-    int children = 0;
-    int width;
-    int height;
-    int bestSpawn = 0;
-    static ArrayList<Entity> bestSeeds = new ArrayList<>();
-    static ArrayList<Entity> prospectSeeds = new ArrayList<>();
-    int step = 0;
-    double phl = 0;
-    static double increment = 0.00001000;
-    int mx = 0;
-    int my = 0;
-    static Entity selected = null;
+    volatile int children = 0;
+    volatile int width;
+    volatile int height;
+    volatile int bestSpawn = 0;
+    volatile static ArrayList<Entity> bestSeeds = new ArrayList<>();
+    volatile static ArrayList<Entity> prospectSeeds = new ArrayList<>();
+    volatile int step = 0;
+    volatile double phl = 0;
+    volatile static double increment = 0.00001000;
+    volatile int mx = 0;
+    volatile int my = 0;
+    volatile static Entity selected = null;
 
 
-    long start = System.currentTimeMillis();
-    int spawns = 0;
-    int impact = 0;
-    int epoch = 1;
+    volatile long start = System.currentTimeMillis();
+    volatile int spawns = 0;
+    volatile int impact = 0;
+    volatile int epoch = 1;
 
     public void reset(){
         list = null;
@@ -71,7 +71,9 @@ public class World extends Canvas {
     World(int w, int h) {
         width = w;
         height = h;
-
+        this.setPreferredSize(new Dimension(width, height));
+        this.setMaximumSize(new Dimension(width, height));
+        this.setMinimumSize(new Dimension(width, height));
     }
 
     public World(ArrayList<Entity> population, Selection selection, int w, int h) {
@@ -80,6 +82,9 @@ public class World extends Canvas {
         this.selection = selection;
         width = w;
         height = h;
+        this.setPreferredSize(new Dimension(width, height));
+        this.setMaximumSize(new Dimension(width, height));
+        this.setMinimumSize(new Dimension(width, height));
 
     }
 

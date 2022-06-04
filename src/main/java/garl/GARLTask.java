@@ -89,15 +89,16 @@ public class GARLTask extends Thread {
         world = new World(width - inspectorPanelWidth, height);
         Globals.world = world;
         selection = new Selection(world);
+        world.selection = selection;
         frame.setSize(width, height);
 
         //3. Create components and put them in the frame.
         //...create emptyLabel...
         ArrayList<Entity> population = new ArrayList<>();
         if (list == null ) {
-            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getHeight());
+            population = Population.create(world, Settings.STARTING_POPULATION);
         } else if( list.size() < Settings.STARTING_POPULATION) {
-            population = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth() - inspectorPanelWidth, frame.getHeight());
+            population = Population.create(world, Settings.STARTING_POPULATION);
         } else {
             Log.info("Loading from seed list:" + list.size());
             for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {

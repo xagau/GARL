@@ -28,49 +28,49 @@ import java.awt.geom.Line2D;
 import java.util.ArrayList;
 
 public class Entity {
-    Brain brain = null;
-    Coord location = new Coord();
-    Coord previous = new Coord();
+    volatile Brain brain = null;
+    volatile Coord location = new Coord();
+    volatile Coord previous = new Coord();
 
-    Genome genome = null;
-    int generation = 0;
-    int epoch = 0;
-    boolean fertile = false;
+    volatile Genome genome = null;
+    volatile int generation = 0;
+    volatile int epoch = 0;
+    volatile boolean fertile = false;
     private double energy = Settings.ENERGY * 2 * Math.random();
-    int size = Settings.MIN_SIZE;
-    double degree = Math.random() * 360; // must be 0 - 360 to specify the direction the entity is facing.
-    boolean selected = false;
-    Action last = null;
-    double input = 0;
-    Entity touching = null;
-    boolean reachedGoal = false;
-    double distanceX = Double.NaN;
-    double distanceY = Double.NaN;
+    volatile int size = Settings.MIN_SIZE;
+    volatile double degree = Math.random() * 360; // must be 0 - 360 to specify the direction the entity is facing.
+    volatile boolean selected = false;
+    volatile Action last = null;
+    volatile double input = 0;
+    volatile Entity touching = null;
+    volatile boolean reachedGoal = false;
+    volatile double distanceX = Double.NaN;
+    volatile double distanceY = Double.NaN;
 
-    int walls = 0;
-    int age = 0;
+    volatile int walls = 0;
+    volatile int age = 0;
 
-    Color color = Color.blue;
-    World world = null;
-    boolean alive = true;
+    volatile Color color = Color.blue;
+    volatile World world = null;
+    volatile boolean alive = true;
 
-    double register = 0;
-    double goal = 0;
-    double direction = 1;
+    volatile double register = 0;
+    volatile double goal = 0;
+    volatile double direction = 1;
 
 
-    double anglex = 0;
-    double angley = 0;
+    volatile double anglex = 0;
+    volatile double angley = 0;
 
-    boolean target = false;
+    volatile boolean target = false;
 
-    double targetvx = Double.NaN;
-    double targetvy = Double.NaN;
+    volatile double targetvx = Double.NaN;
+    volatile double targetvy = Double.NaN;
 
-    double targetx = Double.NaN;
-    double targety = Double.NaN;
+    volatile double targetx = Double.NaN;
+    volatile double targety = Double.NaN;
 
-    int depth = 0;
+    volatile int depth = 0;
 
 
 
@@ -180,7 +180,7 @@ public class Entity {
         return false;
     }
 
-    double targetDegree = -1;
+    volatile double targetDegree = -1;
     public ArrayList<Obstacle> sampleForward(Entity e) {
         double direction = e.degree;
         if( world == null ){
@@ -234,7 +234,7 @@ public class Entity {
     }
 
     public boolean isTouching() {
-        for (int i = 0; i < world.list.size(); i++) {
+        for (int i = 0; i < World.list.size(); i++) {
             Entity e = world.list.get(i);
             if (e != this) {
                 if (isTouching(e)) {
@@ -249,19 +249,19 @@ public class Entity {
     }
 
     public void die() {
-        alive = false;
-        if(reachedGoal) {
-            genome.code = Genome.GOAL;
-        } else {
-            genome.code = Genome.DEAD;
-        }
-        touching = null;
-        brain = null;
-        previous = null;
-        last = null;
-        world = null;
         try {
-            Runtime.getRuntime().gc();
+            alive = false;
+            if(reachedGoal) {
+                genome.code = Genome.GOAL;
+            } else {
+                genome.code = Genome.DEAD;
+            }
+            touching = null;
+            brain = null;
+            previous = null;
+            last = null;
+            world = null;
+                //Runtime.getRuntime().gc();
         } catch(Exception ex) { ex.printStackTrace(); Log.info(ex.getMessage()); }
     }
 
@@ -314,13 +314,15 @@ public class Entity {
         }
         ArrayList<Entity> list = new ArrayList<>();
         for (int i = 0; i < world.list.size(); i++) {
-            Entity ent = world.list.get(i);
-            // should be closest.
-            if (ent != null && ent != this) {
-                if (intersects(this, ent)) {
-                    list.add(ent);
+            try {
+                Entity ent = world.list.get(i);
+                // should be closest.
+                if (ent != null && ent != this) {
+                    if (intersects(this, ent)) {
+                        list.add(ent);
+                    }
                 }
-            }
+            } catch(Exception ex) {}
         }
         return list;
     }
@@ -343,16 +345,20 @@ public class Entity {
 
 
     public Entity(World world) {
-        this.world = world;
-        genome = new Genome(this);
-        brain = new Brain(this, genome);
-        float r, g, b;
-        r = genome.read(Gene.SENSORY);
-        g = genome.read(Gene.HIDDEN);
-        b = genome.read(Gene.SIZE);
-        color = Color.getHSBColor(r, 128 % g, 128 % b);
-        size = Math.max(genome.read(Gene.SIZE) % Settings.MAX_SIZE, Settings.MIN_SIZE);
-        degree = Math.random() * 360;
+        try {
+            this.world = world;
+            this.genome = new Genome(this);
+            this.brain = new Brain(this, genome);
+            float r, g, b;
+            r = genome.read(Gene.SENSORY);
+            g = genome.read(Gene.HIDDEN);
+            b = genome.read(Gene.SIZE);
+            this.color = Color.getHSBColor(r, 128 % g, 128 % b);
+            this.size = Math.max(genome.read(Gene.SIZE) % Settings.MAX_SIZE, Settings.MIN_SIZE);
+            this.degree = Math.random() * 360;
+        } catch(Exception ex) {
+            Log.info(ex.getMessage());
+        }
     }
 
     Entity replicate() {
@@ -366,7 +372,9 @@ public class Entity {
         int move = 1;
 
         boolean tryAgain = false;
+        int cnt = 0;
         do {
+            cnt++;
             tryAgain = false;
             if (Math.random() > 0.5) {
                 e.location.x = location.x + Settings.CELL_MOVEMENT + e.size + move;
@@ -391,6 +399,9 @@ public class Entity {
                 move++;
             }
 
+            if( cnt++ > 10 ){
+                break;
+            }
         } while(tryAgain);
 
         e.genome.code = genome.code;

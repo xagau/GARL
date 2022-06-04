@@ -27,6 +27,7 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/ActivationFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Settings.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Selection.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ReplicationTask.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ActionFactory.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/ExpectedSarsaFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/Linear.java
@@ -39,7 +40,6 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ScreenSaver.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/AWTThreadManager.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ann/OutputLayer.java
-/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/SeedList.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/IActivationFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/ann/Neuron.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/QLearningFunction.java

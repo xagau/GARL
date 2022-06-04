@@ -33,32 +33,58 @@ import java.util.Random;
 
 public class Population {
 
-    public static ArrayList<Entity> create(World world, int individuals, int width, int height) {
+    public static ArrayList<Entity> create(World world, int individuals) {
 
         Log.info("Creating population from random");
         ArrayList<Entity> entities = new ArrayList<>();
         Random rand = new Random();
         world.impact = 0;
+        Log.info("Add Individuals:");
+        Log.info("World Width:" + world.width);
+        Log.info("World Height:" + world.height);
+
         for (int i = 0; i < individuals; i++) {
             try {
+                Log.info("Add Individuals: (" + i + ")");
                 Entity e = new Entity(world);
-                e.location.x = rand.nextInt(width);
-                e.location.y = rand.nextInt(height);
-                if( !world.selection.isTouching(e)) {
-                    entities.add(e);
+                if( !Globals.screenSaverMode ){
+                    e.location.x = rand.nextInt(world.width - Settings.INSPECTOR_WIDTH);
+                    e.location.y = rand.nextInt(world.height);
                 } else {
-                    // HACK. Some will be lost.
                     e.location.x = rand.nextInt(world.width);
                     e.location.y = rand.nextInt(world.height);
-                    entities.add(e);
                 }
-            } catch(Exception ex) {}
+                boolean okay = true;
+                do {
+                    if (!world.selection.isTouching(e)) {
+                        entities.add(e);
+                        okay = false;
+                        break;
+                    } else {
+
+                        // HACK. Some will be lost.
+                        if( !Globals.screenSaverMode ){
+                            e.location.x = rand.nextInt(world.width - Settings.INSPECTOR_WIDTH);
+                            e.location.y = rand.nextInt(world.height);
+                        } else {
+                            e.location.x = rand.nextInt(world.width);
+                            e.location.y = rand.nextInt(world.height);
+                        }
+                    }
+                } while(okay);
+            } catch(Exception ex) {
+                Log.info(ex.getMessage());
+                ex.printStackTrace();
+            }
         }
+
+        Log.info("Size from random:" + entities.size() + " individuals: " + individuals);
+
 
         return entities;
     }
 
-    public static ArrayList<Entity> create(World world, ArrayList seedList, int individuals, int width, int height) throws IOException {
+    public static ArrayList<Entity> create(World world, ArrayList seedList) throws IOException {
 
 
         Log.info("Create population from seed list");
@@ -86,7 +112,7 @@ public class Population {
             ex.printStackTrace();
         }
 
-        individuals = Settings.STARTING_POPULATION; // ? , individuals);
+        int individuals = Settings.STARTING_POPULATION; // ? , individuals);
 
         String fileName = "./genomes/" + System.currentTimeMillis() + "-" + world.epoch + "-epoch.json";
         Log.info(fileName);

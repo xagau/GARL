@@ -37,7 +37,7 @@ import java.util.Set;
 
 public class SeedLoader {
 
-    public static ArrayList<Seed> load() throws IOException {
+    public synchronized static ArrayList<Seed> load() throws IOException {
         ArrayList<Seed> list = new ArrayList<Seed>();
         String seed = "./genomes/";
         Gson gson = new Gson(); //null;
@@ -147,7 +147,7 @@ public class SeedLoader {
         }
 
         if( list.size() < Settings.STARTING_POPULATION){
-            ents = Population.create(world, Settings.STARTING_POPULATION, world.getWidth(), world.getHeight());
+            ents = Population.create(world, Settings.STARTING_POPULATION);
         }
 
         return ents;

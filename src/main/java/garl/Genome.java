@@ -29,7 +29,7 @@ public class Genome {
     public static String DEAD = GenomeFactory.create(Settings.GENOME_LENGTH * Settings.GENOME_LENGTH, '-');
     public static String GOAL = GenomeFactory.create(Settings.GENOME_LENGTH * Settings.GENOME_LENGTH, '1');
     Entity owner = null;
-    String code = null;
+    volatile String code = null;
     int numAppends = 0;
     int numDeletions = 0;
     int numRecodes = 0;
@@ -94,7 +94,7 @@ public class Genome {
     }
 
 
-    public void recode(int loc, char c) {
+    public synchronized void recode(int loc, char c) {
 
         if( c == '-'){
             return;
@@ -109,15 +109,15 @@ public class Genome {
         numRecodes++;
     }
 
-    public void jump(int loc) {
+    public synchronized void jump(int loc) {
         if (index + loc < code.length()) {
             index += loc;
         }
     }
 
-    int index = 0;
+    volatile int index = 0;
 
-    public void advance() {
+    public synchronized void advance() {
         index++;
         if (index >= code.length()) {
             index = Settings.GENOME_LENGTH + 1;
@@ -127,7 +127,7 @@ public class Genome {
         }
     }
 
-    public void reverse() {
+    public synchronized void reverse() {
         index--;
         if (index <= Settings.GENOME_LENGTH) {
             index = Settings.GENOME_LENGTH + 1;
@@ -135,7 +135,7 @@ public class Genome {
     }
 
 
-    public int index() {
+    public synchronized int index() {
         advance();
         return index;
     }

@@ -32,7 +32,7 @@ import java.net.URLConnection;
 import java.util.Properties;
 
 public class Property {
-    public static String getRemoteProperty(String name){
+    public synchronized static String getRemoteProperty(String name){
         try {
 
             try {
@@ -59,7 +59,7 @@ public class Property {
         }
     }
 
-    public static String getProperty(String name)
+    public synchronized static String getProperty(String name)
     {
         try {
             String configPath = "./config.properties";

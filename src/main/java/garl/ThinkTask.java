@@ -23,13 +23,13 @@ package garl;
  * @email seanbeecroft@gmail.com
  *
  */
+
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.TimerTask;
 
 public class ThinkTask extends TimerTask {
-    World world = null;
+    volatile World world = null;
 
     int width = 0;
     int height = 0;
@@ -51,23 +51,18 @@ public class ThinkTask extends TimerTask {
 
         start = System.currentTimeMillis();
 
+
         try {
             boolean b = Globals.semaphore.tryAcquire();
-            if( !b ){
+            if (!b) {
                 return;
             }
 
 
             int ctr = 0;
-            int sz = world.list.size();
 
-            for (int i = 0; i < sz; i++) {
+            for (int i = 0; i < world.list.size(); i++) {
                 try {
-                    ctr++;
-                    if( ctr > 200 ){
-                        ctr = 0;
-                        Runtime.getRuntime().gc();
-                    }
 
                     Entity e = world.list.get(i);
                     if (e.alive) {
@@ -79,129 +74,12 @@ public class ThinkTask extends TimerTask {
                 }
             }
 
-            int livingCount = world.getLivingCount();
 
-            if (Settings.NATURAL_REPLICATION) {
-                for (int i = 0; i < world.list.size(); i++) {
-                    try {
-
-                        Entity e = world.list.get(i);
-
-                        if (e.fertile && e.alive) {
-                            int min = Math.max(32, e.genome.read(Gene.MATURITY) * 2);
-                            if (e.alive && (e.age > min)) {
-                                if (Math.random() > 0.8) {
-                                    int n = e.genome.read(Gene.RR) % Settings.MAX_OFFSPRING;
-                                    if (livingCount > Settings.MAX_POPULATION) {
-                                        n = Math.min(2, n);
-                                    }
-                                    final int nn = n;
-
-                                    for (int j = 0; j <= nn; j++) {
-
-                                        Entity a = e.replicate();
-                                        world.list.add(a);
-                                        world.prospectSeeds.add(a);
-                                        world.children++;
-                                    }
-
-                                    e.die();
-
-                                }
-                            }
-                        }
-                    } catch(Exception ex) {}
-                }
-            }
-
-
-
-            if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
-                try {
-
-                    ArrayList<Seed> list = SeedLoader.load();
-
-                    world.reset();
-                    Log.info("Recreate population:" + list.size());
-                    ArrayList<Entity> entList = new ArrayList<Entity>();
-
-                    Runtime.getRuntime().gc();
-                    if( list.size() < Settings.STARTING_POPULATION ){
-                        entList = Population.create(world, Settings.STARTING_POPULATION, world.width, world.height);
-                    } else {
-                        entList = Population.create(world, list, Settings.STARTING_POPULATION, world.width, world.height);
-                    }
-                    world.list = new ArrayList<>();
-                    Runtime.getRuntime().gc();
-
-                    for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
-                        try {
-                            Entity a = (Entity)entList.get(i);
-                            if (a.alive) {
-                                world.list.add(a);
-                            }
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            Log.info(ex);
-                        }
-
-                    }
-
-                    world.children = 0;
-                    world.impact = 0;
-                    world.spawns = 0;
-                    world.controls = 0;
-
-                    livingCount = world.getLivingCount();
-
-                    world.epoch++;
-                    if (world.epoch == Settings.MAX_EPOCH) {
-                        Log.info("total controls:" + world.totalControls);
-                        Log.info("total spawns:" + world.totalSpawns);
-                        Runtime.getRuntime().exit(0);
-                    }
-                    if (livingCount <= Settings.GENE_POOL && list.isEmpty()) {
-                        try {
-                            world.selection.makeNewList();
-                            world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    if (livingCount <= Settings.GENE_POOL && !list.isEmpty()) {
-
-                        try {
-                            world.selection.makeNewList();
-                            if( list.size() < Settings.STARTING_POPULATION ) {
-                                world.list = Population.create(world, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
-                            } else {
-                                world.list = Population.create(world, list, Settings.STARTING_POPULATION, frame.getWidth(), frame.getHeight());
-                            }
-                            Log.info("Using seed list:" + list.size());
-                        } catch (Exception ex) {
-                            if(Globals.verbose) {
-                                ex.printStackTrace();
-                            }
-                        }
-                    }
-
-                } catch (Exception ex) {
-                    if(Globals.verbose) {
-                        ex.printStackTrace();
-                    }
-                }
-
-            }
         } catch (Exception ex) {
         } finally {
-            Runtime.getRuntime().gc();
             long end = System.currentTimeMillis();
             Globals.semaphore.release();
-
+            Runtime.getRuntime().gc();
         }
-
-
-
     }
 }

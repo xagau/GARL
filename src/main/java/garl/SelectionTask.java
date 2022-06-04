@@ -32,7 +32,7 @@ import java.util.TimerTask;
 
 public class SelectionTask extends TimerTask {
 
-    World world = null;
+    volatile World world = null;
 
     int width = 0;
     int height = 0;
@@ -65,7 +65,7 @@ public class SelectionTask extends TimerTask {
         long start = System.currentTimeMillis();
         try {
             boolean b = Globals.semaphore.tryAcquire();
-            if( !b ){
+            if (!b) {
                 return;
             }
 
@@ -91,7 +91,7 @@ public class SelectionTask extends TimerTask {
                                 if (rect.spawner) {
                                     Globals.spawn = rect;
 
-                                    if( Globals.verbose ) {
+                                    if (Globals.verbose) {
                                         Log.info("Spawn:X" + Globals.spawn.x);
                                         Log.info("Spawn:Y" + Globals.spawn.y);
                                     }
@@ -135,17 +135,17 @@ public class SelectionTask extends TimerTask {
                     e.die();
                 }
 
-                if( ctr++ > Globals.cleanupTime ) {
-                    Runtime.getRuntime().gc();
-                    ctr = 0;
-                }
+
             }
         } catch (Exception ex) {
 
         } finally {
             Globals.semaphore.release();
             long end = System.currentTimeMillis();
+            Runtime.getRuntime().gc();
+
 
         }
+
     }
 }

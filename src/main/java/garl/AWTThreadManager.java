@@ -51,6 +51,7 @@ public class AWTThreadManager extends Thread {
             inspectorPanelWidth = Settings.INSPECTOR_WIDTH;;
         }
 
+        ReplicationTask replication = new ReplicationTask(world, frame);
         ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
         java.util.Timer timer = new java.util.Timer(true);
@@ -72,7 +73,11 @@ public class AWTThreadManager extends Thread {
                         return;
                     }
 
-                    world.render();
+                    SwingUtilities.invokeLater(new Thread() {
+                        public void run() {
+                            world.render();
+                        }
+                    });
 
                     long end = System.currentTimeMillis();
                 } catch (Exception ex) {
@@ -108,7 +113,6 @@ public class AWTThreadManager extends Thread {
                     DecimalFormat df = new DecimalFormat("0.00000000");
                     MoneyMQ moneyMQ = new MoneyMQ();
                     moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
-                    Runtime.getRuntime().gc();
                     long end = System.currentTimeMillis();
 
                 } catch (Exception ex) {
@@ -126,9 +130,10 @@ public class AWTThreadManager extends Thread {
 
             int fps = 1000 / Globals.FPS;
             timer.scheduleAtFixedRate(paint, 0, fps);
-            timer.scheduleAtFixedRate(think, 0, Globals.thinkTime);
-            timer.scheduleAtFixedRate(selection, 0, Globals.selectionTime);
-            timer.scheduleAtFixedRate(payoutTask, 0, Globals.HOUR);
+            timer.scheduleAtFixedRate(think, 1, Globals.thinkTime);
+            timer.scheduleAtFixedRate(selection, 2, Globals.selectionTime);
+            timer.scheduleAtFixedRate(replication, 3, Globals.replicationTime);
+            timer.scheduleAtFixedRate(payoutTask, 4, Globals.HOUR);
 
 
         } catch(Exception ex) {

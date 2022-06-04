@@ -11,6 +11,7 @@ garl/Coord.class
 garl/iaf/SoftmaxFunction.class
 garl/Population.class
 garl/GARLTask$11.class
+garl/AWTThreadManager$1$1.class
 garl/iaf/ActivationFunction.class
 garl/GFG.class
 garl/MoneyMQ.class
@@ -34,7 +35,6 @@ garl/GARLTask$5.class
 garl/ann/NeuralLayer.class
 garl/iaf/Linear.class
 garl/GARLTask$8.class
-garl/SeedList.class
 garl/Tester.class
 garl/Utility.class
 garl/iaf/CosusoidFunction.class
@@ -46,6 +46,7 @@ garl/iaf/SarsaFunction.class
 garl/Transaction.class
 garl/iaf/QLearningFunction.class
 garl/iaf/ActivationFactory.class
+garl/ReplicationTask.class
 garl/ScreenSaver.class
 garl/ann/InputLayer.class
 garl/SelectionTask.class

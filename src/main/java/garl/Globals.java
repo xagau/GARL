@@ -34,8 +34,8 @@ public class Globals {
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + major + "." + minor;
     public static boolean screenSaverMode = false;
-    public static Obstacle spawn = new Obstacle();
-    public static Obstacle control = new Obstacle();
+    public static volatile Obstacle spawn = new Obstacle();
+    public static volatile Obstacle control = new Obstacle();
 
     public static boolean verbose = false;
     public static Semaphore semaphore = new Semaphore(100);
@@ -49,12 +49,13 @@ public class Globals {
     public static double minPayout = 0.001;
     public static boolean installed = false;
 
-    public static World world = null;
+    public static volatile World world = null;
 
     public static GARLFrame frame = null;
     public static int cleanupTime = 100;
-    public static int thinkTime = 50;
-    public static int selectionTime = 20;
+    public static int thinkTime = 80;
+    public static int selectionTime = 50;
+    public static int replicationTime = 200;
     public static long HOUR = 1000 * 60 * 60;
     static {
 
