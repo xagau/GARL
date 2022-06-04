@@ -52,7 +52,11 @@ public class ThinkTask extends TimerTask {
         start = System.currentTimeMillis();
 
         try {
-            Globals.semaphore.acquire();
+            boolean b = Globals.semaphore.tryAcquire();
+            if( !b ){
+                return;
+            }
+
 
             int ctr = 0;
             int sz = world.list.size();
@@ -192,9 +196,7 @@ public class ThinkTask extends TimerTask {
             Runtime.getRuntime().gc();
             long end = System.currentTimeMillis();
             Globals.semaphore.release();
-
-            //System.out.println(end-start + " think");
-
+            System.out.println("Think:");
         }
 
 

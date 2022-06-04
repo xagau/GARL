@@ -175,20 +175,23 @@ public class Brain {
 
 
     public double getOutput(Entity e) {
-        if( e != null && e.brain != null && e.brain.ann != null && e.brain.ann.output != null ){
-            NeuralLayer d = e.brain.ann.output;
-            ArrayList<Neuron> n = d.neuron;
-            Neuron nn = d.neuron.get(0);
-            double r = 0;
-            if (nn == null) {
-                Log.info("nn is null");
-            } else {
-                r = nn.getOutput();
+
+        try {
+            if (e != null && e.brain != null && e.brain.ann != null && e.brain.ann.output != null) {
+                NeuralLayer d = e.brain.ann.output;
+                ArrayList<Neuron> n = d.neuron;
+                Neuron nn = d.neuron.get(0);
+                double r = 0;
+                if (nn == null) {
+                    Log.info("nn is null");
+                } else {
+                    r = nn.getOutput();
+                }
+                return r;
             }
-            return r;
-        } else {
-            return Math.random() * Action.values().length ;
+        } catch(Exception ex) {
         }
+        return Math.random() * Action.values().length;
     }
 
     Action last = null;

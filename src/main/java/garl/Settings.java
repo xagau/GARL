@@ -54,8 +54,8 @@ public class Settings {
     public static int MAX_SPEED = 3;
     public static int MAX_POPULATION = 60;
 
-    public static double ENERGY = 150.0 ;
-    public static double ENERGY_STEP_COST = 0.00001;
+    public static double ENERGY = 15.0 ;
+    public static double ENERGY_STEP_COST = 0.0001;
     public static double ENERGY_STEP_SLEEP_COST = 0.02;
 
     static {

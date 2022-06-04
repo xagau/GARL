@@ -38,7 +38,6 @@ garl/SeedList.class
 garl/Tester.class
 garl/Utility.class
 garl/iaf/CosusoidFunction.class
-garl/EntityTask.class
 garl/GARLTask$13.class
 garl/GARLTask$4.class
 garl/ann/NeuralNet.class
@@ -47,7 +46,6 @@ garl/iaf/SarsaFunction.class
 garl/Transaction.class
 garl/iaf/QLearningFunction.class
 garl/iaf/ActivationFactory.class
-garl/ReplicationTask.class
 garl/ScreenSaver.class
 garl/ann/InputLayer.class
 garl/SelectionTask.class

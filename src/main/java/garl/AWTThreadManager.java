@@ -67,9 +67,13 @@ public class AWTThreadManager extends Thread {
                         Runtime.getRuntime().gc();
                         ctr = 0;
                     }
-                    //Globals.semaphore.acquire();
+                    boolean b = Globals.semaphore.tryAcquire();
+                    if( !b ){
+                        return;
+                    }
 
                     world.render();
+
                     long end = System.currentTimeMillis();
                 } catch (Exception ex) {
                     if( Globals.verbose) {
@@ -80,8 +84,8 @@ public class AWTThreadManager extends Thread {
                         e.printStackTrace();
                     }
                 } finally {
-                    //Globals.semaphore.release();
-
+                    Globals.semaphore.release();
+                    System.out.println("Paint");
                 }
             }
         };
@@ -93,7 +97,11 @@ public class AWTThreadManager extends Thread {
                 try {
 
                     long start = System.currentTimeMillis();
-                    Globals.semaphore.acquire();
+                    boolean b = Globals.semaphore.tryAcquire();
+                    if( !b ){
+                        return;
+                    }
+
 
                     double phl = world.phl;
                     world.phl = 0;
@@ -103,32 +111,29 @@ public class AWTThreadManager extends Thread {
                     Runtime.getRuntime().gc();
                     long end = System.currentTimeMillis();
 
-                    //System.out.println(end-start + " payout");
-
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 } catch (Error e) {
                     e.printStackTrace();
                 } finally {
                     Globals.semaphore.release();
+                    System.out.println("Payout");
                 }
             }
         };
 
         try {
 
-
-
             int fps = 1000 / Globals.FPS;
             timer.scheduleAtFixedRate(paint, 0, fps);
             timer.scheduleAtFixedRate(think, 0, Globals.thinkTime);
-            //timer.scheduleAtFixedRate(entityTask, 0, Globals.thinkTime);
             timer.scheduleAtFixedRate(selection, 0, Globals.selectionTime);
             timer.scheduleAtFixedRate(payoutTask, 0, Globals.HOUR);
 
+
         } catch(Exception ex) {
             ex.printStackTrace();
-            Log.info(ex);
+            Log.info(ex.getMessage());
         } catch(Error er){
             er.printStackTrace();
             Log.info(er);
@@ -175,14 +180,7 @@ public class AWTThreadManager extends Thread {
             }
         });
 
-        //boolean b = true;
-        //while(b){
-        //    try {
-        //        world.render();
-                //world.paint(frame.getGraphics());
-        //    } catch(Exception ex) { ex.printStackTrace(); }
-            //world.paint();
-        //}
+
 
 
     }

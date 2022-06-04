@@ -58,6 +58,7 @@ public class World extends Canvas {
     static Entity selected = null;
 
 
+    long start = System.currentTimeMillis();
     int spawns = 0;
     int impact = 0;
     int epoch = 1;
@@ -73,14 +74,10 @@ public class World extends Canvas {
 
     }
 
-
-    World(ArrayList<Entity> population, Selection selection, int w, int h) {
+    public World(ArrayList<Entity> population, Selection selection, int w, int h) {
 
         this.list = population;
         this.selection = selection;
-        //GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        //GraphicsDevice myDevice = env.getDefaultScreenDevice();
-
         width = w;
         height = h;
 
@@ -341,7 +338,7 @@ public class World extends Canvas {
 
     }
 
-    int m = 0;
+    int m = 1;
 
     public void paint(Graphics g){
         render();
@@ -418,8 +415,15 @@ public class World extends Canvas {
             g2.fillRect(0, getHeight() - 24, getWidth(), getHeight());
             g2.setColor(Color.YELLOW);
             String logLine = "No message";
+            //long now = System.currentTimeMillis();
+            //long delta = now - start;
+            //long time = delta / 1000;
+            //long frameRate = m / time ;
+
+           // start = System.currentTimeMillis();
+
             try {
-                logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " killed:" + (list.size() - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " best seed:" + bestSpawn + " frames:" + m++;
+                logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " killed:" + (list.size() - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " best seed:" + bestSpawn + " FPS: N/A frames:" + m++;
             } catch(Exception ex) {}
             g2.drawString(logLine, 10, (getHeight() - 10));
             g2.dispose();

@@ -64,7 +64,10 @@ public class SelectionTask extends TimerTask {
 
         long start = System.currentTimeMillis();
         try {
-            Globals.semaphore.acquire();
+            boolean b = Globals.semaphore.tryAcquire();
+            if( !b ){
+                return;
+            }
 
 
             Selection selection = world.selection;
@@ -142,6 +145,8 @@ public class SelectionTask extends TimerTask {
         } finally {
             Globals.semaphore.release();
             long end = System.currentTimeMillis();
+            System.out.println("Selection:");
+
             //System.out.println(end-start + " selection");
 
         }

@@ -29,7 +29,7 @@ import java.util.concurrent.Semaphore;
 
 public class Globals {
 
-    public static int minor = 40;
+    public static int minor = 41;
     public static int major = 1;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + major + "." + minor;
@@ -38,7 +38,7 @@ public class Globals {
     public static Obstacle control = new Obstacle();
 
     public static boolean verbose = false;
-    public static Semaphore semaphore = new Semaphore(1);
+    public static Semaphore semaphore = new Semaphore(100);
 
     public static MoneyMQ mq = new MoneyMQ();
 
