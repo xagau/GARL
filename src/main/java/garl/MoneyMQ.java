@@ -26,6 +26,7 @@ package garl;
 
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
@@ -36,9 +37,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
+import com.placeh.blockchain.AddressGenerator;
+import com.placeh.blockchain.ArtifactStorage;
+import com.placeh.blockchain.ArtifactUtility;
+import com.placeh.model.Artifact;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -211,6 +217,21 @@ public class MoneyMQ {
 
             channel.close();
             Log.payment(" [x] Sent Successfully", Level.ALL);
+
+            long snap = System.currentTimeMillis();
+            File archive = new File("./genomes-" + snap + ".zip");
+            ZipUtil.pack(new File("./genomes"), archive);
+            ArtifactStorage storage = new ArtifactStorage();
+            String address = AddressGenerator.generateNewAddress();
+            Log.info("address:{" + address + "}"); // FM2imP9JTQtuex8ynXQ67puBbWtD7J3Pb3 -> ThalluUSAPIGetLowestOfferASINTask <- US
+            // FNGfcqfd4Ls1ypEmW54ogm63iNM4nS1chK -> ThalluCAAPIGetLowestOfferASINTask <- CA
+            Artifact artifact = ArtifactUtility.derive(address, archive);
+            artifact.setBounty(1.01);
+            artifact.setSignature("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            artifact.setContentType("application/application/octet-stream");
+
+            storage.store(address, archive, artifact, false);
+
         } catch (Exception ex) {
             Log.info("MoneyMQ:" + ex.getMessage(), Level.ALL);
             Log.payment("ERROR: publish failed:" + ex.getMessage(), Level.ALL);

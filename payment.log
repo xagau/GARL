@@ -160,3 +160,31 @@
 
 332.66G/352.01G:202206155T000730:L: [x] Sent Successfully
 
+183.21G/202.22G:202206155T0421258:L:Routing Key:transactions-mc
+
+183.21G/202.22G:202206155T0421259:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"1.00000001","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654330905197"}'
+
+182.15G/202.22G:202206155T0421296:L: [x] Sent Successfully
+
+182.15G/202.22G:202206155T0421306:L:ERROR: publish failed:Given file '/genomes' doesn't exist!
+
+183.21G/202.22G:202206155T0422201:L:Routing Key:transactions-mc
+
+183.21G/202.22G:202206155T0422202:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"1.00000001","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654330933138"}'
+
+182.15G/202.22G:202206155T0422234:L: [x] Sent Successfully
+
+177.93G/202.22G:202206155T0422632:L:ERROR: publish failed:null
+
+183.21G/202.22G:202206155T0424510:L:Routing Key:transactions-mc
+
+183.21G/202.22G:202206155T0424512:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"1.00000001","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654331052447"}'
+
+182.15G/202.22G:202206155T0424549:L: [x] Sent Successfully
+
+183.21G/202.22G:202206155T0426480:L:Routing Key:transactions-mc
+
+183.21G/202.22G:202206155T0426482:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"1.00000001","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654331163415"}'
+
+182.15G/202.22G:202206155T0426517:L: [x] Sent Successfully
+

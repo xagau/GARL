@@ -42,7 +42,7 @@ public class Globals {
 
     public static MoneyMQ mq = new MoneyMQ();
 
-    static double increment = 0.00001000;
+    static double increment = 0.0001000;
     final static int FPS = 32;
     public static long threshold = 1000/FPS;
     public static double maxPayout = 5.00;

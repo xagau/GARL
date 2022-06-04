@@ -9,6 +9,17 @@
     <version>1.0-SNAPSHOT</version>
     <dependencies>
         <dependency>
+            <groupId>com.placeh</groupId>
+            <artifactId>placeholders-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.zeroturnaround</groupId>
+            <artifactId>zt-zip</artifactId>
+            <version>1.15</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
             <version>3.6.6</version>
