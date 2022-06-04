@@ -188,3 +188,9 @@
 
 182.15G/202.22G:202206155T0426517:L: [x] Sent Successfully
 
+183.21G/202.22G:202206155T0439567:L:Routing Key:transactions-mc
+
+183.21G/202.22G:202206155T0439569:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"1.00000001","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654331992502"}'
+
+183.21G/202.22G:202206155T0439602:L: [x] Sent Successfully
+

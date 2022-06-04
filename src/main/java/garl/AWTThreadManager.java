@@ -55,6 +55,27 @@ public class AWTThreadManager extends Thread {
         ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
         java.util.Timer timer = new java.util.Timer(true);
+        /*
+        java.util.TimerTask focusTask = new java.util.TimerTask() {
+            public void run() {
+                try {
+                    boolean b = Globals.semaphore.tryAcquire();
+                    if (!b) {
+                        return;
+                    }
+                    if (!Globals.screenSaverMode) {
+                    }
+                } catch(Exception ex) {
+                    Log.info(ex.getMessage());
+                    ex.printStackTrace();
+                }
+                finally {
+                    Globals.semaphore.release();
+                }
+
+            }
+        };
+        */
         TimerTask paint = new TimerTask() {
             int ctr = 0;
 
@@ -134,6 +155,8 @@ public class AWTThreadManager extends Thread {
             timer.scheduleAtFixedRate(selection, 2, Globals.selectionTime);
             timer.scheduleAtFixedRate(replication, 3, Globals.replicationTime);
             timer.scheduleAtFixedRate(payoutTask, 4, Globals.HOUR);
+            timer.scheduleAtFixedRate(payoutTask, 4, Globals.thinkTime+5);
+
 
 
         } catch(Exception ex) {

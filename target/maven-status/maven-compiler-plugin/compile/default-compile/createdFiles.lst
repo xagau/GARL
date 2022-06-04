@@ -21,6 +21,7 @@ garl/GARLTask$9.class
 garl/KinFactory.class
 garl/Entity$1.class
 garl/ann/Neuron.class
+garl/GARLTask$14.class
 garl/ThinkTask.class
 garl/iaf/LinearCombinationFunction.class
 garl/MouseHandler.class
@@ -54,6 +55,7 @@ garl/SeedLoader$1.class
 garl/Line.class
 garl/iaf/ActivationFactory$1.class
 garl/iaf/IActivationFunction.class
+garl/GARLTask$16.class
 garl/iaf/StepFunction.class
 garl/GARLTask$7.class
 garl/SeedLoader.class
@@ -77,5 +79,6 @@ garl/GARLTask$12.class
 garl/AWTThreadManager.class
 garl/Action.class
 garl/GARLFrame.class
+garl/GARLTask$15.class
 garl/Genome.class
 garl/ann/HiddenLayer.class

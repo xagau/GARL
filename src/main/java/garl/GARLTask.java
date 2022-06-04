@@ -238,6 +238,43 @@ public class GARLTask extends Thread {
         });
         inspector.add(genePool);
         inspector.add(new JLabel("Minimum Size"));
+        inspectorContainer.addFocusListener(new FocusAdapter() {
+        });
+        inspector.addMouseListener(new MouseListener(){
+
+
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+                inspector.requestFocus(true);
+                try {
+                    Thread.currentThread().setPriority(0);
+                } catch(Exception ex){}
+           }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+                inspector.requestFocus(false);
+                try {
+                    Thread.currentThread().setPriority(20);
+                } catch(Exception ex){}
+
+            }
+        });
         JTextField minSize = new JTextField("" + Settings.MIN_SIZE);
         minSize.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
@@ -613,12 +650,41 @@ public class GARLTask extends Thread {
         inspectorContainer.add(new JPanel(), BorderLayout.EAST);
         inspectorContainer.add(new JPanel(), BorderLayout.WEST);
 
-        JPanel selectedInspector = new JPanel();
-        //selectedInspector.add(canvas);
-        //inspectorContainer.add(selectedInspector, BorderLayout.SOUTH);
-
         inspectorContainer.add(inspector, BorderLayout.CENTER);
+        inspectorContainer.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
 
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+                inspector.requestFocus(true);
+                try {
+                    Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+                } catch(Exception ex){}
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+                inspector.requestFocus(true);
+                try {
+                    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+                } catch(Exception ex){}
+
+            }
+        });
 
         frame.add(world, BorderLayout.CENTER);
         frame.add(inspectorContainer, BorderLayout.EAST);
