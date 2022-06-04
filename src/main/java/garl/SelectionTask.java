@@ -145,9 +145,6 @@ public class SelectionTask extends TimerTask {
         } finally {
             Globals.semaphore.release();
             long end = System.currentTimeMillis();
-            System.out.println("Selection:");
-
-            //System.out.println(end-start + " selection");
 
         }
     }

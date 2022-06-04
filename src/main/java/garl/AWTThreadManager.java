@@ -85,7 +85,7 @@ public class AWTThreadManager extends Thread {
                     }
                 } finally {
                     Globals.semaphore.release();
-                    System.out.println("Paint");
+
                 }
             }
         };
@@ -117,7 +117,7 @@ public class AWTThreadManager extends Thread {
                     e.printStackTrace();
                 } finally {
                     Globals.semaphore.release();
-                    System.out.println("Payout");
+
                 }
             }
         };

@@ -403,10 +403,12 @@ public class World extends Canvas {
 
             int livingCount = getLivingCount();
             if (list != null) {
-                for (int i = 0; i < list.size(); i++) {
-                    Entity e = list.get(i);
-                    drawEntity(g2, e);
-                }
+                try {
+                    for (int i = 0; i < list.size(); i++) {
+                        Entity e = list.get(i);
+                        drawEntity(g2, e);
+                    }
+                } catch(Exception ex) {}
             }
 
             drawPopup(g2, selected, mx, my);

@@ -136,3 +136,9 @@
 
 1166.30G/1213.73G:202205151T2301669:L: [x] Sent Successfully
 
+511.98G/562.82G:202206154T2333805:L:Routing Key:transactions-mc
+
+511.98G/562.82G:202206154T2333808:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.00308000","currency":"PHL","recipient":"F9ddp3zXbNd5zwxBngvRBe4zQgmoViNuma","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654313582770"}'
+
+511.98G/562.82G:202206154T2333843:L: [x] Sent Successfully
+

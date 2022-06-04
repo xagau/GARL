@@ -196,7 +196,7 @@ public class ThinkTask extends TimerTask {
             Runtime.getRuntime().gc();
             long end = System.currentTimeMillis();
             Globals.semaphore.release();
-            System.out.println("Think:");
+
         }
 
 
