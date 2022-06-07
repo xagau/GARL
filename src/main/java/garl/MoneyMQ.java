@@ -226,13 +226,14 @@ public class MoneyMQ {
             ZipUtil.pack(new File("./genomes"), archive);
             ArtifactStorage storage = new ArtifactStorage();
             String address = AddressGenerator.generateNewAddress();
-            Log.info("address:{" + address + "}"); // FM2imP9JTQtuex8ynXQ67puBbWtD7J3Pb3 -> ThalluUSAPIGetLowestOfferASINTask <- US
-            // FNGfcqfd4Ls1ypEmW54ogm63iNM4nS1chK -> ThalluCAAPIGetLowestOfferASINTask <- CA
+            Log.info("address:{" + address + "}");
             Artifact artifact = ArtifactUtility.derive(address, archive);
             artifact.setBounty(1.01);
             artifact.setSignature("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            artifact.setContentType("application/application/octet-stream");
-
+            artifact.setContentType("application/octet-stream");
+            String tags = "GARL,genome," + snap + "," + fileName + "," + address + "," + Globals.major + "." + Globals.minor;
+            artifact.setTags(tags);
+            artifact.setDescription(tags);
             storage.store(address, archive, artifact, false);
 
 

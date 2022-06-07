@@ -524,3 +524,9 @@
 
 152.32G/202.22G:202206157T2229506:L: [x] Sent Successfully
 
+180.87G/192.41G:202206157T2326518:L:Routing Key:transactions-mc
+
+180.87G/192.41G:202206157T2326520:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50440000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1654572377480","version":"1.43","taskType":"GARL-genome"}'
+
+180.35G/192.41G:202206157T2326553:L: [x] Sent Successfully
+
