@@ -127,11 +127,12 @@ public final class ScreenSaver {
 
 
     public static final void main(final String[] args)  {
+
         try {
             CullingStrategy.cleanup();
 
             try {
-                World.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
+                Globals.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
             } catch(Exception ex) {
                 ex.printStackTrace();
             }
@@ -139,6 +140,7 @@ public final class ScreenSaver {
             Log.info("Running in Screen Saver Mode:");
             Globals.screenSaverMode = true;
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
 
             ArrayList<Seed> list = new ArrayList<>();
             if (args.length >= 0) {
@@ -228,8 +230,13 @@ public final class ScreenSaver {
 
             frame.setVisible(true);
 
-            AWTThreadManager tm = new AWTThreadManager( frame, world );
-            tm.start();
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    AWTThreadManager tm = new AWTThreadManager( frame, world );
+                    tm.start();
+
+                }
+            });
 
 
 

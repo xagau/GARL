@@ -23,21 +23,16 @@ package garl;
  * @email seanbeecroft@gmail.com
  *
  */
-import com.google.gson.Gson;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.Timer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.UUID;
 
 
 public class GARLTask extends Thread {
@@ -56,14 +51,23 @@ public class GARLTask extends Thread {
 
     public static void main(String[] args) throws IOException {
 
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                ArrayList<Seed> list = new ArrayList<>();
+                if (args.length > 0) {
+                    try {
+                        list = SeedLoader.load();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-        ArrayList<Seed> list = new ArrayList<>();
-        if (args.length > 0) {
-            list = SeedLoader.load();
-        }
+                GARLTask task = new GARLTask(list);
+                task.start();
 
-        GARLTask task = new GARLTask(list);
-        task.start();
+            }
+        });
+
 
     }
 
@@ -82,6 +86,7 @@ public class GARLTask extends Thread {
 
         //2. Optional: What happens when the frame closes?
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
 
         int width = 1800;
         int height = 1000;
@@ -643,7 +648,6 @@ public class GARLTask extends Thread {
         });
         payoutAddress.setText(address);
         inspector.add(payoutAddress);
-        //inspector.add(new JLabel("Selected Agent ANN"));
 
         inspectorContainer.setLayout(new BorderLayout());
         inspectorContainer.add(new JPanel(), BorderLayout.NORTH);
@@ -651,40 +655,6 @@ public class GARLTask extends Thread {
         inspectorContainer.add(new JPanel(), BorderLayout.WEST);
 
         inspectorContainer.add(inspector, BorderLayout.CENTER);
-        inspectorContainer.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mousePressed(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
-                inspector.requestFocus(true);
-                try {
-                    Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-                } catch(Exception ex){}
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent mouseEvent) {
-                inspector.requestFocus(true);
-                try {
-                    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-                } catch(Exception ex){}
-
-            }
-        });
 
         frame.add(world, BorderLayout.CENTER);
         frame.add(inspectorContainer, BorderLayout.EAST);
@@ -694,7 +664,7 @@ public class GARLTask extends Thread {
         //5. Show it.
         frame.setVisible(true);
 
-        AWTThreadManager tm = new AWTThreadManager( frame, world );
+        AWTThreadManager tm = new AWTThreadManager(frame, world);
         tm.start();
 
 

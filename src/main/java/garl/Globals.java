@@ -25,11 +25,12 @@ package garl;
  */
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
+import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
 public class Globals {
 
-    public static int minor = 42;
+    public static int minor = 43;
     public static int major = 1;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + major + "." + minor;
@@ -37,31 +38,31 @@ public class Globals {
     public static volatile Obstacle spawn = new Obstacle();
     public static volatile Obstacle control = new Obstacle();
 
-    public static boolean verbose = false;
+    public static boolean verbose = true;
     public static Semaphore semaphore = new Semaphore(100);
 
     public static MoneyMQ mq = new MoneyMQ();
 
-    static double increment = 0.0001000;
+    static double increment = 0.00010000;
     final static int FPS = 32;
-    public static long threshold = 1000/FPS;
-    public static double maxPayout = 5.00;
-    public static double minPayout = 0.001;
+
+    final static int ATC = 10;
+    public static double maxPayout = 25.00;
+    public static double minPayout = 0.5;
+    public static double minManualPayout = 0.001;
+
     public static boolean installed = false;
 
     public static volatile World world = null;
 
-    public static GARLFrame frame = null;
-    public static int cleanupTime = 100;
+
     public static int thinkTime = 80;
     public static int selectionTime = 50;
     public static int replicationTime = 200;
-    public static long HOUR = 1000 * 60 * 60;
     static {
-
-
-
-
+        try {
+            Locale.setDefault(Locale.US);
+        } catch(Exception ex) { }
     }
 
 }

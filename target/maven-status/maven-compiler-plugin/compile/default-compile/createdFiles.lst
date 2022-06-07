@@ -11,7 +11,6 @@ garl/Coord.class
 garl/iaf/SoftmaxFunction.class
 garl/Population.class
 garl/GARLTask$11.class
-garl/AWTThreadManager$1$1.class
 garl/iaf/ActivationFunction.class
 garl/GFG.class
 garl/MoneyMQ.class
@@ -31,6 +30,7 @@ garl/GARLTask$10.class
 garl/GenomeFactory.class
 garl/GARLTask.class
 garl/Kernel.class
+garl/ScreenSaver$1.class
 garl/ann/OutputLayer.class
 garl/GARLTask$5.class
 garl/ann/NeuralLayer.class
@@ -42,6 +42,7 @@ garl/iaf/CosusoidFunction.class
 garl/GARLTask$13.class
 garl/GARLTask$4.class
 garl/ann/NeuralNet.class
+garl/PaintTask.class
 garl/Obstacle.class
 garl/iaf/SarsaFunction.class
 garl/Transaction.class
@@ -65,11 +66,11 @@ garl/Log.class
 garl/Settings.class
 garl/iaf/ReluFunction.class
 garl/Property.class
+garl/PayoutTask.class
 garl/GARLTask$3.class
 garl/Brain.class
 garl/Seed.class
 garl/CullingStrategy.class
-garl/AWTThreadManager$3.class
 garl/KeyHandler.class
 garl/iaf/HTANFunction.class
 garl/Gene.class

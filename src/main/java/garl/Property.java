@@ -29,6 +29,8 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DecimalFormat;
+import java.util.Deque;
 import java.util.Properties;
 
 public class Property {
@@ -55,7 +57,9 @@ public class Property {
             Log.info(ex);
             ex.printStackTrace();
         } finally {
-            return "0.0000100";
+            DecimalFormat df = new DecimalFormat("0.00000000");
+
+            return df.format(Globals.increment);
         }
     }
 

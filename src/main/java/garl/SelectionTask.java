@@ -63,89 +63,92 @@ public class SelectionTask extends TimerTask {
     public void run() {
 
         long start = System.currentTimeMillis();
-        try {
-            boolean b = Globals.semaphore.tryAcquire();
-            if (!b) {
-                return;
-            }
+
+            try {
+                Globals.semaphore.acquire();
 
 
-            Selection selection = world.selection;
-
-            ArrayList<Obstacle> rlist = world.selection.rlist;
-
-            for (int i = 0; i < world.list.size(); i++) {
-                Entity e = world.list.get(i);
-                if (e.location.y == 0) {
-                    e.die();
-                } else if (e.location.x == 0) {
-                    e.die();
-                }
-                Random rand = new Random();
-                for (int j = 0; j < rlist.size(); j++) {
-                    Obstacle rect = rlist.get(j);
-                    if (rect != null) {
-                        if (e.alive) {
-
-                            if (selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
-                                if (rect.spawner) {
-                                    Globals.spawn = rect;
-
-                                    if (Globals.verbose) {
-                                        Log.info("Spawn:X" + Globals.spawn.x);
-                                        Log.info("Spawn:Y" + Globals.spawn.y);
-                                    }
 
 
-                                    save(world.epoch, e.generation, e.genome);
-                                    for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
-                                        Entity n = e.clone();
-                                        n.location.x = rand.nextInt(frame.getWidth());
-                                        n.location.y = rand.nextInt(frame.getHeight());
-                                        n.alive = true;
-                                        world.list.add(n);
-                                        world.spawns++;
-                                        world.totalSpawns++;
+                Selection selection = world.selection;
 
-                                        world.prospectSeeds.add(e.clone());
-                                        if (world.spawns >= world.bestSpawn) {
-                                            world.bestSeeds.add(e.clone());
-                                            world.bestSpawn = world.spawns;
+                ArrayList<Obstacle> rlist = world.selection.rlist;
+
+                for (int i = 0; i < world.list.size(); i++) {
+                    Entity e = world.list.get(i);
+                    if (e.location.y == 0) {
+                        e.die();
+                    } else if (e.location.x == 0) {
+                        e.die();
+                    }
+                    Random rand = new Random();
+                    for (int j = 0; j < rlist.size(); j++) {
+                        Obstacle rect = rlist.get(j);
+                        if (rect != null) {
+                            if (e.alive) {
+
+                                if (selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
+                                    if (rect.spawner) {
+                                        Globals.spawn = rect;
+
+                                        if (Globals.verbose) {
+                                            Log.info("Spawn:X" + Globals.spawn.x);
+                                            Log.info("Spawn:Y" + Globals.spawn.y);
                                         }
 
-                                    }
-                                    e.reachedGoal = true;
-                                    e.die();
 
-                                } else if (rect.kill) {
-                                    if (rect.control) {
-                                        world.controls += Settings.MAX_OFFSPRING;
-                                        world.totalControls += Settings.MAX_OFFSPRING;
-                                    }
-                                    world.impact++;
-                                    e.die();
+                                        save(world.epoch, e.generation, e.genome);
+                                        for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
+                                            Entity n = e.clone();
+                                            n.location.x = rand.nextInt(frame.getWidth());
+                                            n.location.y = rand.nextInt(frame.getHeight());
+                                            n.alive = true;
+                                            world.list.add(n);
+                                            world.spawns++;
+                                            world.totalSpawns++;
 
+                                            world.prospectSeeds.add(e.clone());
+                                            if (world.spawns >= world.bestSpawn) {
+                                                world.bestSeeds.add(e.clone());
+                                                world.bestSpawn = world.spawns;
+                                            }
+
+                                        }
+                                        e.reachedGoal = true;
+                                        e.die();
+
+                                    } else if (rect.kill) {
+                                        if (rect.control) {
+                                            world.controls += Settings.MAX_OFFSPRING;
+                                            world.totalControls += Settings.MAX_OFFSPRING;
+                                        }
+                                        world.impact++;
+                                        e.die();
+
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                if (e.getEnergy() <= 0) {
-                    e.die();
+                    if (e.getEnergy() <= 0) {
+                        e.die();
+                    }
+
+
                 }
+            } catch (Exception ex) {
+
+                Log.info(ex.getMessage());
+            } finally {
+                Globals.semaphore.release();
+                long end = System.currentTimeMillis();
+                Runtime.getRuntime().gc();
 
 
             }
-        } catch (Exception ex) {
-
-        } finally {
-            Globals.semaphore.release();
-            long end = System.currentTimeMillis();
-            Runtime.getRuntime().gc();
 
 
-        }
 
     }
 }

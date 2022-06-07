@@ -51,15 +51,8 @@ public class ShutdownHook extends Thread {
             e.printStackTrace();
         } finally {
             frame.dispose();
-            Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
-            Iterator itr = threadSet.iterator();
-            while( itr.hasNext()){
-                try {
-                    Thread t = (Thread) itr.next();
-                    t.stop();
-                    Runtime.getRuntime().gc();
-                } catch(Exception ex){}
-            }
+
+            Runtime.getRuntime().halt(0);
 
         }
     }

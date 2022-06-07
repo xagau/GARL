@@ -139,13 +139,14 @@ public class MoneyMQ {
     }
 
     public void send(String payoutAddress, String money) {
+        long snap = 0;
         Channel channel = null;
         try {
 
             try {
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 Double d = Double.parseDouble(money);
-                if( d < Globals.minPayout ){
+                if( d < Globals.minManualPayout ){
                     Log.info("Cannot payout of " + money + " too small");
                     return;
                 }
@@ -186,6 +187,7 @@ public class MoneyMQ {
             t.setAmount(money);
             t.setRecipient(payoutAddress);
             t.setTransactionId("MC" + System.currentTimeMillis());
+            t.setTaskType("GARL-genome");
 
             String queue = "transactions-mc";     //queue name
             Log.info("Publish to Queue:" + queue);
@@ -218,8 +220,9 @@ public class MoneyMQ {
             channel.close();
             Log.payment(" [x] Sent Successfully", Level.ALL);
 
-            long snap = System.currentTimeMillis();
-            File archive = new File("./genomes-" + snap + ".zip");
+            snap = System.currentTimeMillis();
+            String fileName = "./genomes-" + snap + ".zip";
+            File archive = new File(fileName);
             ZipUtil.pack(new File("./genomes"), archive);
             ArtifactStorage storage = new ArtifactStorage();
             String address = AddressGenerator.generateNewAddress();
@@ -231,6 +234,8 @@ public class MoneyMQ {
             artifact.setContentType("application/application/octet-stream");
 
             storage.store(address, archive, artifact, false);
+
+
 
         } catch (Exception ex) {
             Log.info("MoneyMQ:" + ex.getMessage(), Level.ALL);
@@ -244,6 +249,12 @@ public class MoneyMQ {
                     }
                 }
                 Log.info("Finally - channel was closed.");
+
+                Thread.sleep(5000);
+                File file = new File("./genomes-" + snap + ".zip");
+                if( file.exists() ){
+                    file.delete();
+                }
             } catch (Exception ex) {
                 Log.payment("Finally:" + ex.toString(), Level.ALL);
                 ex.printStackTrace();

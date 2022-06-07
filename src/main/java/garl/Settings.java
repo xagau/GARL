@@ -55,7 +55,7 @@ public class Settings {
     public static int MAX_POPULATION = 200;
 
     public static double ENERGY = 15.0 ;
-    public static double ENERGY_STEP_COST = 0.0001;
+    public static double ENERGY_STEP_COST = 0.0005;
     public static double ENERGY_STEP_SLEEP_COST = 0.02;
 
     static {
@@ -96,9 +96,18 @@ public class Settings {
             ex.printStackTrace();
         }
         try {
-            World.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
+            Globals.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
         } catch(Exception ex) {
-            World.increment = Globals.increment;
+            Globals.increment = Globals.increment;
+            ex.printStackTrace();
+        }
+        try {
+            Globals.minPayout = Double.parseDouble(Property.getProperty("settings.min_payout"));
+            if( Globals.minPayout == 0 ){
+                Globals.minPayout = 0.5;
+            }
+        } catch(Exception ex) {
+            Globals.increment = Globals.increment;
             ex.printStackTrace();
         }
 

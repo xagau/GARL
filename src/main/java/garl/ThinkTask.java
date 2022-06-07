@@ -52,34 +52,30 @@ public class ThinkTask extends TimerTask {
         start = System.currentTimeMillis();
 
 
-        try {
-            boolean b = Globals.semaphore.tryAcquire();
-            if (!b) {
-                return;
-            }
+            try {
+                Thread.yield();
+                Globals.semaphore.acquire();
+                for (int i = 0; i < world.list.size(); i++) {
+                    try {
 
+                        Entity e = world.list.get(i);
+                        if (e.alive) {
+                            e.think(world, start);
+                        }
 
-            int ctr = 0;
-
-            for (int i = 0; i < world.list.size(); i++) {
-                try {
-
-                    Entity e = world.list.get(i);
-                    if (e.alive) {
-                        e.think(world, start);
+                    } catch (Exception ex) {
+                        Log.info("Think:" + ex.getMessage());
                     }
-
-                } catch (Exception ex) {
-                    Log.info("Think:" + ex.getMessage());
                 }
+
+                //Runtime.getRuntime().gc();
+
+            } catch (Exception ex) {
+            } finally {
+                long end = System.currentTimeMillis();
+                Globals.semaphore.release();
+
             }
 
-
-        } catch (Exception ex) {
-        } finally {
-            long end = System.currentTimeMillis();
-            Globals.semaphore.release();
-            Runtime.getRuntime().gc();
-        }
     }
 }

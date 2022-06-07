@@ -24,15 +24,17 @@ package garl;
  *
  */
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.text.DecimalFormat;
 import java.util.TimerTask;
 
 public class AWTThreadManager extends Thread {
-    java.util.Timer timer = null;
     JFrame frame = null;
     World world = null;
+
+    public static java.util.Timer timer = new java.util.Timer();
 
     public  AWTThreadManager ( JFrame frame, World world ) {
 
@@ -54,108 +56,38 @@ public class AWTThreadManager extends Thread {
         ReplicationTask replication = new ReplicationTask(world, frame);
         ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
-        java.util.Timer timer = new java.util.Timer(true);
-        /*
-        java.util.TimerTask focusTask = new java.util.TimerTask() {
-            public void run() {
-                try {
-                    boolean b = Globals.semaphore.tryAcquire();
-                    if (!b) {
-                        return;
-                    }
-                    if (!Globals.screenSaverMode) {
-                    }
-                } catch(Exception ex) {
-                    Log.info(ex.getMessage());
-                    ex.printStackTrace();
-                }
-                finally {
-                    Globals.semaphore.release();
-                }
 
-            }
-        };
-        */
-        TimerTask paint = new TimerTask() {
+        PaintTask paint = new PaintTask();
+        PayoutTask payout = new PayoutTask();
+
+
+        TimerTask threadUpdate = new TimerTask() {
             int ctr = 0;
-
             @Override
             public void run() {
-
-                try {
-                    long start = System.currentTimeMillis();
-                    ctr++;
-                    if (ctr > Globals.cleanupTime) {
-                        Runtime.getRuntime().gc();
-                        ctr = 0;
-                    }
-                    boolean b = Globals.semaphore.tryAcquire();
-                    if( !b ){
-                        return;
-                    }
-
-                    SwingUtilities.invokeLater(new Thread() {
-                        public void run() {
-                            world.render();
-                        }
-                    });
-
-                    long end = System.currentTimeMillis();
-                } catch (Exception ex) {
-                    if( Globals.verbose) {
-                        ex.printStackTrace();
-                    }
-                } catch (Error e) {
-                    if( Globals.verbose) {
-                        e.printStackTrace();
-                    }
-                } finally {
-                    Globals.semaphore.release();
-
+                ctr++;
+                if( ctr > Globals.ATC ) {
+                    ThreadGroup g = Thread.currentThread().getThreadGroup();
+                    Log.info("Active threads:" + g.activeCount());
                 }
             }
         };
 
-        TimerTask payoutTask = new TimerTask() {
-            @Override
-            public void run() {
-
-                try {
-
-                    long start = System.currentTimeMillis();
-                    boolean b = Globals.semaphore.tryAcquire();
-                    if( !b ){
-                        return;
-                    }
-
-
-                    double phl = world.phl;
-                    world.phl = 0;
-                    DecimalFormat df = new DecimalFormat("0.00000000");
-                    MoneyMQ moneyMQ = new MoneyMQ();
-                    moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
-                    long end = System.currentTimeMillis();
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                } catch (Error e) {
-                    e.printStackTrace();
-                } finally {
-                    Globals.semaphore.release();
-
-                }
-            }
-        };
 
         try {
 
             int fps = 1000 / Globals.FPS;
-            timer.scheduleAtFixedRate(paint, 0, fps);
-            timer.scheduleAtFixedRate(think, 1, Globals.thinkTime);
-            timer.scheduleAtFixedRate(selection, 2, Globals.selectionTime);
-            timer.scheduleAtFixedRate(replication, 3, Globals.replicationTime);
-            timer.scheduleAtFixedRate(payoutTask, 4, Globals.HOUR);
-            timer.scheduleAtFixedRate(payoutTask, 4, Globals.thinkTime+5);
+
+            Log.info("Time logging tasks");
+            timer.schedule(paint, 0, fps);
+            timer.schedule(think, 1, Globals.thinkTime);
+            timer.schedule(selection, 2, Globals.selectionTime);
+            timer.schedule(replication, 3, Globals.replicationTime);
+            timer.schedule(payout, 5, 5000);
+            timer.schedule( threadUpdate, 5, 1000);
+
+
+            Log.info("Done logging tasks");
 
 
 
@@ -184,7 +116,7 @@ public class AWTThreadManager extends Thread {
                 timer.purge();
                 frame.setVisible(false);
                 frame.dispose();
-                Runtime.getRuntime().exit(0);
+                Runtime.getRuntime().halt(0);
             }
 
             @Override
@@ -208,8 +140,7 @@ public class AWTThreadManager extends Thread {
             }
         });
 
-
-
+        Log.info("Shutdown hook added");
 
     }
 

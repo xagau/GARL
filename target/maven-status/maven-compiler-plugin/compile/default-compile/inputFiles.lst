@@ -9,10 +9,12 @@
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/World.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Gene.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Coord.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/PaintTask.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Genome.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/SoftmaxFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/iaf/ReluFunction.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Log.java
+/home/xagau/Desktop/git/repo/GARL/src/main/java/garl/PayoutTask.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/Brain.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/GARLTask.java
 /home/xagau/Desktop/git/repo/GARL/src/main/java/garl/GenomeFactory.java

@@ -37,6 +37,8 @@ public class Transaction {
     private String clientId = null;
     private String otp = null;
     private String transactionId = null;
+    private String version = Globals.major + "." + Globals.minor;
+    private String taskType = "none";
 
     /**
      * @return the terminalId
@@ -150,4 +152,19 @@ public class Transaction {
         this.transactionId = transactionId;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
+    }
 }

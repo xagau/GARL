@@ -53,6 +53,13 @@ public class MouseHandler implements MouseMotionListener, MouseListener {
                 if( !b ){
                     return;
                 }
+                try {
+                    AWTThreadManager.timer.cancel();
+                } catch(Exception ex) {}
+                try {
+                    AWTThreadManager.timer.purge();
+                } catch(Exception ex) {}
+
                 Log.info("Mouse Movement Detected x 5");
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 String money = df.format(world.phl);

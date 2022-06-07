@@ -30,6 +30,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
+import java.lang.reflect.InvocationTargetException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -52,7 +53,6 @@ public class World extends Canvas {
     volatile static ArrayList<Entity> prospectSeeds = new ArrayList<>();
     volatile int step = 0;
     volatile double phl = 0;
-    volatile static double increment = 0.00001000;
     volatile int mx = 0;
     volatile int my = 0;
     volatile static Entity selected = null;
@@ -74,6 +74,7 @@ public class World extends Canvas {
         this.setPreferredSize(new Dimension(width, height));
         this.setMaximumSize(new Dimension(width, height));
         this.setMinimumSize(new Dimension(width, height));
+
     }
 
     public World(ArrayList<Entity> population, Selection selection, int w, int h) {
@@ -85,6 +86,7 @@ public class World extends Canvas {
         this.setPreferredSize(new Dimension(width, height));
         this.setMaximumSize(new Dimension(width, height));
         this.setMinimumSize(new Dimension(width, height));
+
 
     }
 
@@ -345,34 +347,42 @@ public class World extends Canvas {
 
     int m = 1;
 
+    BufferStrategy strategy = null;
+
     public void paint(Graphics g){
+
         render();
+        /*
+        final World w = this;
+        try {
+            SwingUtilities.invokeAndWait( new Thread() { public void run() { w.render(); } } );
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+         */
     }
+    DecimalFormat df = new DecimalFormat("0.00000000");
     public void render() {
 
         try {
+            Thread.sleep(10);
+            Thread.yield();
+            Globals.semaphore.acquire();
 
-            Graphics g = this.getGraphics();
             this.createBufferStrategy(2);
-            BufferStrategy strategy = this.getBufferStrategy();
-            g = strategy.getDrawGraphics();
+            strategy = this.getBufferStrategy();
+            Graphics g = strategy.getDrawGraphics();
             Graphics2D g2 = (Graphics2D) g;
 
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-            /*
-            g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,
-                    RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-                    RenderingHints.VALUE_RENDER_QUALITY);
-             */
-            DecimalFormat df = new DecimalFormat("0.00000000");
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+
 
             step++;
             if (totalSpawns > totalControls) {
-                phl += increment;
+                phl += Globals.increment;
             }
 
             g2.setColor(Color.BLACK);
@@ -422,13 +432,6 @@ public class World extends Canvas {
             g2.fillRect(0, getHeight() - 24, getWidth(), getHeight());
             g2.setColor(Color.YELLOW);
             String logLine = "No message";
-            //long now = System.currentTimeMillis();
-            //long delta = now - start;
-            //long time = delta / 1000;
-            //long frameRate = m / time ;
-
-           // start = System.currentTimeMillis();
-
             try {
                 logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " killed:" + (list.size() - livingCount) + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " best seed:" + bestSpawn + " FPS: N/A frames:" + m++;
             } catch(Exception ex) {}
@@ -442,11 +445,19 @@ public class World extends Canvas {
                 ex.printStackTrace();
             }
         } finally {
-
-
+            Globals.semaphore.release();
         }
 
     }
+
+    /*
+            g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,
+                    RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+    */
 
     public void drawEntity(Graphics2D g2, Entity e) {
         try {
@@ -515,7 +526,7 @@ public class World extends Canvas {
     }
 
 
-    public void drawPopup(Graphics g, Entity e, int mx, int my) {
+    public void drawPopup(Graphics2D g, Entity e, int mx, int my) {
 
         try {
             int spacing = 14;

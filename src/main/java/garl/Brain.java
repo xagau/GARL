@@ -27,6 +27,7 @@ import garl.ann.NeuralLayer;
 import garl.ann.NeuralNet;
 import garl.ann.Neuron;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class Brain {
@@ -58,6 +59,9 @@ public class Brain {
         Action a = e.brain.evaluate(world);
         e.brain.ann.input.calc();
         double d = e.brain.getOutput();
+
+        DecimalFormat df = new DecimalFormat("0.0000000");
+        Log.info(df.format(d));
 
     }
 
@@ -169,12 +173,12 @@ public class Brain {
         }
     }
 
-    public double getOutput() {
+    public synchronized double getOutput() {
         return getOutput(entity);
     }
 
 
-    public double getOutput(Entity e) {
+    public synchronized double getOutput(Entity e) {
 
         try {
             if (e != null && e.brain != null && e.brain.ann != null && e.brain.ann.output != null) {
