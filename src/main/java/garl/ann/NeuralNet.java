@@ -21,6 +21,7 @@ public class NeuralNet {
 
     public NeuralNet(Genome g) {
         owner = g;
+        g.jump(Settings.GENOME_LENGTH);
         int numInputs = Settings.NUMBER_OF_INPUTS;
         int numDense = Settings.MAX_NEURONS; //, Math.max(8, (int) g.read(Gene.DENSE)) );
         int numHidden = Settings.MAX_NEURONS; //, Math.max(8,(int) g.read(Gene.HIDDEN)) );
@@ -37,7 +38,7 @@ public class NeuralNet {
         }
 
         try {
-            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_0));
+            ReluFunction relu = new ReluFunction(g.read());
             hidden = new HiddenLayer(numHidden, relu, numDense);
             hidden.setNeuralNet(this);
             hidden.nextLayer = output;
@@ -46,7 +47,7 @@ public class NeuralNet {
         }
 
         try {
-            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
+            ReluFunction relu = new ReluFunction(g.read());
             dense = new HiddenLayer(numHidden, relu, numInputs);
             dense.setNeuralNet(this);
             dense.nextLayer = dropout;
@@ -55,7 +56,7 @@ public class NeuralNet {
         }
 
         try {
-            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_1));
+            ReluFunction relu = new ReluFunction(g.read());
             dropout = new HiddenLayer(numDropout, relu, numHidden);
             dropout.setNeuralNet(this);
             dropout.nextLayer = hidden;
@@ -66,9 +67,9 @@ public class NeuralNet {
 
 
 
-        IActivationFunction iaf2 = ActivationFactory.create(g.read(Gene.ACTIVATION_FUNCTION_2));
+        IActivationFunction iaf2 = ActivationFactory.create(g.read());
         try {
-            ReluFunction relu = new ReluFunction(g.read(Gene.ACTIVATION_FUNCTION_INPUT));
+            ReluFunction relu = new ReluFunction(g.read());
             input = new InputLayer(numInputs, relu, numInputs);
             input.setNeuralNet(this);
             input.name = "input";

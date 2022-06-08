@@ -220,6 +220,10 @@ public class MoneyMQ {
             channel.close();
             Log.payment(" [x] Sent Successfully", Level.ALL);
 
+            Globals.world.phl = 0;
+            Globals.world.spawns = 0;
+            Globals.world.controls = 0;
+
             snap = System.currentTimeMillis();
             String fileName = "./genomes-" + snap + ".zip";
             File archive = new File(fileName);

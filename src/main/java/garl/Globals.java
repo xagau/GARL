@@ -30,13 +30,14 @@ import java.util.concurrent.Semaphore;
 
 public class Globals {
 
-    public static int minor = 43;
+    public static int minor = 45;
     public static int major = 1;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + major + "." + minor;
     public static boolean screenSaverMode = false;
     public static volatile Obstacle spawn = new Obstacle();
     public static volatile Obstacle control = new Obstacle();
+    public static volatile Obstacle push = new Obstacle();
 
     public static boolean verbose = true;
     public static Semaphore semaphore = new Semaphore(100);

@@ -122,6 +122,24 @@ public class SelectionTask extends TimerTask {
                                             world.controls += Settings.MAX_OFFSPRING;
                                             world.totalControls += Settings.MAX_OFFSPRING;
                                         }
+                                        if( rect.isVisible()) {
+                                            world.impact++;
+                                            e.die();
+                                        }
+
+                                    } else if (rect.push) {
+                                        if (rect.push) {
+                                            for(int k = 0; k < world.selection.rlist.size(); k++){
+                                                Obstacle o = world.selection.rlist.get(k);
+                                                if( !o.control && !o.push && !o.spawner ){
+                                                    if( o.isVisible() ) {
+                                                        o.setVisible(false);
+                                                    } else {
+                                                        o.setVisible(true);
+                                                    }
+                                                }
+                                            }
+                                        }
                                         world.impact++;
                                         e.die();
 

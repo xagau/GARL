@@ -29,14 +29,21 @@ public class Obstacle extends Rectangle {
     boolean kill = true;
     boolean spawner = false;
     boolean control = false;
+    boolean push = false;
+    private boolean visible = true;
+
     Color color = Color.pink;
     String name = "wall";
+
+
 
     public String getName() {
         if( spawner ){
             return "spawner";
         } else if( control ){
             return "control";
+        } else if( push ){
+            return "push";
         } else {
             return name;
         }
@@ -47,8 +54,17 @@ public class Obstacle extends Rectangle {
             return Color.green;
         } else if (control) {
             return Color.magenta;
+        } else if (push) {
+            return Color.blue;
         }
         return color;
     }
 
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
 }

@@ -36,12 +36,12 @@ public class Settings {
     public static int MAX_OFFSPRING = 2;
     public static boolean NATURAL_REPLICATION = true;
     public static int MAX_THINK_DEPTH = 3;
-    public static int NUMBER_OF_INPUTS = 28; //STARTING_POPULATION * 12; // garl.Action.values().length;
+    public static int NUMBER_OF_INPUTS = 256; //STARTING_POPULATION * 12; // garl.Action.values().length;
     public static int DEATH_MULTIPLIER = 25;
     public static int GENE_POOL = 2;
     public static int MAX_SIZE = 19;
     public static int MIN_SIZE = 5;
-    public static int MAX_NEURONS = 4;
+    public static int MAX_NEURONS = 6;
     public static int MAX_DROPOUT = 2;
 
     public static String PAYOUT_ADDRESS = "";

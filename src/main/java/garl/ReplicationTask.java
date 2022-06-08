@@ -99,7 +99,7 @@ public class ReplicationTask extends TimerTask {
                         }
                         if (livingCount <= Settings.GENE_POOL && list.isEmpty()) {
                             try {
-                                world.selection.makeNewList();
+                                world.selection = new Selection(world);
                                 world.list = Population.create(world, Settings.STARTING_POPULATION);
                             } catch (Exception ex) {
                                 ex.printStackTrace();
@@ -109,7 +109,7 @@ public class ReplicationTask extends TimerTask {
                         if (livingCount <= Settings.GENE_POOL && !list.isEmpty()) {
 
                             try {
-                                world.selection.makeNewList();
+                                world.selection = new Selection(world);
                                 if (list.size() < Settings.STARTING_POPULATION) {
                                     world.list = Population.create(world, Settings.STARTING_POPULATION);
                                 } else {

@@ -394,22 +394,27 @@ public class World extends Canvas {
                 try {
                     Obstacle rect = rlist.get(j);
 
-                    Point2D point = new Point2D.Double(rect.getCenterX(), rect.getCenterY());
-                    Color[] colors = {Color.pink, Color.pink, Color.pink};
-                    float[] dist = {0.01f, 0.5f, 1.0f};
+                    if( rect.isVisible() ) {
+                        Point2D point = new Point2D.Double(rect.getCenterX(), rect.getCenterY());
+                        Color[] colors = {Color.pink, Color.pink, Color.pink};
+                        float[] dist = {0.01f, 0.5f, 1.0f};
 
-                    RadialGradientPaint p =
-                            new RadialGradientPaint(point, 0.5f * rect.width, dist, colors);
-                    g2.setPaint(p);
-                    if (rect.spawner) {
-                        g2.setColor(rect.getColor());
-                    }
-                    if (rect.control) {
-                        g2.setColor(rect.getColor());
-                    }
+                        RadialGradientPaint p =
+                                new RadialGradientPaint(point, 0.5f * rect.width, dist, colors);
+                        g2.setPaint(p);
+                        if (rect.spawner) {
+                            g2.setColor(rect.getColor());
+                        }
+                        if (rect.control) {
+                            g2.setColor(rect.getColor());
+                        }
+                        if (rect.push) {
+                            g2.setColor(rect.getColor());
+                        }
 
-                    if (rect != null) {
-                        g2.fillRect(rect.x, rect.y, rect.width, rect.height);
+                        if (rect != null) {
+                            g2.fillRect(rect.x, rect.y, rect.width, rect.height);
+                        }
                     }
 
                 } catch(Exception ex) { }

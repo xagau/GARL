@@ -37,15 +37,27 @@ public class Selection  {
     }
 
     public void makeNewList() {
-        Obstacle[] list = new Obstacle[16];
+        int sz = (int) (Math.random() * 30 );
+        sz += 10;
+
+        Obstacle[] list = new Obstacle[sz];
         rlist = new ArrayList<>();
 
-        list[0] = new Obstacle();
-        list[0].x = world.getWidth() - 20;
-        list[0].y = 0;
-        list[0].width = 20;
-        list[0].height = world.getHeight() - 20;
+        int i = 0;
+        for(i = 0; i < sz-3; i++ ) {
+            list[i] = new Obstacle();
+            list[i].x = (int)(Math.random() * world.width) - 20;
+            list[i].y = (int)(Math.random() * world.height) - 20;
+            if( Math.random() > 0.5 ) {
+                list[i].width = (int) (Math.random() * world.width / 2) + 20;
+                list[i].height = (int) (Math.random() ) + 20;
+            } else {
+                list[i].width = (int) (Math.random() ) + 20;
+                list[i].height = (int) (Math.random() * world.height / 2) + 20;
+            }
+        }
 
+        /*
         list[1] = new Obstacle();
         list[1].x = 100;
         list[1].y = 100;
@@ -105,14 +117,14 @@ public class Selection  {
 
 
         list[10] = new Obstacle();
-        list[10].x = (int) (1440 * Math.random());
+        list[10].x = (int) (1040 * Math.random());
         list[10].y = (int) 500;
         list[10].width = (int) 20;
         list[10].height = (int) (430 * Math.random());
 
 
         list[11] = new Obstacle();
-        list[11].x = (int) (1400 * Math.random());
+        list[11].x = (int) (1100 * Math.random());
         list[11].y = (int) (500 * Math.random());
         list[11].width = (int) (100 * Math.random());
         list[11].height = (int) 20;
@@ -121,7 +133,7 @@ public class Selection  {
         list[12] = new Obstacle();
         list[12].x = (int) 0;
         list[12].y = (int) (1000 * Math.random());
-        list[12].width = (int) (1800 * Math.random());
+        list[12].width = (int) (700 * Math.random());
         list[12].height = (int) 20;
 
         list[13] = new Obstacle();
@@ -129,30 +141,42 @@ public class Selection  {
         list[13].y = (int) 100;
         list[13].width = (int) 100;
         list[13].height = (int) (300 * Math.random());
+         */
 
 
-        list[14] = new Obstacle();
-        list[14].x = (int) ((world.width - 100) * Math.random());
-        list[14].y = (int) ((world.height - 100) * Math.random());
-        list[14].control = true;
-        list[14].width = (int) (100 * Math.random()) + 30;
-        list[14].height = (int) (100 * Math.random()) + 30;
-        list[14].kill = true;
+        list[i] = new Obstacle();
+        list[i].x = (int) ((world.width - 200) * Math.random());
+        list[i].y = (int) ((world.height - 200) * Math.random());
+        list[i].control = true;
+        list[i].width = (int) (100 * Math.random()) + 30;
+        list[i].height = (int) (100 * Math.random()) + 30;
+        list[i].kill = true;
+        Globals.control = list[i];
+        i++;
 
-        list[15] = new Obstacle();
-        list[15].x = (int) ((world.width - 100) * Math.random());
-        list[15].y = (int) ((world.height - 100) * Math.random());
-        list[15].width = (int) (100 * Math.random()) + 30;
-        list[15].height = (int) (100 * Math.random()) + 30;
-        list[15].spawner = true;
-        list[15].kill = false;
+        list[i] = new Obstacle();
+        list[i].x = (int) ((world.width - 100) * Math.random());
+        list[i].y = (int) ((world.height - 100) * Math.random());
+        list[i].width = (int) (100 * Math.random()) + 30;
+        list[i].height = (int) (100 * Math.random()) + 30;
+        list[i].spawner = true;
+        list[i].kill = false;
+        Globals.spawn = list[i];
+        i++;
 
+        list[i] = new Obstacle();
+        list[i].x = (int) ((world.width - 100) * Math.random());
+        list[i].y = (int) ((world.height - 100) * Math.random());
+        list[i].width = (int) (100 * Math.random()) + 30;
+        list[i].height = (int) (100 * Math.random()) + 30;
+        list[i].spawner = false;
+        list[i].kill = false;
+        list[i].push = true;
+        Globals.push = list[i];
+        i++;
 
-        Globals.spawn = list[15];
-        Globals.control = list[14];
-
-        for (int i = 0; i < list.length; i++) {
-            rlist.add(list[i]);
+        for (int j = 0; j < list.length; j++) {
+            rlist.add(list[j]);
         }
     }
 

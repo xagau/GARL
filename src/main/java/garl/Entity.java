@@ -87,20 +87,23 @@ public class Entity {
 
         for (int i = 0; i < list.size(); i++) {
             Obstacle g = list.get(i);
-            int tdistX = (int) (g.x + g.width ) - ((int) e.location.x + e.size / 2);
-            int tdistY = (int) (g.y + g.height ) - ((int) e.location.y + e.size / 2);
-            tdistX = Math.abs(tdistX);
-            tdistY = Math.abs(tdistY);
+            if( g.isVisible() ) {
+                int tdistX = (int) (g.x + g.width) - ((int) e.location.x + e.size / 2);
+                int tdistY = (int) (g.y + g.height) - ((int) e.location.y + e.size / 2);
+                tdistX = Math.abs(tdistX);
+                tdistY = Math.abs(tdistY);
 
 
-            if (tdistX < distX && tdistY < distY) {
-                distX = tdistX;
-                distY = tdistY;
-                closest = g;
-            }
-            if( g.spawner){
-                e.distanceX = tdistX;
-                e.distanceY = tdistY;
+
+                if (tdistX < distX && tdistY < distY) {
+                    distX = tdistX;
+                    distY = tdistY;
+                    closest = g;
+                }
+                if( g.spawner){
+                    e.distanceX = tdistX;
+                    e.distanceY = tdistY;
+                }
             }
         }
 
@@ -201,9 +204,11 @@ public class Entity {
         for (int i = 0; i < world.selection.rlist.size(); i++) {
             try {
                 Obstacle wall = world.selection.rlist.get(i);
-                Line line1 = new Line(wall.x, wall.y, wall.x + wall.width, wall.y + wall.height);
-                if (wall.intersectsLine(line)) {
-                    walls.add(wall);
+                if( wall.isVisible() ) {
+                    Line line1 = new Line(wall.x, wall.y, wall.x + wall.width, wall.y + wall.height);
+                    if (wall.intersectsLine(line)) {
+                        walls.add(wall);
+                    }
                 }
             } catch (Exception ex) {
             }
@@ -261,7 +266,7 @@ public class Entity {
             previous = null;
             last = null;
             world = null;
-                //Runtime.getRuntime().gc();
+            Runtime.getRuntime().gc();
         } catch(Exception ex) { ex.printStackTrace(); Log.info(ex.getMessage()); }
     }
 
@@ -389,9 +394,11 @@ public class Entity {
             ArrayList<Obstacle> list = world.selection.rlist;
             for (int i = 0; i < list.size(); i++) {
                 Obstacle rect = list.get(i);
-                if (world.selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
-                    tryAgain = true;
-                    move++;
+                if( rect.isVisible() ) {
+                    if (world.selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
+                        tryAgain = true;
+                        move++;
+                    }
                 }
             }
             if( isTouching()) {
@@ -421,10 +428,13 @@ public class Entity {
     }
 
     private void consume() {
+        double cost = (double)age/100000;
+        //Log.info("Age Cost" + cost);
         if (Math.abs(location.vx) != 0 && Math.abs(location.vy) != 0) {
-            setEnergy(getEnergy() - Settings.ENERGY_STEP_COST);
+
+            setEnergy(getEnergy() - Settings.ENERGY_STEP_COST - cost);
         } else {
-            setEnergy(getEnergy() - Settings.ENERGY_STEP_SLEEP_COST);
+            setEnergy(getEnergy() - Settings.ENERGY_STEP_SLEEP_COST - cost);
         }
     }
 
