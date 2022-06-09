@@ -41,7 +41,7 @@ public class Selection  {
         sz += 10;
 
         Obstacle[] list = new Obstacle[sz];
-        rlist = new ArrayList<>();
+        world.selection.rlist = new ArrayList<>();
 
         int i = 0;
         for(i = 0; i < sz-3; i++ ) {
@@ -176,7 +176,7 @@ public class Selection  {
         i++;
 
         for (int j = 0; j < list.length; j++) {
-            rlist.add(list[j]);
+            world.selection.rlist.add(list[j]);
         }
     }
 

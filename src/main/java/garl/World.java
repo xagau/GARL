@@ -381,7 +381,7 @@ public class World extends Canvas {
 
 
             step++;
-            if (totalSpawns > totalControls) {
+            if (spawns > controls) {
                 phl += Globals.increment;
             }
 
@@ -466,7 +466,10 @@ public class World extends Canvas {
 
     public void drawEntity(Graphics2D g2, Entity e) {
         try {
-            int r = (int) Math.ceil((double) e.size / 2);
+            int r = (int) (Math.min(e.getEnergy(), Settings.MAX_SIZE) / 2);
+            if( r*2 < Settings.MIN_SIZE){
+                r = Settings.MIN_SIZE / 2;
+            }
 
             if (e.alive) {
                 g2.setColor(e.color);

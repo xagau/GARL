@@ -358,8 +358,15 @@ public class Entity {
             r = genome.read(Gene.SENSORY);
             g = genome.read(Gene.HIDDEN);
             b = genome.read(Gene.SIZE);
+            this.setEnergy(Settings.ENERGY*Math.random());
             this.color = Color.getHSBColor(r, 128 % g, 128 % b);
-            this.size = Math.max(genome.read(Gene.SIZE) % Settings.MAX_SIZE, Settings.MIN_SIZE);
+            this.size = Math.min((int)getEnergy(), Settings.MAX_SIZE);
+            if( this.size > Settings.MAX_SIZE){
+                this.size = Settings.MAX_SIZE;
+            } else if( this.size <= Settings.MIN_SIZE ){
+                this.size = Settings.MIN_SIZE;
+            }
+
             this.degree = Math.random() * 360;
         } catch(Exception ex) {
             Log.info(ex.getMessage());
@@ -415,11 +422,11 @@ public class Entity {
         e.genome.numAppends = 0;
         e.genome.numRecodes = 0;
         e.genome.mutate();
-        e.size = size;
         e.brain = new Brain(e, e.genome);
 
         e.age = 0;
-        e.energy = Settings.ENERGY * 2 * Math.random();
+        e.energy = Settings.ENERGY * Math.random();
+        e.size = (int)Math.min((int)e.energy, Settings.MAX_SIZE);
         e.degree = Math.random() * 360;
         e.generation = generation + 1;
         e.fertile = false;
@@ -427,7 +434,8 @@ public class Entity {
         return e;
     }
 
-    private void consume() {
+    private void
+    consume() {
         double cost = (double)age/100000;
         //Log.info("Age Cost" + cost);
         if (Math.abs(location.vx) != 0 && Math.abs(location.vy) != 0) {
@@ -953,9 +961,13 @@ public class Entity {
                             extracted = (genome.read(Gene.ATTACK) * size) - (o.genome.read(Gene.DEFENSE) / 8);
                         } else {
                             extracted = o.getEnergy();
-                            size = size + (o.size / 8);
-                            world.list.remove(o);
+                            //size = size + (o.size );
                             setEnergy(getEnergy()+Math.abs(extracted));
+                            size = Math.min((int)getEnergy(), Settings.MAX_SIZE);
+                            if( size > Settings.MAX_SIZE){
+                                size = Settings.MAX_SIZE;
+                            }
+                            world.list.remove(o);
                             continue;
                         }
                         double eo = o.getEnergy();
@@ -967,8 +979,11 @@ public class Entity {
                         }
 
                         setEnergy(getEnergy() + Math.abs(extracted));
-                        size = size + (o.size / 8);
-                        o.size = o.size - (size / 8);
+                        //size = size + (o.size );
+                        size = Math.min((int)getEnergy(), Settings.MAX_SIZE);
+                        o.setEnergy(o.getEnergy() - extracted);
+                        o.size = Math.min((int)o.getEnergy(), Settings.MAX_SIZE);
+
                         if (size > Settings.MAX_SIZE) {
                             size = Settings.MAX_SIZE;
                         }
@@ -982,7 +997,6 @@ public class Entity {
                         if (o.size <= Settings.MIN_SIZE) {
                             o.size = Settings.MIN_SIZE;
                         }
-                        o.setEnergy(o.getEnergy() - extracted);
                         if (o.getEnergy() <= 0 || o.size <= Settings.MIN_SIZE) {
                             o.die();
                             if (o.size <= Settings.MIN_SIZE) {

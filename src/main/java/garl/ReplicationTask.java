@@ -68,6 +68,7 @@ public class ReplicationTask extends TimerTask {
                         } else {
                             entList = Population.create(world, list);
                         }
+                        world.selection = new Selection(world);
                         world.list = new ArrayList<>();
                         //Runtime.getRuntime().gc();
 
@@ -89,6 +90,7 @@ public class ReplicationTask extends TimerTask {
                         world.spawns = 0;
                         world.controls = 0;
 
+
                         livingCount = world.getLivingCount();
 
                         world.epoch++;
@@ -100,6 +102,7 @@ public class ReplicationTask extends TimerTask {
                         if (livingCount <= Settings.GENE_POOL && list.isEmpty()) {
                             try {
                                 world.selection = new Selection(world);
+
                                 world.list = Population.create(world, Settings.STARTING_POPULATION);
                             } catch (Exception ex) {
                                 ex.printStackTrace();

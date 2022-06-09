@@ -61,6 +61,11 @@ public class ThinkTask extends TimerTask {
                         Entity e = world.list.get(i);
                         if (e.alive) {
                             e.think(world, start);
+                        } else {
+                            e.setEnergy(e.getEnergy()-Settings.ENERGY_STEP_SLEEP_COST);
+                            if( e.getEnergy() <= 0 ){
+                                world.list.remove(e);
+                            }
                         }
 
                     } catch (Exception ex) {
