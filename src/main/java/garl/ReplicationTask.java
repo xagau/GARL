@@ -70,7 +70,7 @@ public class ReplicationTask extends TimerTask {
                         }
                         world.selection = new Selection(world);
                         world.list = new ArrayList<>();
-                        //Runtime.getRuntime().gc();
+                        Runtime.getRuntime().gc();
 
                         for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
                             try {

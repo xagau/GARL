@@ -82,14 +82,27 @@ public class GARLTask extends Thread {
 
     public void run() {
 
+        try {
+            CullingStrategy.cleanup();
+
+            try {
+                Globals.increment = Double.parseDouble(Property.getRemoteProperty("settings.increment"));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
         //1. Create the frame.
 
         //2. Optional: What happens when the frame closes?
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int width = screenSize.width;
+        int height = screenSize.height;
 
-        int width = 1800;
-        int height = 1000;
         int inspectorPanelWidth = Settings.INSPECTOR_WIDTH;
         world = new World(width - inspectorPanelWidth, height);
         Globals.world = world;
@@ -100,35 +113,20 @@ public class GARLTask extends Thread {
         //3. Create components and put them in the frame.
         //...create emptyLabel...
         ArrayList<Entity> population = new ArrayList<>();
+        try {
+            list = SeedLoader.load();
+        } catch(Exception ex) {}
         if (list == null ) {
             population = Population.create(world, Settings.STARTING_POPULATION);
         } else if( list.size() < Settings.STARTING_POPULATION) {
             population = Population.create(world, Settings.STARTING_POPULATION);
         } else {
             Log.info("Loading from seed list:" + list.size());
-            for (int i = 0; i < Math.min(list.size(), Settings.STARTING_POPULATION); i++) {
-                if (list.get(i).genome.contains("-")) {
-
-                    continue;
-                }
-                try {
-                    String genome = list.get(i).genome;
-                    Log.info("Adding:" + i + ":" + genome);
-                    Genome g = new Genome(genome);
-                    Brain brain = new Brain(g);
-                    Entity e = new Entity(world);
-                    brain.setOwner(e);
-                    e.location.x = (int) (Math.random() * width - inspectorPanelWidth);
-                    e.location.y = (int) (Math.random() * height);
-                    g.setOwner(e);
-                    e.brain = brain;
-
-                    e.genome = g;
-                    population.add(e);
-                    Log.info("Added:" + i + " at " + e.location.x + " " + e.location.y);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+            try {
+                population = SeedLoader.load(list, world);
+            } catch(Exception ex) {
+                Log.info("Exception occurred:" + ex.getMessage());
+                population = Population.create(world, Settings.STARTING_POPULATION);
             }
         }
         world.setPopulation(population);

@@ -1,4 +1,7 @@
 package garl;
+
+import java.io.File;
+
 /** Copyright (c) 2019-2022 placeh.io,
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -28,4 +31,6 @@ public class Seed {
     public int epoch;
     public int generation;
     public String genome;
+    public int reward;
+    public File file = null;
 }

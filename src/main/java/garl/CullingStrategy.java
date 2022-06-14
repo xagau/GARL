@@ -1,6 +1,7 @@
 package garl;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -37,38 +38,36 @@ public class CullingStrategy {
         try {
             Log.info("Culling Strategy called");
             String genomePath = Property.getProperty("settings.genomes");
-            if( genomePath == null ){
+            if (genomePath == null) {
                 genomePath = "./genomes/";
             }
             File dir = new File(genomePath);
             boolean f = dir.isDirectory();
             File[] list = dir.listFiles();
 
-            ArrayList<Seed> slist = SeedLoader.load();
-            if(slist.isEmpty() && list == null && list.length == 0){
-                return;
-            }
-            Log.info("Seed List size to select fit individuals:" + slist.size());
+            int lowestReward = SeedLoader.lowestReward();
+            ArrayList<Seed> seeds = SeedLoader.load();
             int limit = CullingStrategy.MAX_ENTITIES;
             int count = 0;
             Log.info(f + " genome source: " + genomePath + " " + list.length);
-            Log.info(f + " seed source: " + genomePath + " " + slist.size());
-            for(int i = 0; i < list.length; i++ ) {
-                String name = list[i].getName();
-                Date d = new Date(list[i].lastModified());
-                if (name.contains("genome")) {
-                    if (count++ > limit) {
-                        Log.info("Delete:" + list[i].getName() + " because " + d.toString());
-                        // TODO Filter by fitness.
-                        list[i].delete();
+            for (int i = 0; i < seeds.size(); i++) {
+                if( seeds.size() >= MAX_ENTITIES) {
+                    Seed seed = (Seed) seeds.get(i);
+                    if (seed.reward <= lowestReward) {
+                        Log.info("Removing:" + seeds.get(i).file.getName() + " because reward = " + seeds.get(i).reward);
+                        seeds.get(i).file.delete();
+                        count++;
                     } else {
-                        Log.info("Retain:" + list[i].getName() + " because " + d.toString());
-
+                        Log.info("Retain:" + seeds.get(i).file.getName() + " because reward = " + seeds.get(i).reward);
                     }
                 }
             }
 
-        } catch(Exception ex) {
+    } catch( IOException ex) {
+            ex.printStackTrace();
+            Log.info(ex);
+
+    } catch(Exception ex) {
             ex.printStackTrace();
             Log.info(ex);
         } catch(Error e){

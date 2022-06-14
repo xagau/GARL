@@ -37,112 +37,26 @@ public class Selection  {
     }
 
     public void makeNewList() {
-        int sz = (int) (Math.random() * 30 );
+        int sz = (int) (Math.random() * 50 );
         sz += 10;
 
         Obstacle[] list = new Obstacle[sz];
         world.selection.rlist = new ArrayList<>();
 
         int i = 0;
+        int obstacleWidth = 10;
         for(i = 0; i < sz-3; i++ ) {
             list[i] = new Obstacle();
-            list[i].x = (int)(Math.random() * world.width) - 20;
-            list[i].y = (int)(Math.random() * world.height) - 20;
+            list[i].x = (int)(Math.random() * world.width) - obstacleWidth;
+            list[i].y = (int)(Math.random() * world.height) - obstacleWidth;
             if( Math.random() > 0.5 ) {
-                list[i].width = (int) (Math.random() * world.width / 2) + 20;
-                list[i].height = (int) (Math.random() ) + 20;
+                list[i].width = (int) (Math.random() * world.width / 2) + obstacleWidth;
+                list[i].height = (int) (Math.random() ) + obstacleWidth;
             } else {
-                list[i].width = (int) (Math.random() ) + 20;
-                list[i].height = (int) (Math.random() * world.height / 2) + 20;
+                list[i].width = (int) (Math.random() ) + obstacleWidth;
+                list[i].height = (int) (Math.random() * world.height / 2) + obstacleWidth;
             }
         }
-
-        /*
-        list[1] = new Obstacle();
-        list[1].x = 100;
-        list[1].y = 100;
-        list[1].width = 400;
-        list[1].height = 20;
-
-        list[2] = new Obstacle();
-        list[2].x = 0;
-        list[2].y = -10;
-        list[2].width = world.getWidth() - 20;
-        list[2].height = 30;
-
-        list[3] = new Obstacle();
-        list[3].x = 0;
-        list[3].y = world.getHeight() - 20;
-        list[3].width = world.getWidth() - 20;
-        list[3].height = 20;
-
-
-        list[4] = new Obstacle();
-        list[4].x = (int) (200 * Math.random());
-        list[4].y = (int) (200 * Math.random());
-        list[4].width = (int) (20 * Math.random());
-        list[4].height = (int) (400 * Math.random());
-
-        list[5] = new Obstacle();
-        list[5].x = (int) (0);
-        list[5].y = (int) (world.height - 80);
-        list[5].width = (int) (world.width);
-        list[5].height = (int) (80);
-
-
-        list[6] = new Obstacle();
-        list[6].x = (int) (200 * Math.random());
-        list[6].y = (int) (500 * Math.random());
-        list[6].width = (int) (20 * Math.random());
-        list[6].height = (int) (430 * Math.random());
-
-        list[7] = new Obstacle();
-        list[7].x = (int) 0;
-        list[7].y = (int) 300;
-        list[7].width = (int) 20;
-        list[7].height = (int) (630 * Math.random());
-
-        list[8] = new Obstacle();
-        list[8].x = (int) (700 * Math.random());
-        list[8].y = (int) (200 * Math.random());
-        list[8].width = (int) 20;
-        list[8].height = (int) (730 * Math.random());
-
-
-        list[9] = new Obstacle();
-        list[9].x = (int) (990 * Math.random());
-        list[9].y = (int) 0;
-        list[9].width = (int) 20;
-        list[9].height = (int) (700 * Math.random());
-
-
-        list[10] = new Obstacle();
-        list[10].x = (int) (1040 * Math.random());
-        list[10].y = (int) 500;
-        list[10].width = (int) 20;
-        list[10].height = (int) (430 * Math.random());
-
-
-        list[11] = new Obstacle();
-        list[11].x = (int) (1100 * Math.random());
-        list[11].y = (int) (500 * Math.random());
-        list[11].width = (int) (100 * Math.random());
-        list[11].height = (int) 20;
-
-
-        list[12] = new Obstacle();
-        list[12].x = (int) 0;
-        list[12].y = (int) (1000 * Math.random());
-        list[12].width = (int) (700 * Math.random());
-        list[12].height = (int) 20;
-
-        list[13] = new Obstacle();
-        list[13].x = (int) (1400 * Math.random());
-        list[13].y = (int) 100;
-        list[13].width = (int) 100;
-        list[13].height = (int) (300 * Math.random());
-         */
-
 
         list[i] = new Obstacle();
         list[i].x = (int) ((world.width - 200) * Math.random());
@@ -192,8 +106,24 @@ public class Selection  {
         return false;
     }
 
+    public synchronized boolean insideRect(Obstacle rect, Entity e) {
+        if (e.location.x + e.size >= rect.x && e.location.x < rect.x + rect.width && e.location.y + e.size > rect.y && e.location.y < rect.y + rect.height) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public synchronized boolean insideRect(Obstacle rect, int x, int y) {
         if (x > rect.x && x < rect.x + rect.width && y > rect.y && y < rect.y + rect.height) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public synchronized boolean notInBounds(Entity e, World world) {
+        if (e.location.x <= 0 || e.location.x + e.size >= world.width || e.location.y <= 0 || e.location.y + e.size >= world.height ) {
             return true;
         } else {
             return false;

@@ -32,8 +32,10 @@ public class Entity {
     volatile Coord location = new Coord();
     volatile Coord previous = new Coord();
 
+    volatile long timeSinceEpoch = 0;
     volatile Genome genome = null;
     volatile int generation = 0;
+    volatile int reward = 0;
     volatile int epoch = 0;
     volatile boolean fertile = false;
     private double energy = Settings.ENERGY * 2 * Math.random();
@@ -76,38 +78,35 @@ public class Entity {
 
 
     public static Obstacle closest(ArrayList<Obstacle> list, Entity e) {
-        int distX = Integer.MAX_VALUE;
-        int distY = Integer.MAX_VALUE;
         Obstacle closest = new Obstacle();
         closest.x = Integer.MAX_VALUE - 2;
         closest.y = Integer.MAX_VALUE - 2;
         closest.width = Integer.MAX_VALUE - 1;
         closest.height = Integer.MAX_VALUE - 1;
 
-
-        for (int i = 0; i < list.size(); i++) {
-            Obstacle g = list.get(i);
-            if( g.isVisible() ) {
-                int tdistX = (int) (g.x + g.width) - ((int) e.location.x + e.size / 2);
-                int tdistY = (int) (g.y + g.height) - ((int) e.location.y + e.size / 2);
-                tdistX = Math.abs(tdistX);
-                tdistY = Math.abs(tdistY);
-
-
-
-                if (tdistX < distX && tdistY < distY) {
-                    distX = tdistX;
-                    distY = tdistY;
-                    closest = g;
-                }
-                if( g.spawner){
-                    e.distanceX = tdistX;
-                    e.distanceY = tdistY;
-                }
+        GARLPoint ent = new GARLPoint(e.location.x, e.location.y);
+        int vis = 0;
+        for(int i = 0; i < list.size(); i++ ){
+            if( list.get(i).isVisible()){
+                vis++;
             }
         }
 
-        if (closest != null) {
+        GARLPoint[] plist = new GARLPoint[vis];
+
+        int v = 0;
+        for (int i = 0; i < list.size(); i++) {
+            Obstacle g = list.get(i);
+            if( g.isVisible() ) {
+                GARLPoint p = new GARLPoint(g.getCenterX(), g.getCenterY(), g);
+                plist[v++] = p;
+            }
+        }
+
+        GARLPoint nearestPoint = GARLPoint.nearestPoint(plist, ent);
+
+        if (nearestPoint != null) {
+            closest = nearestPoint.o;
             return closest;
         }
 
@@ -131,6 +130,8 @@ public class Entity {
             return false;
         }
     }
+
+
     public boolean isTrajectoryGoal() {
         if( !alive ){
             return false;
@@ -138,12 +139,15 @@ public class Entity {
         ArrayList<Obstacle> mwalls = sampleForward(this);
 
         Obstacle first = closest(mwalls, this);
+        if( first == null ){
+            return false;
+        }
         if (walls == 0) {
             return false;
         }
         double direction = degree;
-        int _xs = (int) ((int) (location.x + (size / 2)) + (size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d)))); //);
-        int _ys = (int) ((int) (location.y + (size / 2)) - (size * world.getHeight() * Math.sin(direction * ((Math.PI) / 360d)))); //);
+        int _xs = (int) ((int) (location.x + (size / 2)) + (size * world.width * Math.cos(direction * ((Math.PI) / 360d)))); //);
+        int _ys = (int) ((int) (location.y + (size / 2)) - (size * world.height * Math.sin(direction * ((Math.PI) / 360d)))); //);
 
         int x = (int) location.x + ((size / 2) / 2);
         int y = (int) location.y + ((size / 2) / 2);
@@ -192,8 +196,8 @@ public class Entity {
         if( e == null ) {
             return null;
         }
-        int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.getWidth() * Math.cos(direction * ((Math.PI) / 360d))));
-        int _ys = (int) ((int) (e.location.y + (e.size / 2)) - (e.size * world.getHeight() * Math.sin(direction * ((Math.PI) / 360d))));
+        int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.width * Math.cos(direction * ((Math.PI) / 360d))));
+        int _ys = (int) ((int) (e.location.y + (e.size / 2)) - (e.size * world.height * Math.sin(direction * ((Math.PI) / 360d))));
 
         int x = (int) e.location.x + ((e.size / 2) / 2);
         int y = (int) e.location.y + ((e.size / 2) / 2);
@@ -419,6 +423,7 @@ public class Entity {
         } while(tryAgain);
 
         e.genome.code = genome.code;
+        e.reward = reward;
         e.genome.numAppends = 0;
         e.genome.numRecodes = 0;
         e.genome.mutate();
@@ -434,10 +439,8 @@ public class Entity {
         return e;
     }
 
-    private void
-    consume() {
+    private void consume() {
         double cost = (double)age/100000;
-        //Log.info("Age Cost" + cost);
         if (Math.abs(location.vx) != 0 && Math.abs(location.vy) != 0) {
 
             setEnergy(getEnergy() - Settings.ENERGY_STEP_COST - cost);
@@ -456,6 +459,8 @@ public class Entity {
         age++;
         consume();
         Action action = null;
+        distanceX = (int)(location.x - Globals.spawn.getCenterX());
+        distanceY = (int)(location.y - Globals.spawn.getCenterY());
         try {
             action = brain.evaluate(world);
             long intermediate = System.currentTimeMillis();
@@ -565,21 +570,18 @@ public class Entity {
 
                     case STOP:
                         // if we're stopped - and we're touching someone, lets move.
-                        //if(!target ) {
-                        if (isTouching()) {
+                          if (isTouching()) {
                             doKill(Action.KILL);
+                            location.vx = 0;
+                            location.vy = 0;
+                            break;
                         } else {
                             location.vx = 0;
                             location.vy = 0;
                             process(Action.SCAN, world, depth);
                             break;
                         }
-                        if (!isTrajectoryGoal()) {
-                            //process(Action.SCAN, world, depth);
-                            process(Action.RECODE, world, depth);
-                        }
 
-                        break;
 
                     case JUMP:
 
@@ -613,9 +615,6 @@ public class Entity {
                     case CYCLE:
                     case CONTINUE:
                         if (target) {
-                            // should revert back to origin of location where goal was set, set degree, then set vx, and vy
-                            //degree = targetDegree;
-
                             if (targetvx != 0) {
                                 if (targetx > location.x) {
                                     location.vx = -Settings.ACCELERATION;
@@ -640,10 +639,8 @@ public class Entity {
 
                         break;
                     case DELETE:
-                        int maxDeletions = genome.read(Gene.MAX_DELETIONS);
-                        //if (genome.numDeletions <= maxDeletions) {
+
                         ArrayList<Entity> ae = sampleForward();
-                        double aao = 0;
                         for (int i = 0; i < ae.size(); i++) {
                             Entity ent = ae.get(i);
                             brain.input(ent, world);
@@ -667,7 +664,6 @@ public class Entity {
                                 }
                             }
                         }
-                        //}
                         break;
 
 
@@ -706,7 +702,6 @@ public class Entity {
                         try {
                             if (!isTrajectoryGoal()) {
                                 degree = Math.random() * 360d;
-                                //Log.info("Degree:" + degree);
                             } else {
                                 if( Globals.verbose) {
                                     Log.info("Trajectory good:" + degree);
@@ -845,6 +840,7 @@ public class Entity {
                             } else {
                                 process(Action.SLOW, world, depth);
                                 process(Action.CONTINUE, world, depth);
+                                doKill(action);
                             }
                             break;
                         } else {
@@ -857,11 +853,11 @@ public class Entity {
 
             }
 
-            if (location.x + size > world.getWidth()) {
+            if (location.x + size > world.width) {
                 location.x = (location.x - size) - Settings.CELL_MOVEMENT;
                 location.vx = -location.vx;
             }
-            if (location.y + size > world.getHeight()) {
+            if (location.y + size > world.height) {
                 location.y = (location.y - size) - Settings.CELL_MOVEMENT;
                 location.vy = -location.vy;
             }
@@ -913,20 +909,12 @@ public class Entity {
 
             double v = Math.atan2(location.vx, location.vy);
 
-            //boolean b = isTrajectoryGoal();
-            //if(b){
-            //    targetvx = location.vx;
-            //    targetvy = location.vy;
-            //target = true;
-            //    return;
-            //}
-
             double radiansToDegrees = 360d / Math.PI;
             degree = v * radiansToDegrees; //
             degree = degree + World.offset;
 
             if (last == action) {
-                action = Action.CONTINUE;
+                last = Action.CONTINUE;
             } else {
                 last = action;
             }

@@ -20,6 +20,7 @@ class PayoutTask extends TimerTask {
                 DecimalFormat df = new DecimalFormat("0.00000000");
                 MoneyMQ moneyMQ = new MoneyMQ();
                 moneyMQ.send(Settings.PAYOUT_ADDRESS, df.format(phl));
+                moneyMQ = null;
                 long end = System.currentTimeMillis();
             }
 

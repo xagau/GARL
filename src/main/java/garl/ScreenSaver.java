@@ -143,16 +143,6 @@ public final class ScreenSaver {
 
 
             ArrayList<Seed> list = new ArrayList<>();
-            if (args.length >= 0) {
-                list = SeedLoader.load();
-                if (list != null) {
-                    Log.info(list.size());
-                } else {
-                    Log.info("List is null");
-                }
-            }
-
-            //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
             int width = screenSize.width;
             int height = screenSize.height;
@@ -167,36 +157,21 @@ public final class ScreenSaver {
             //3. Create components and put them in the frame.
             //...create emptyLabel...
             ArrayList<Entity> population = new ArrayList<>();
+
+            try {
+                list = SeedLoader.load();
+            } catch(Exception ex) {}
             if (list == null ) {
                 population = Population.create(world, Settings.STARTING_POPULATION);
             } else if( list.size() < Settings.STARTING_POPULATION) {
                 population = Population.create(world, Settings.STARTING_POPULATION);
             } else {
                 Log.info("Loading from seed list:" + list.size());
-
-                for (int i = 0; i < Math.min(list.size(), Settings.MAX_POPULATION); i++) {
-                    if (list.get(i).genome.contains("-")) {
-
-                        continue;
-                    }
-                    try {
-                        String genome = list.get(i).genome;
-                        Log.info("Adding:" + i + ":" + genome);
-                        Genome g = new Genome(genome);
-                        Brain brain = new Brain(g);
-                        Entity e = new Entity(world);
-                        brain.setOwner(e);
-                        e.location.x = (int) (Math.random() * width);
-                        e.location.y = (int) (Math.random() * height);
-                        g.setOwner(e);
-                        e.brain = brain;
-
-                        e.genome = g;
-                        population.add(e);
-                        Log.info("Added:" + i + " at " + e.location.x + " " + e.location.y);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                try {
+                    population = SeedLoader.load(list, world);
+                } catch(Exception ex) {
+                    Log.info("Exception occurred:" + ex.getMessage());
+                    population = Population.create(world, Settings.STARTING_POPULATION);
                 }
             }
             world.setPopulation(population);

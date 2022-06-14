@@ -23,6 +23,7 @@ package garl;
  * @email seanbeecroft@gmail.com
  *
  */
+
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -33,9 +34,21 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Set;
 
 public class SeedLoader {
+    public synchronized static int lowestReward() throws IOException {
+
+        int lowestReward = Integer.MIN_VALUE;
+        ArrayList<Seed> list = load();
+        for(int i = 0; i < list.size(); i++ ){
+            Seed s = (Seed)list.get(i);
+            if( s.reward > lowestReward ) {
+                lowestReward = s.reward;
+            }
+        }
+
+        return lowestReward;
+    }
 
     public synchronized static ArrayList<Seed> load() throws IOException {
         ArrayList<Seed> list = new ArrayList<Seed>();
@@ -52,12 +65,12 @@ public class SeedLoader {
             File f = files[i];
             if (f.getName().contains("genome")) {
                 String fName = f.getName();
-                Log.info("Using GARL Entity: [" + ctr + "] " + f.getName());
 
                     Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
                     try {
                         Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
                         lseed.seedName = f.getName();
+                        lseed.file = Paths.get(seed + fName).toFile();
                         list.add(lseed);
                         ctr++;
                     } catch (Exception ex) {
@@ -65,9 +78,6 @@ public class SeedLoader {
                             Log.info(ex);
                         }
                     }
-            }
-            if (ctr >= CullingStrategy.MAX_ENTITIES) {
-                break;
             }
         }
 
@@ -83,9 +93,9 @@ public class SeedLoader {
             public int compare(Object o1, Object o2) {
                 Seed s1 = (Seed)o1;
                 Seed s2 = (Seed)o2;
-                if( s1.generation>s2.generation){
+                if( s1.reward>s2.reward){
                     return -1;
-                } else if( s1.generation == s2.generation ){
+                } else if( s1.reward == s2.reward ){
                     return 0;
                 }
                 return 1;
@@ -105,15 +115,17 @@ public class SeedLoader {
         }
         Arrays.sort(arr, comparator);
         for(int i =0; i < arr.length; i++ ){
-            if( i > Settings.STARTING_POPULATION){
+            if (i > Settings.STARTING_POPULATION) {
                 break;
             }
-            Log.info(arr[i].generation + " " + arr[i].genome);
+            Log.info("generation:" + arr[i].generation + " genome length:" + arr[i].genome.length() + " reward:" + arr[i].reward);
         }
         list = new ArrayList<>();
-        for(int i =0; i < arr.length; i++ ){
+        for (int i = 0; i < arr.length; i++) {
             list.add(arr[i]);
         }
+
+        Log.info("list size:" + list.size());
 
         return list;
     }
@@ -133,10 +145,14 @@ public class SeedLoader {
                 Brain brain = new Brain(g);
                 Entity e = new Entity(world);
                 brain.setOwner(e);
-                e.location.x = (int) (Math.random() * world.getWidth());
-                e.location.y = (int) (Math.random() * world.getHeight());
+                e.location.x = (int) (Math.random() * world.width);
+                e.location.y = (int) (Math.random() * world.height);
                 g.setOwner(e);
                 e.brain = brain;
+                try {
+                    e.reward = list.get(i).reward;
+                } catch (Exception ex) {
+                }
 
                 e.genome = g;
                 ents.add(e);
@@ -146,11 +162,20 @@ public class SeedLoader {
             }
         }
 
-        if( list.size() < Settings.STARTING_POPULATION){
+        if (list.size() < Settings.STARTING_POPULATION) {
+            Log.info("Not enough genomes, using random starting population");
             ents = Population.create(world, Settings.STARTING_POPULATION);
         }
 
         return ents;
+    }
+
+    public static void main(String[] args) {
+        try {
+            SeedLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

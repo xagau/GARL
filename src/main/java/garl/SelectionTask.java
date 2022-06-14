@@ -45,10 +45,10 @@ public class SelectionTask extends TimerTask {
         this.frame = frame;
     }
 
-    public void save(int epoch, int generation, Genome g) {
+    public void save(int epoch, Entity e) {
         try {
             FileWriter writer = new FileWriter(new File(Property.getProperty("settings.genomes") + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
-            writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + generation + ", \"genome\":\"" + g.code + "\" }");
+            writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + e.generation + ", \"genome\":\"" + e.genome.code + "\", \"reward\":\"" + e.reward + "\" }");
             writer.flush();
             writer.close();
 
@@ -87,7 +87,13 @@ public class SelectionTask extends TimerTask {
                         if (rect != null) {
                             if (e.alive) {
 
-                                if (selection.insideRect(rect, (int) e.location.x, (int) e.location.y)) {
+                                if( selection.notInBounds(e, world)){
+                                    world.impact++;
+                                    e.die();
+                                    continue;
+                                }
+
+                                if (selection.insideRect(rect, e)) {
                                     if (rect.spawner) {
                                         Globals.spawn = rect;
 
@@ -96,12 +102,12 @@ public class SelectionTask extends TimerTask {
                                             Log.info("Spawn:Y" + Globals.spawn.y);
                                         }
 
-
-                                        save(world.epoch, e.generation, e.genome);
+                                        e.reward++;
+                                        save(world.epoch, e);
                                         for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
                                             Entity n = e.clone();
-                                            n.location.x = rand.nextInt(frame.getWidth());
-                                            n.location.y = rand.nextInt(frame.getHeight());
+                                            n.location.x = rand.nextInt(world.width);
+                                            n.location.y = rand.nextInt(world.height);
                                             n.alive = true;
                                             world.list.add(n);
                                             world.spawns++;

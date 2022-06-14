@@ -1,4 +1,5 @@
-# GARL
+# GARL - 1.46
+Modern version is 1.46 anyone running a greater version may experience benefit or problems. 
 Genetic Based Selection Forced Reinforcement Learning
 
 Run using Java 1.8.

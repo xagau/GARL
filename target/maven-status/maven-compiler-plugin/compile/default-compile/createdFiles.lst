@@ -71,6 +71,7 @@ garl/GARLTask$3.class
 garl/Brain.class
 garl/Seed.class
 garl/CullingStrategy.class
+garl/GARLPoint.class
 garl/KeyHandler.class
 garl/iaf/HTANFunction.class
 garl/Gene.class

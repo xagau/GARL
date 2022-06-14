@@ -25,6 +25,8 @@ package garl;
  */
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferStrategy;
@@ -35,7 +37,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class World extends Canvas {
+public class World extends Canvas implements ComponentListener  {
     volatile static ArrayList<Entity> list = new ArrayList<>();
 
     Selection selection = null;
@@ -75,6 +77,8 @@ public class World extends Canvas {
         this.setMaximumSize(new Dimension(width, height));
         this.setMinimumSize(new Dimension(width, height));
 
+        this.addComponentListener(this);
+
     }
 
     public World(ArrayList<Entity> population, Selection selection, int w, int h) {
@@ -87,6 +91,7 @@ public class World extends Canvas {
         this.setMaximumSize(new Dimension(width, height));
         this.setMinimumSize(new Dimension(width, height));
 
+        this.addComponentListener(this);
 
     }
 
@@ -207,22 +212,10 @@ public class World extends Canvas {
                     }
                 }
             }
-            //g2d.drawImage(I, (int)ent.location.x, (int)ent.location.y, null);
             g2d.drawImage(I, (Settings.INSPECTOR_WIDTH / 2) - sz - (int) ent.size, (Settings.INSPECTOR_WIDTH / 2) - sz - (int) ent.size, null);
-
             RadialGradientPaint rgp = new RadialGradientPaint(center, radius, dist, colors);
             g2d.setPaint(rgp);
             g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
-
-
-
-            //drawGradientAutomata(g2d, radius, dist, colors, center, ent);
-
-            //RadialGradientPaint rgp = new RadialGradientPaint(center, radius, dist, colors);
-            //g2d.setPaint(rgp);
-            //g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
-
-            //drawGradientAutomata(g2d, 2, dist, kins, center, ent);
 
         } catch (Exception ex) {
             if (Globals.verbose) {
@@ -272,7 +265,6 @@ public class World extends Canvas {
                     }
                 }
             }
-            //g2d.drawImage(I, (int)ent.location.x, (int)ent.location.y, null);
             g2d.drawImage(I, (Settings.INSPECTOR_WIDTH / 2) - sz - (int) ent.size, (Settings.INSPECTOR_WIDTH / 2) - sz - (int) ent.size, null);
         } catch (Exception ex) {
             if (Globals.verbose) {
@@ -286,17 +278,11 @@ public class World extends Canvas {
     private static void drawGradientAutomata(Graphics2D g2d, float radius, float[] dist, Color[] colors, Point2D center, Entity ent) {
 
         try {
-            //GradientPaint gp4 = new GradientPaint(radius, radius,
-            //        ent.color, radius/2, radius, Color.black, true);
 
             RadialGradientPaint rgp = new RadialGradientPaint(center, radius, dist, colors);
             g2d.setPaint(rgp);
             g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
 
-            //int[] xValues = {(int)center.getX() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size};
-            //int[] yValues = {(int)center.getY() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size};
-            //Polygon poly = new Polygon(xValues, yValues, 6);
-            //g2d.fill(poly);
         } catch (Exception ex) {
             if (Globals.verbose) {
                 Log.info(ex);
@@ -326,17 +312,11 @@ public class World extends Canvas {
     private static void drawGradientCircle(Graphics2D g2d, float radius, float[] dist, Color[] colors, Point2D center, Entity ent) {
 
         try {
-            //GradientPaint gp4 = new GradientPaint(radius, radius,
-            //        ent.color, radius/2, radius, Color.black, true);
 
             RadialGradientPaint rgp = new RadialGradientPaint(center, radius, dist, colors);
             g2d.setPaint(rgp);
             g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
 
-            //int[] xValues = {(int)center.getX() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getX() -ent.genome.read(ent.genome.index())%ent.size};
-            //int[] yValues = {(int)center.getY() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() +ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size, (int)center.getY() -ent.genome.read(ent.genome.index())%ent.size};
-            //Polygon poly = new Polygon(xValues, yValues, 6);
-            //g2d.fill(poly);
         } catch (Exception ex) {
             if (Globals.verbose) {
                 Log.info(ex);
@@ -352,16 +332,7 @@ public class World extends Canvas {
     public void paint(Graphics g){
 
         render();
-        /*
-        final World w = this;
-        try {
-            SwingUtilities.invokeAndWait( new Thread() { public void run() { w.render(); } } );
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-         */
+
     }
     DecimalFormat df = new DecimalFormat("0.00000000");
     public void render() {
@@ -377,8 +348,6 @@ public class World extends Canvas {
             Graphics2D g2 = (Graphics2D) g;
 
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-
 
             step++;
             if (spawns > controls) {
@@ -539,7 +508,7 @@ public class World extends Canvas {
         try {
             int spacing = 14;
             int popupWidth = 340;
-            int popupHeight = 560;
+            int popupHeight = 570;
 
             if (e != null) {
                 boolean b = e.world.list.contains(e);
@@ -549,6 +518,11 @@ public class World extends Canvas {
             }
 
             if (e != null && e.selected == true && e.alive == true) {
+                Obstacle o = Entity.closest(e.world.selection.rlist, e);
+                String name = "-/-";
+                if( o != null) {
+                    name = o.getName();
+                }
                 DecimalFormat ddf = new DecimalFormat("0.00000000");
 
                 DecimalFormat df = new DecimalFormat("0.00");
@@ -612,8 +586,9 @@ public class World extends Canvas {
                 g.drawString("Walls: " + e.walls, mx + spacing, my + spacing * 35);
                 g.drawString("Read Char: " + e.genome.read(e.genome.index), mx + spacing, my + spacing * 36);
                 g.drawString("Found Target: " + e.target, mx + spacing, my + spacing * 37);
-                g.drawString("Closest: " + Entity.closest(e.world.selection.rlist, e).getName(), mx + spacing, my + spacing * 38);
+                g.drawString("Closest: " + name, mx + spacing, my + spacing * 38);
                 g.drawString("Distance to Goal: X:" + e.distanceX + " Y:" + e.distanceY, mx + spacing, my + spacing * 39);
+                g.drawString("Reward:" + e.reward, mx + spacing, my + spacing * 40);
 
                 g.setColor(Color.black);
 
@@ -628,5 +603,27 @@ public class World extends Canvas {
 
     }
 
+    @Override
+    public void componentResized(ComponentEvent componentEvent) {
+
+        this.width = getWidth();
+        this.height = getHeight();
+
+    }
+
+    @Override
+    public void componentMoved(ComponentEvent componentEvent) {
+
+    }
+
+    @Override
+    public void componentShown(ComponentEvent componentEvent) {
+
+    }
+
+    @Override
+    public void componentHidden(ComponentEvent componentEvent) {
+
+    }
 }
 
