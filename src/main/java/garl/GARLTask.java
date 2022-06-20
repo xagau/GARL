@@ -131,10 +131,7 @@ public class GARLTask extends Thread {
         }
         world.setPopulation(population);
         world.setSelection(selection);
-        MouseHandler mouseHandler = new MouseHandler(world);
         KeyHandler keyHandler = new KeyHandler(world);
-        world.addMouseMotionListener(mouseHandler);
-        world.addMouseListener(mouseHandler);
         frame.addKeyListener(keyHandler);
 
         world.setMaximumSize(new Dimension(width - inspectorPanelWidth, height));

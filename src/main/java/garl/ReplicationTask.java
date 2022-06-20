@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.TimerTask;
 
-public class ReplicationTask extends TimerTask {
+public class ReplicationTask implements Runnable {
     volatile World world = null;
     JFrame frame = null;
     public ReplicationTask(World world, JFrame frame){
@@ -16,9 +16,12 @@ public class ReplicationTask extends TimerTask {
             try {
                 Globals.semaphore.acquire();
 
-                int livingCount = world.getLivingCount();
-
+                int livingCount = -1;
                 if (Settings.NATURAL_REPLICATION) {
+                    if( livingCount < 0 ) {
+                        livingCount = world.getLivingCount();
+                    }
+
                     for (int i = 0; i < world.list.size(); i++) {
                         try {
 
@@ -38,7 +41,6 @@ public class ReplicationTask extends TimerTask {
 
                                             Entity a = e.replicate();
                                             world.list.add(a);
-                                            world.prospectSeeds.add(a);
                                             world.children++;
                                         }
 
@@ -53,14 +55,21 @@ public class ReplicationTask extends TimerTask {
                 }
 
 
+                if( livingCount < 0 ) {
+                    livingCount = world.getLivingCount();;
+                }
+
                 if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
                     try {
 
                         ArrayList<Seed> list = SeedLoader.load();
-
-                        world.reset();
-                        Log.info("Recreate population:" + list.size());
                         ArrayList<Entity> entList = new ArrayList<Entity>();
+                        entList = Population.create(world, list);
+                        int w = world.width;
+                        int h = world.height;
+                        Selection selection = new Selection(world);
+                        world = new World(entList, selection, w, h);
+                        Log.info("Recreate population:" + list.size());
 
                         Runtime.getRuntime().gc();
                         if (list.size() < Settings.STARTING_POPULATION) {
@@ -68,9 +77,6 @@ public class ReplicationTask extends TimerTask {
                         } else {
                             entList = Population.create(world, list);
                         }
-                        world.selection = new Selection(world);
-                        world.list = new ArrayList<>();
-                        Runtime.getRuntime().gc();
 
                         for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
                             try {
@@ -89,9 +95,6 @@ public class ReplicationTask extends TimerTask {
                         world.impact = 0;
                         world.spawns = 0;
                         world.controls = 0;
-
-
-                        livingCount = world.getLivingCount();
 
                         world.epoch++;
                         if (world.epoch == Settings.MAX_EPOCH) {

@@ -68,7 +68,9 @@ public class AWTThreadManager extends Thread {
                 ctr++;
                 if( ctr > Globals.ATC ) {
                     ThreadGroup g = Thread.currentThread().getThreadGroup();
-                    Log.info("Active threads:" + g.activeCount());
+                    if( Globals.benchmark ) {
+                        Log.info("Active threads:" + g.activeCount());
+                    }
                 }
             }
         };
@@ -79,11 +81,31 @@ public class AWTThreadManager extends Thread {
             int fps = 1000 / Globals.FPS;
 
             Log.info("Time logging tasks");
-            timer.schedule(paint, 0, fps);
-            timer.schedule(think, 1, Globals.thinkTime);
-            timer.schedule(selection, 2, Globals.selectionTime);
-            timer.schedule(replication, 3, Globals.replicationTime);
-            timer.schedule(payout, 5, 5000);
+            Thread t = new Thread() {
+                public void run() {
+
+                    boolean running = true;
+                    int ctr = 0;
+                    while( running ) {
+                        ctr++;
+                        paint.run();
+                        if( ctr >= 10 ) {
+                            think.run();
+                            selection.run();
+                            replication.run();
+                            payout.run();
+                            ctr = 0;
+                        }
+                    }
+                }
+            };
+            t.setPriority(Thread.MAX_PRIORITY);
+            t.start();
+            //timer.schedule(paint, 0, fps);
+            //timer.schedule(think, 1, Globals.thinkTime);
+            //timer.schedule(selection, 2, Globals.selectionTime);
+            ///timer.schedule(replication, 3, Globals.replicationTime);
+            //timer.schedule(payout, 5, 5000);
             timer.schedule( threadUpdate, 5, 1000);
 
 

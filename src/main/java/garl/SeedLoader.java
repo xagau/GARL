@@ -130,7 +130,7 @@ public class SeedLoader {
         return list;
     }
 
-    public static ArrayList<Entity> load(ArrayList<Seed> seeds, World world) throws IOException {
+    public static ArrayList<Entity> load(ArrayList<Seed> seeds, World world)  {
         ArrayList<Seed> list = seeds;
         ArrayList<Entity> ents = new ArrayList<>();
 

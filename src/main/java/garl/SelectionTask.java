@@ -29,8 +29,9 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.TimerTask;
+import java.util.UUID;
 
-public class SelectionTask extends TimerTask {
+public class SelectionTask implements Runnable {
 
     volatile World world = null;
 
@@ -47,7 +48,7 @@ public class SelectionTask extends TimerTask {
 
     public void save(int epoch, Entity e) {
         try {
-            FileWriter writer = new FileWriter(new File(Property.getProperty("settings.genomes") + System.currentTimeMillis() + "-genome-" + GARLTask.run.toString() + ".json"));
+            FileWriter writer = new FileWriter(new File(Property.getProperty("settings.genomes") + System.currentTimeMillis() + "-genome-" + UUID.randomUUID().toString() + ".json"));
             writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + e.generation + ", \"genome\":\"" + e.genome.code + "\", \"reward\":\"" + e.reward + "\" }");
             writer.flush();
             writer.close();
@@ -65,7 +66,7 @@ public class SelectionTask extends TimerTask {
         long start = System.currentTimeMillis();
 
             try {
-                Globals.semaphore.acquire();
+                //Globals.semaphore.acquire();
 
 
 
@@ -90,10 +91,7 @@ public class SelectionTask extends TimerTask {
                                 if( selection.notInBounds(e, world)){
                                     world.impact++;
                                     e.die();
-                                    continue;
-                                }
-
-                                if (selection.insideRect(rect, e)) {
+                                } else if (selection.insideRect(rect, e)) {
                                     if (rect.spawner) {
                                         Globals.spawn = rect;
 
@@ -104,7 +102,7 @@ public class SelectionTask extends TimerTask {
 
                                         e.reward++;
                                         save(world.epoch, e);
-                                        for (int k = 0; k < Settings.MAX_OFFSPRING; k++) {
+                                        for (int k = 0; k < Settings.MAX_SPAWN_OFFSPRING; k++) {
                                             Entity n = e.clone();
                                             n.location.x = rand.nextInt(world.width);
                                             n.location.y = rand.nextInt(world.height);
@@ -112,21 +110,14 @@ public class SelectionTask extends TimerTask {
                                             world.list.add(n);
                                             world.spawns++;
                                             world.totalSpawns++;
-
-                                            world.prospectSeeds.add(e.clone());
-                                            if (world.spawns >= world.bestSpawn) {
-                                                world.bestSeeds.add(e.clone());
-                                                world.bestSpawn = world.spawns;
-                                            }
-
                                         }
-                                        e.reachedGoal = true;
+
                                         e.die();
 
                                     } else if (rect.kill) {
                                         if (rect.control) {
-                                            world.controls += Settings.MAX_OFFSPRING;
-                                            world.totalControls += Settings.MAX_OFFSPRING;
+                                            world.controls += Settings.MAX_SPAWN_OFFSPRING;
+                                            world.totalControls += Settings.MAX_SPAWN_OFFSPRING;
                                         }
                                         if( rect.isVisible()) {
                                             world.impact++;
@@ -158,15 +149,16 @@ public class SelectionTask extends TimerTask {
                     if (e.getEnergy() <= 0) {
                         e.die();
                     }
-
-
                 }
             } catch (Exception ex) {
 
                 Log.info(ex.getMessage());
             } finally {
-                Globals.semaphore.release();
+                //Globals.semaphore.release();
                 long end = System.currentTimeMillis();
+                if( Globals.benchmark ) {
+                    Log.info("selection:" + (end - start));
+                }
                 Runtime.getRuntime().gc();
 
 

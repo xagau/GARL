@@ -37,24 +37,26 @@ public class Selection  {
     }
 
     public void makeNewList() {
-        int sz = (int) (Math.random() * 50 );
+        int sz = (int) (Math.random() * 70 );
         sz += 10;
 
         Obstacle[] list = new Obstacle[sz];
         world.selection.rlist = new ArrayList<>();
 
         int i = 0;
-        int obstacleWidth = 10;
-        for(i = 0; i < sz-3; i++ ) {
+        int obstacleWidth = 5;
+        int obstacleHeight = 4;
+        int additionalObstacles = 3;
+        for(i = 0; i < sz-additionalObstacles; i++ ) {
             list[i] = new Obstacle();
             list[i].x = (int)(Math.random() * world.width) - obstacleWidth;
             list[i].y = (int)(Math.random() * world.height) - obstacleWidth;
             if( Math.random() > 0.5 ) {
-                list[i].width = (int) (Math.random() * world.width / 2) + obstacleWidth;
+                list[i].width = (int) (Math.random() * world.width / obstacleHeight) + obstacleWidth;
                 list[i].height = (int) (Math.random() ) + obstacleWidth;
             } else {
                 list[i].width = (int) (Math.random() ) + obstacleWidth;
-                list[i].height = (int) (Math.random() * world.height / 2) + obstacleWidth;
+                list[i].height = (int) (Math.random() * world.height / obstacleHeight) + obstacleWidth;
             }
         }
 

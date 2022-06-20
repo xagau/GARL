@@ -3,7 +3,7 @@ package garl;
 import java.text.DecimalFormat;
 import java.util.TimerTask;
 
-class PayoutTask extends TimerTask {
+class PayoutTask implements Runnable {
     @Override
     public void run() {
 
@@ -11,7 +11,7 @@ class PayoutTask extends TimerTask {
 
 
             long start = System.currentTimeMillis();
-            Globals.semaphore.acquire();
+            //Globals.semaphore.acquire();
 
             double phl = Globals.world.phl;
             if (phl > Globals.minPayout) {
@@ -31,7 +31,7 @@ class PayoutTask extends TimerTask {
         } catch (Error e) {
             e.printStackTrace();
         } finally {
-            Globals.semaphore.release();
+            //Globals.semaphore.release();
 
         }
 

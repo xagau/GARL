@@ -137,7 +137,7 @@ public class Brain {
                     list.add((double) m.get(i).getEnergy());
                     list.add((double) (KinFactory.create(m.get(i).genome.read(Gene.KIN))));
                     list.add((double) (m.get(i).walls));
-                    list.add((double) (m.get(i).reachedGoal ? 1d : 0d));
+
                 } catch (Exception ex) {
                 }
             }
@@ -158,7 +158,6 @@ public class Brain {
                     list.add((double) world.list.get(i).getEnergy());
                     list.add((double) (KinFactory.create(world.list.get(i).genome.read(Gene.KIN))));
                     list.add((double) (world.list.get(i).walls));
-                    list.add((double) (world.list.get(i).reachedGoal ? 1d : 0d));
                 } catch (Exception ex) {
                 }
 

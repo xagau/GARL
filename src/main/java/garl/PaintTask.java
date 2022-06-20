@@ -2,12 +2,12 @@ package garl;
 
 import java.util.TimerTask;
 
-public class PaintTask extends TimerTask {
+public class PaintTask implements Runnable {
 
     public void run() {
         try {
             long start = System.currentTimeMillis();
-            Globals.semaphore.acquire();
+            //Globals.semaphore.acquire();
             Globals.world.render();
             long end = System.currentTimeMillis();
         } catch (Exception ex) {
@@ -19,7 +19,7 @@ public class PaintTask extends TimerTask {
                 e.printStackTrace();
             }
         } finally {
-            Globals.semaphore.release();
+            //Globals.semaphore.release();
         }
     }
 }

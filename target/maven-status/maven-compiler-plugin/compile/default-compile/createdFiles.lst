@@ -23,7 +23,6 @@ garl/ann/Neuron.class
 garl/GARLTask$14.class
 garl/ThinkTask.class
 garl/iaf/LinearCombinationFunction.class
-garl/MouseHandler.class
 garl/AWTThreadManager$1.class
 garl/iaf/ExpectedSarsaFunction.class
 garl/GARLTask$10.class
@@ -72,6 +71,7 @@ garl/Brain.class
 garl/Seed.class
 garl/CullingStrategy.class
 garl/GARLPoint.class
+garl/AWTThreadManager$3.class
 garl/KeyHandler.class
 garl/iaf/HTANFunction.class
 garl/Gene.class

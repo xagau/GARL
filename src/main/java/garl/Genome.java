@@ -26,8 +26,6 @@ package garl;
 import java.util.Random;
 
 public class Genome {
-    public static String DEAD = GenomeFactory.create(Settings.GENOME_LENGTH * Settings.GENOME_LENGTH, '-');
-    public static String GOAL = GenomeFactory.create(Settings.GENOME_LENGTH * Settings.GENOME_LENGTH, '1');
     Entity owner = null;
     volatile String code = null;
     int numAppends = 0;

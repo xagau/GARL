@@ -36,6 +36,7 @@ public class Entity {
     volatile Genome genome = null;
     volatile int generation = 0;
     volatile int reward = 0;
+
     volatile int epoch = 0;
     volatile boolean fertile = false;
     private double energy = Settings.ENERGY * 2 * Math.random();
@@ -45,7 +46,6 @@ public class Entity {
     volatile Action last = null;
     volatile double input = 0;
     volatile Entity touching = null;
-    volatile boolean reachedGoal = false;
     volatile double distanceX = Double.NaN;
     volatile double distanceY = Double.NaN;
 
@@ -57,7 +57,7 @@ public class Entity {
     volatile boolean alive = true;
 
     volatile double register = 0;
-    volatile double goal = 0;
+
     volatile double direction = 1;
 
 
@@ -86,9 +86,11 @@ public class Entity {
 
         GARLPoint ent = new GARLPoint(e.location.x, e.location.y);
         int vis = 0;
-        for(int i = 0; i < list.size(); i++ ){
-            if( list.get(i).isVisible()){
-                vis++;
+        if( list != null ) {
+            for(int i = 0; i < list.size(); i++ ){
+                if( list.get(i).isVisible()){
+                    vis++;
+                }
             }
         }
 
@@ -137,13 +139,16 @@ public class Entity {
             return false;
         }
         ArrayList<Obstacle> mwalls = sampleForward(this);
+        if( mwalls == null || mwalls.isEmpty() ){
+            return false;
+        }
 
         Obstacle first = closest(mwalls, this);
         if( first == null ){
             return false;
         }
-        if (walls == 0) {
-            return false;
+        if( first == Globals.spawn ){
+            return true;
         }
         double direction = degree;
         int _xs = (int) ((int) (location.x + (size / 2)) + (size * world.width * Math.cos(direction * ((Math.PI) / 360d)))); //);
@@ -176,7 +181,7 @@ public class Entity {
                 targetvy = previous.vy;
             }
 
-            this.goal = 1;
+
             targety = location.y;
             targetDegree = degree;
 
@@ -233,13 +238,9 @@ public class Entity {
         if (t == 1) {
             touching = e;
             return true;
-        } else if (t < 0) {
-            touching = null;
-            return false;
-        } else {
-            touching = e;
-            return true;
         }
+        touching = null;
+        return false;
     }
 
     public boolean isTouching() {
@@ -260,11 +261,6 @@ public class Entity {
     public void die() {
         try {
             alive = false;
-            if(reachedGoal) {
-                genome.code = Genome.GOAL;
-            } else {
-                genome.code = Genome.DEAD;
-            }
             touching = null;
             brain = null;
             previous = null;
@@ -778,7 +774,7 @@ public class Entity {
                             degree++;
                             location.vy += Math.max(location.vy * Settings.ACCELERATION, epsilon);
                             if (Math.random() > 0.5) {
-                                degree--;
+                                degree = -degree;
                                 location.vy = -location.vy;
                             }
                             break;
@@ -907,6 +903,19 @@ public class Entity {
                 location.y = oy;
             }
 
+            if( location.x == Double.NaN ){
+                location.x = 0;
+            }
+            if( location.y == Double.NaN ){
+                location.y = 0;
+            }
+            if( location.vx == Double.NaN ){
+                location.vx = 0;
+            }
+            if( location.vy == Double.NaN ){
+                location.vy = 0;
+            }
+
             double v = Math.atan2(location.vx, location.vy);
 
             double radiansToDegrees = 360d / Math.PI;
@@ -1014,6 +1023,9 @@ public class Entity {
     }
 
     public void setEnergy(double energy) {
-        this.energy = energy;
+        if( energy >= Settings.MAX_ENERGY ){
+            this.energy = Settings.MAX_ENERGY;
+        }
+        //this.energy = energy;
     }
 }

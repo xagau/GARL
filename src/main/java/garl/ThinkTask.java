@@ -28,7 +28,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.TimerTask;
 
-public class ThinkTask extends TimerTask {
+public class ThinkTask implements Runnable {
     volatile World world = null;
 
     int width = 0;
@@ -45,7 +45,7 @@ public class ThinkTask extends TimerTask {
     }
 
     long start = 0;
-
+    long snap = System.currentTimeMillis();
     @Override
     public void run() {
 
@@ -54,31 +54,24 @@ public class ThinkTask extends TimerTask {
 
             try {
                 Thread.yield();
-                Globals.semaphore.acquire();
+                //Globals.semaphore.acquire();
                 for (int i = 0; i < world.list.size(); i++) {
-                    try {
-
                         Entity e = world.list.get(i);
                         if (e.alive) {
                             e.think(world, start);
-                        } else {
-                            e.setEnergy(e.getEnergy()-Settings.ENERGY_STEP_SLEEP_COST);
-                            if( e.getEnergy() <= 0 ){
-                                world.list.remove(e);
-                            }
+                            world.step++;
                         }
-
-                    } catch (Exception ex) {
-                        Log.info("Think:" + ex.getMessage());
-                    }
                 }
 
-                //Runtime.getRuntime().gc();
+                long end = System.currentTimeMillis();
+                if( Globals.benchmark ) {
+                    Log.info("think diff:" + (end - start));
+                }
+                Runtime.getRuntime().gc();
 
             } catch (Exception ex) {
             } finally {
-                long end = System.currentTimeMillis();
-                Globals.semaphore.release();
+                //Globals.semaphore.release();
 
             }
 

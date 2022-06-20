@@ -34,8 +34,10 @@ public class Settings {
     public static int GENOME_LENGTH = 32;
     public static int STARTING_POPULATION = 50;
     public static int MAX_OFFSPRING = 2;
+    public static int MAX_SPAWN_OFFSPRING = 6;
+
     public static boolean NATURAL_REPLICATION = true;
-    public static int MAX_THINK_DEPTH = 3;
+    public static int MAX_THINK_DEPTH = 2;
     public static int NUMBER_OF_INPUTS = 256; //STARTING_POPULATION * 12; // garl.Action.values().length;
     public static int DEATH_MULTIPLIER = 25;
     public static int GENE_POOL = 2;
@@ -54,6 +56,7 @@ public class Settings {
     public static int MAX_SPEED = 5;
     public static int MAX_POPULATION = 200;
 
+    public static double MAX_ENERGY = 150.0 ;
     public static double ENERGY = 15.0 ;
     public static double ENERGY_STEP_COST = 0.0005;
     public static double ENERGY_STEP_SLEEP_COST = 0.02;
