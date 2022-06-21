@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -227,7 +228,10 @@ public class MoneyMQ {
             snap = System.currentTimeMillis();
             String fileName = "./genomes-" + snap + ".zip";
             File archive = new File(fileName);
-            ZipUtil.pack(new File("./genomes"), archive);
+            ArrayList<Seed> list = SeedLoader.load();
+            for(int i = 0; i < list.size(); i++) {
+                ZipUtil.pack(list.get(i).file, archive);
+            }
             ArtifactStorage storage = new ArtifactStorage();
             String address = AddressGenerator.generateNewAddress();
             Log.info("address:{" + address + "}");

@@ -29,12 +29,14 @@ public class Settings {
 
 
     public static int INSPECTOR_WIDTH = 420;
-    public static double ACCELERATION = 0.3;
+    public static double ACCELERATION = 1.1;
     public static int CHAR_SET = 62;
     public static int GENOME_LENGTH = 32;
     public static int STARTING_POPULATION = 50;
     public static int MAX_OFFSPRING = 2;
     public static int MAX_SPAWN_OFFSPRING = 6;
+    public static int FRAME_RATE = 30;
+    public static int THINK_RATE = 10;
 
     public static boolean NATURAL_REPLICATION = true;
     public static int MAX_THINK_DEPTH = 2;
@@ -52,8 +54,9 @@ public class Settings {
     public static int MAX_EPOCH = 9000;
 
 
+    public static double MIN_ENERGY = 1;
     public static int CELL_MOVEMENT = 1;
-    public static int MAX_SPEED = 5;
+    public static int MAX_SPEED = 8;
     public static int MAX_POPULATION = 200;
 
     public static double MAX_ENERGY = 150.0 ;

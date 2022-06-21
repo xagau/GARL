@@ -44,6 +44,9 @@ public class Utility {
 
     public synchronized static double flatten(long v, long max) {
         double d = (double) ((double) v % (double) max);
+        if(Double.isNaN(d)){
+            return (double)v;
+        }
         return d;
     }
 
@@ -69,6 +72,9 @@ public class Utility {
     public synchronized static double flatten(char c) {
 
         double i = (c - 'a') / 25d;
+        if( Double.isNaN(i)){
+            return 1;
+        }
         return i;
     }
 

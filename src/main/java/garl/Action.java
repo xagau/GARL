@@ -25,7 +25,6 @@ package garl;
  */
 
 public enum Action {
-
     NONE,
     COMMIT,
     MOVE_RIGHT,
@@ -43,9 +42,10 @@ public enum Action {
     RECODE,
     JUMP,
     COS,
+    COSIN,
+    SINCOS,
     SIN,
     TAN,
-    TANH,
     SLOW,
     RANDOM,
     FASTER,
@@ -55,7 +55,5 @@ public enum Action {
     CONTINUE,
     APPEND,
     SAVE,
-    GOAL,
-    DEATH,
     DELETE
 }

@@ -35,9 +35,7 @@ public class GARLPoint {
 
     public String toString() {
         String s = "";
-        //for (int i = 0; i < s.length(); i++) {
         s = "(" + this.getX() + "," + this.getY() + ")";
-
         return s;
     }
 
@@ -48,13 +46,18 @@ public class GARLPoint {
         if( points.length >= 1 ) {
             GARLPoint p = points[0];
             for (int i = 0; i < points.length; i++) {
-                if (points[i].distance(point) < p.distance(point)) {
-                    p = points[i];
+                double p1 = points[i].distance(point);
+                double p2 = p.distance(point);
+                if( !new Double(p1).isNaN() && !new Double(p2).isNaN()) {
+                    if (p1 < p2) {
+                        p = points[i];
+                    }
                 }
             }
             return p;
         }
         return null;
+
     }
 
     public static GARLPoint[] internalPoints(GARLPoint[] points, double radius) {

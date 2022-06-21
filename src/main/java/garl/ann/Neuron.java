@@ -16,6 +16,9 @@ public class Neuron {
 
     public Neuron(int numberofinputs, IActivationFunction iaf, Double bias) {
         this.bias = bias;
+        if(this.bias.isNaN()){
+            this.bias = Math.random();
+        }
         numberOfInputs = numberofinputs;
         weight = new ArrayList<>(numberofinputs + 1);
         input = new ArrayList<>(numberofinputs);
@@ -63,6 +66,9 @@ public class Neuron {
     }
 
     public Double getOutput() {
+        if( output.isNaN() ){
+            return bias;
+        }
         return output;
     }
 

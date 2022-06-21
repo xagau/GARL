@@ -56,7 +56,7 @@ public class Brain {
         World world = new World(1848, 1016);
         Entity e = new Entity(world);
         e.age = 100;
-        Action a = e.brain.evaluate(world);
+        Action a = e.brain.evaluate(e, world);
         e.brain.ann.input.calc();
         double d = e.brain.getOutput();
 
@@ -71,8 +71,17 @@ public class Brain {
             if (e == null) {
                 Log.info("garl.Genome is null");
             }
-            list.add((double) world.getWidth());
-            list.add((double) world.getHeight());
+            list.add((double) e.reward);
+            list.add((double) e.getEnergy());
+            list.add((double) e.age);
+            list.add((double) e.location.x);
+            list.add((double) e.location.y);
+            list.add(e.location.vy);
+            list.add(e.location.vx);
+            list.add(e.distanceX);
+            list.add(e.distanceY);
+            list.add((double) world.width);
+            list.add((double) world.height);
             list.add((double) Globals.spawn.x);
             list.add((double) Globals.spawn.y);
             list.add((double) Globals.spawn.width);
@@ -84,14 +93,6 @@ public class Brain {
             list.add((double) Globals.control.height);
             list.add((double) Globals.control.getColor().getRGB());
             list.add((double) (1d));
-            list.add((double) e.location.x);
-            list.add((double) e.location.y);
-            list.add(e.location.vy);
-            list.add(e.location.vx);
-            list.add(e.distanceX);
-            list.add(e.distanceY);
-            list.add((double) e.age);
-            list.add((double) e.getEnergy());
             list.add((double) Settings.DEATH_MULTIPLIER * e.genome.read(Gene.AGE));
 
             list.add((double) (e.fertile ? 1d : 0d));
@@ -213,7 +214,9 @@ public class Brain {
                 } else if( entity.target && !entity.isTrajectoryGoal()) {
                     entity.process(Action.SLOW, world, 0);
                     entity.process(Action.SCAN, world, 0);
-                } else {
+                }
+                /*
+                else {
                     input(entity, world);
                     try {
                         long s = System.currentTimeMillis();
@@ -261,13 +264,20 @@ public class Brain {
 
                         return a;
                     }
+
                 }
+                 */
             }
         } catch (Exception ex) {
             return Action.SCAN;
         }
         return Action.SCAN;
     }
+
+
+    //public Action evaluate(World world) {
+
+    //}
 
     public Action evaluate(Entity entity, World world) {
 

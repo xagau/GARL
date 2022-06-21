@@ -49,17 +49,13 @@ public class GARLTask extends Thread {
 
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args)  {
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 ArrayList<Seed> list = new ArrayList<>();
                 if (args.length > 0) {
-                    try {
-                        list = SeedLoader.load();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    list = SeedLoader.load();
                 }
 
                 GARLTask task = new GARLTask(list);

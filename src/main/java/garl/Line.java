@@ -83,6 +83,9 @@ public class Line {
     public static boolean isPointOnTheLine(Point2D.Double A, Point2D.Double B, Point2D.Double P) {
         double m = (B.y - A.y) / (B.x - A.x);
 
+        if( Double.isNaN(m)){
+            return false;
+        }
         //handle special case where the line is vertical
         if (Double.isInfinite(m)) {
             if (A.x == P.x) return true;

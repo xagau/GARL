@@ -33,6 +33,10 @@ import java.util.Date;
 public class CullingStrategy {
 
     public static int MAX_ENTITIES = 500;
+    public static void main(String[] args)
+    {
+        cleanup();
+    }
     public static void cleanup() {
 
         try {

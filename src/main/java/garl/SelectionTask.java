@@ -75,18 +75,17 @@ public class SelectionTask implements Runnable {
 
                 ArrayList<Obstacle> rlist = world.selection.rlist;
 
+                //world.fixNaN();
+                world.killNaN();
+
                 for (int i = 0; i < world.list.size(); i++) {
                     Entity e = world.list.get(i);
-                    if (e.location.y == 0) {
-                        e.die();
-                    } else if (e.location.x == 0) {
-                        e.die();
-                    }
                     Random rand = new Random();
                     for (int j = 0; j < rlist.size(); j++) {
                         Obstacle rect = rlist.get(j);
                         if (rect != null) {
                             if (e.alive) {
+
 
                                 if( selection.notInBounds(e, world)){
                                     world.impact++;
@@ -101,7 +100,7 @@ public class SelectionTask implements Runnable {
                                         }
 
                                         e.reward++;
-                                        save(world.epoch, e);
+                                        save(Globals.epoch, e);
                                         for (int k = 0; k < Settings.MAX_SPAWN_OFFSPRING; k++) {
                                             Entity n = e.clone();
                                             n.location.x = rand.nextInt(world.width);
@@ -146,7 +145,7 @@ public class SelectionTask implements Runnable {
                         }
                     }
 
-                    if (e.getEnergy() <= 0) {
+                    if (e.getEnergy() <= Settings.MIN_ENERGY) {
                         e.die();
                     }
                 }

@@ -55,9 +55,7 @@ public class ReplicationTask implements Runnable {
                 }
 
 
-                if( livingCount < 0 ) {
-                    livingCount = world.getLivingCount();;
-                }
+                livingCount = world.getLivingCount();
 
                 if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
                     try {
@@ -68,7 +66,7 @@ public class ReplicationTask implements Runnable {
                         int w = world.width;
                         int h = world.height;
                         Selection selection = new Selection(world);
-                        world = new World(entList, selection, w, h);
+                        world.list.clear();
                         Log.info("Recreate population:" + list.size());
 
                         Runtime.getRuntime().gc();
@@ -96,8 +94,8 @@ public class ReplicationTask implements Runnable {
                         world.spawns = 0;
                         world.controls = 0;
 
-                        world.epoch++;
-                        if (world.epoch == Settings.MAX_EPOCH) {
+                        Globals.epoch++;
+                        if (Globals.epoch == Settings.MAX_EPOCH) {
                             Log.info("total controls:" + world.totalControls);
                             Log.info("total spawns:" + world.totalSpawns);
                             Runtime.getRuntime().halt(0);
@@ -112,7 +110,7 @@ public class ReplicationTask implements Runnable {
                             }
                         }
 
-                        if (livingCount <= Settings.GENE_POOL && !list.isEmpty()) {
+                        if (livingCount <= Settings.GENE_POOL && !world.list.isEmpty()) {
 
                             try {
                                 world.selection = new Selection(world);

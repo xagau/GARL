@@ -31,7 +31,7 @@ public class ActionFactory {
     static Action create(double input) {
         int len = Action.class.getDeclaredFields().length;
 
-        double o = (double) (input%1*len);
+        double o = (double) ((input%1)*len);
 
         int n = (int) Math.round(o);
         try {

@@ -50,7 +50,7 @@ public class SeedLoader {
         return lowestReward;
     }
 
-    public synchronized static ArrayList<Seed> load() throws IOException {
+    public synchronized static ArrayList<Seed> load()  {
         ArrayList<Seed> list = new ArrayList<Seed>();
         String seed = "./genomes/";
         Gson gson = new Gson(); //null;
@@ -64,7 +64,8 @@ public class SeedLoader {
         for (int i = files.length - 1; i >= 0; i--) {
             File f = files[i];
             if (f.getName().contains("genome")) {
-                String fName = f.getName();
+                try {
+                    String fName = f.getName();
 
                     Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
                     try {
@@ -74,10 +75,11 @@ public class SeedLoader {
                         list.add(lseed);
                         ctr++;
                     } catch (Exception ex) {
-                        if( Globals.verbose ) {
+                        if (Globals.verbose) {
                             Log.info(ex);
                         }
                     }
+                } catch(Exception ex){}
             }
         }
 
@@ -173,7 +175,7 @@ public class SeedLoader {
     public static void main(String[] args) {
         try {
             SeedLoader.load();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

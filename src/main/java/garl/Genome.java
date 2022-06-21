@@ -53,7 +53,7 @@ public class Genome {
 
     public synchronized char read(int loc) {
         if (loc < 0) {
-            loc = Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION);
+            loc = Settings.GENOME_LENGTH + (int) code.charAt(Settings.GENOME_LENGTH + Gene.DECISION);
         }
         if (loc < code.length()) {
             last = code.charAt(loc);
@@ -65,7 +65,7 @@ public class Genome {
             } catch (Exception ex) {
             }
         }
-        char c = code.charAt(Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION));
+        char c = code.charAt(Settings.GENOME_LENGTH + (int) code.charAt(Settings.GENOME_LENGTH + Gene.DECISION));
         last = c;
         return c;
     }
@@ -73,7 +73,7 @@ public class Genome {
     public synchronized char read() {
         int loc = index;
         if (loc < 0) {
-            loc = Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION);
+            loc = Settings.GENOME_LENGTH + (int) code.charAt(Settings.GENOME_LENGTH + Gene.DECISION);
         }
         if (loc < code.length()) {
             last = code.charAt(loc);
@@ -85,7 +85,7 @@ public class Genome {
             } catch (Exception ex) {
             }
         }
-        char c = code.charAt(Settings.GENOME_LENGTH + (int) read(Settings.GENOME_LENGTH + Gene.DECISION));
+        char c = code.charAt(Settings.GENOME_LENGTH + (int) code.charAt(Settings.GENOME_LENGTH + Gene.DECISION));
         last = c;
         advance();
         return c;

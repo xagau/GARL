@@ -55,6 +55,7 @@ public class AWTThreadManager extends Thread {
 
         ReplicationTask replication = new ReplicationTask(world, frame);
         ThinkTask think = new ThinkTask(frame, world, width - inspectorPanelWidth, height, 5);
+        DoingTask doing = new DoingTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
 
         PaintTask paint = new PaintTask();
@@ -78,7 +79,7 @@ public class AWTThreadManager extends Thread {
 
         try {
 
-            int fps = 1000 / Globals.FPS;
+
 
             Log.info("Time logging tasks");
             Thread t = new Thread() {
@@ -86,26 +87,31 @@ public class AWTThreadManager extends Thread {
 
                     boolean running = true;
                     int ctr = 0;
+                    int thinkCtr = 0;
                     while( running ) {
-                        ctr++;
-                        paint.run();
-                        if( ctr >= 10 ) {
-                            think.run();
+                        try {
+                            ctr++;
+                            thinkCtr++;
+                            paint.run();
+                            doing.run();
                             selection.run();
-                            replication.run();
-                            payout.run();
-                            ctr = 0;
-                        }
+
+                            if( thinkCtr >= Settings.THINK_RATE){
+                                think.run();
+                                thinkCtr = 0;
+                            }
+                            if (ctr >= Settings.FRAME_RATE) {
+                                replication.run();
+                                payout.run();
+                                ctr = 0;
+                            }
+                        } catch(Exception ex) {}
                     }
                 }
             };
             t.setPriority(Thread.MAX_PRIORITY);
             t.start();
-            //timer.schedule(paint, 0, fps);
-            //timer.schedule(think, 1, Globals.thinkTime);
-            //timer.schedule(selection, 2, Globals.selectionTime);
-            ///timer.schedule(replication, 3, Globals.replicationTime);
-            //timer.schedule(payout, 5, 5000);
+
             timer.schedule( threadUpdate, 5, 1000);
 
 

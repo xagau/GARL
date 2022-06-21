@@ -59,7 +59,6 @@ public class Population {
                     if (!world.selection.isTouching(e)) {
                         entities.add(e);
                         okay = false;
-                        break;
                     } else {
 
                         // HACK. Some will be lost.
@@ -84,21 +83,27 @@ public class Population {
         return entities;
     }
 
-    public static ArrayList<Entity> create(World world, ArrayList seedList) throws IOException {
+    public static ArrayList<Entity> create(World world, ArrayList<Seed> seedList) {
 
 
         Log.info("Create population from seed list");
         ArrayList<Entity> entities = new ArrayList<>();
         Random rand = new Random();
+        world.list = new ArrayList<>();
+        world.selection = new Selection(world);
         world.impact = 0;
         world.children = 0;
+        world.killedNan = 0;
+        world.controls = 0;
+        world.spawns = 0;
+
 
         Comparator<Seed> comparator = new Comparator<Seed>() {
             @Override
             public int compare(Seed e1, Seed e2) {
-                if (e1.generation == e2.generation) {
+                if (e1.reward == e2.reward) {
                     return 0;
-                } else if (e1.generation < e2.generation) {
+                } else if (e1.reward < e2.reward) {
                     return 1;
                 } else {
                     return -1;
@@ -114,88 +119,50 @@ public class Population {
 
         int individuals = Settings.STARTING_POPULATION; // ? , individuals);
 
-        String fileName = "./genomes/" + System.currentTimeMillis() + "-" + world.epoch + "-epoch.json";
-        Log.info(fileName);
-        FileWriter writer = new FileWriter(new File(fileName));
-        writer.write("[");
-        for (int i = 0; i <= individuals; i++) {
-            try {
-                if( i < seedList.size() ) {
-                    Seed seed = (Seed) seedList.get(i);
-
-                    Entity e = new Entity(world);
-                    e.genome = new Genome(seed.genome);
-                    e.generation = seed.generation;
-                    e.epoch = world.epoch;
-                    e.brain = new Brain(e.genome);
-                    e.location.x = rand.nextInt(world.width);
-                    e.location.y = rand.nextInt(world.height);
-
-
-                    //Entity rep = e.replicate();
-                    e.genome.setOwner(e);
-                    if( !world.selection.isTouching(e)) {
-                        entities.add(e);
-                    } else {
-                        // HACK. Some will be lost.
-                        e.location.x = rand.nextInt(world.width);
-                        e.location.y = rand.nextInt(world.height);
-                        entities.add(e);
-                    }
-                    if (Globals.verbose) {
-                        writer.write("{ \"epoch\":" + world.epoch + ", \"generation\":" + e.generation + ", \"position\":" + i + ", \"genome\": \"" + e.genome.code + "\"}");
-                        if (i + 1 != individuals) {
-                            writer.write(",\n");
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                Log.info("Exception:" +ex);
-                if(Globals.verbose) {
-                    ex.printStackTrace();
-                }
-            }
-
-        }
-
-        /*
-        Log.info("Adjusted Individuals:" + adjustedIndividuals);
-
-        if (adjustedIndividuals > 0) {
-            for (int i = 0; i < adjustedIndividuals; i++) {
+        //String fileName = "./genomes/" + System.currentTimeMillis() + "-" + Globals.epoch + "-epoch.json";
+        //Log.info(fileName);
+        try {
+            //FileWriter writer = new FileWriter(new File(fileName));
+            //writer.write("[");
+            for (int i = 0; i <= individuals; i++) {
                 try {
-                    Entity e = new Entity(world);
+                    if (i < seedList.size()) {
+                        Seed seed = (Seed) seedList.get(i);
 
-                    e.location.x = rand.nextInt(world.width);
-                    e.location.y = rand.nextInt(world.height);
-                    if( !world.selection.isTouching(e)) {
-                        entities.add(e);
-                    } else {
-                        // HACK. Some will be lost.
+                        Entity e = new Entity(world);
+                        e.genome = new Genome(seed.genome);
+                        e.generation = seed.generation;
+                        e.reward = seed.reward;
+                        e.epoch = Globals.epoch;
+                        e.brain = new Brain(e.genome);
                         e.location.x = rand.nextInt(world.width);
                         e.location.y = rand.nextInt(world.height);
-                        entities.add(e);
-                    }
 
-                    if (Globals.verbose) {
-                        writer.write("{ \"generation\":" + e.generation + ", \"position\":" + i + ", \"genome\": \"" + e.genome.code + "\"}");
-                        if (i + 1 != adjustedIndividuals) {
-                            writer.write(",\n");
-                        }
+                        e.genome.setOwner(e);
+                        boolean done = false;
+                        do {
+                            if (!world.selection.isTouching(e)) {
+                                entities.add(e);
+                                Log.info("Adding:" + e.getEnergy() + " " + e.reward);
+                                done = true;
+                            } else {
+
+                                e.location.x = rand.nextInt(world.width);
+                                e.location.y = rand.nextInt(world.height);
+                            }
+                        } while (!done);
+
                     }
                 } catch (Exception ex) {
                     Log.info("Exception:" + ex);
-                    ex.printStackTrace();
+                    if (Globals.verbose) {
+                        ex.printStackTrace();
+                    }
                 }
+
             }
-        }
 
-         */
-        writer.flush();
-        writer.write("]");
-        writer.flush();
-        writer.close();
-
+        } catch(Exception ex) {ex.printStackTrace();}
         Log.info("Entities added (H):" + entities.size());
 
         return entities;

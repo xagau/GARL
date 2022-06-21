@@ -40,14 +40,14 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
     volatile World world = null;
 
 
-    volatile static ArrayList<Entity> list = new ArrayList<>();
+    volatile ArrayList<Entity> list = new ArrayList<>();
 
     Selection selection = null;
 
     volatile static double offset = -180;
     volatile int controls = 0;
-    volatile static int totalControls = 0;
-    volatile static int totalSpawns = 0;
+    volatile int totalControls = 0;
+    volatile int totalSpawns = 0;
 
     volatile int children = 0;
     volatile int width;
@@ -57,14 +57,20 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
     volatile double phl = 0;
     volatile int mx = 0;
     volatile int my = 0;
-    volatile static Entity selected = null;
+    volatile Entity selected = null;
 
     int frames = 1;
     volatile long start = System.currentTimeMillis();
     volatile int spawns = 0;
     volatile int impact = 0;
-    volatile int epoch = 1;
+    int fps = 0;
+    DecimalFormat df = new DecimalFormat("0.00000000");
+    long firstSnap = 0;
+    int killedNan = 0;
+    static int done = 0;
 
+    public BufferedImage img = null;
+    BufferStrategy strategy = null;
 
     World(int w, int h) {
         width = w;
@@ -106,7 +112,6 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
     }
 
-    static int done = 0;
     @Override
     public void mouseMoved(MouseEvent mouseEvent) {
         try {
@@ -132,7 +137,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
         } catch(Exception ex) {
             Log.info(ex);
             ex.printStackTrace();
-        }
+        } catch(Error e) { }
         int mx = mouseEvent.getX();
         int my = mouseEvent.getY();
         this.mx = mx;
@@ -143,23 +148,22 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
                 for (int i = 0; i < list.size(); i++) {
                     Entity e = list.get(i);
                     if (e != null) {
-                        if (e.isTouching(mx, my)) {
+                        if (e.isTouching(e, mx, my)) {
                             try {
                                 anythingTouching = true;
                                 selected = e;
                                 e.selected = true;
                             } catch (Exception ex) {
                             }
-                        } else {
-                            if( e.selected == true ){
-                                e.selected = false;
-                            }
                         }
                     }
                 }
             }
             if( anythingTouching == false ){
-                selected = null;
+                if( selected != null ) {
+                    selected.selected = false;
+                    selected = null;
+                }
             }
         } catch(Exception ex){
             Log.info(ex);
@@ -215,28 +219,88 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
         return livingCount;
     }
 
+    public void fixNaN()
+    {
+        for (int i = 0; i < this.list.size(); i++) {
+            Entity e = (Entity) this.list.get(i);
+            if(e.alive) {
+                boolean criteria = false;
+                if (new Double(e.location.x).isNaN()) {
+                    e.location.x = e.previous.x;
+                }
+                if (new Double(e.location.y).isNaN()) {
+                    e.location.y = e.previous.y;
+                }
+                if (new Double(e.location.vx).isNaN()) {
+                    e.location.vx = e.previous.vx;
+                }
+                if (new Double(e.location.vy).isNaN()) {
+                    e.location.vy = e.previous.vy;
+                }
+
+                if(criteria) {
+                    //e.die();
+                    //killedNan++;
+                }
+            }
+        }
+
+    }
+    public void killNaN()
+    {
+        for (int i = 0; i < this.list.size(); i++) {
+            Entity e = (Entity) this.list.get(i);
+            if(e.alive) {
+                //Log.info("Last action:" + e.last.toString());
+                boolean criteria = false;
+                if (new Double(e.location.x).isNaN()) {
+                    e.location.x = Math.random()*width;
+                    criteria = true;
+                }
+                if (new Double(e.location.y).isNaN()) {
+                    e.location.y = Math.random()*height;
+                    criteria = true;
+                }
+                if (new Double(e.location.vx).isNaN()) {
+                    e.location.vx = Math.random()>0.5?-1.01:1.01;
+                    criteria = true;
+                }
+                if (new Double(e.location.vy).isNaN()) {
+                    e.location.vy = Math.random()>0.5?-1.01:1.01;
+                    criteria = true;
+                }
+
+                if(criteria) {
+                    Log.info("Last action:" + e.last.toString());
+                    e.die();
+                    killedNan++;
+                }
+            }
+        }
+
+    }
     public int getNaNCount(){
 
         int nanCount = 0;
         for (int i = 0; i < this.list.size(); i++) {
             Entity e = (Entity) this.list.get(i);
-            boolean criteria = false;
-            if( new Double(e.location.x).isNaN() ){
-                criteria = true;
-            }
-            if( new Double(e.location.y).isNaN() ){
-                criteria = true;
-            }
-            if( new Double(e.location.vx).isNaN() ){
-                criteria = true;
-            }
-            if( new Double(e.location.vy).isNaN() ){
-                criteria = true;
-            }
+                boolean criteria = false;
+                if (new Double(e.location.x).isNaN()) {
+                    criteria = true;
+                }
+                if (new Double(e.location.y).isNaN()) {
+                    criteria = true;
+                }
+                if (new Double(e.location.vx).isNaN()) {
+                    criteria = true;
+                }
+                if (new Double(e.location.vy).isNaN()) {
+                    criteria = true;
+                }
 
-            if (criteria) {
-                nanCount++;
-            }
+                if (criteria) {
+                    nanCount++;
+                }
         }
         return nanCount;
 
@@ -324,25 +388,15 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
     }
 
-
-
-    BufferStrategy strategy = null;
-
     public void paint(Graphics g){
-
         render();
-
     }
-    int fps = 0;
-    DecimalFormat df = new DecimalFormat("0.00000000");
-    long firstSnap = 0;
 
-    public BufferedImage img = null;
 
     public void render() {
 
         try {
-            Thread.sleep(1);
+            //Thread.sleep(1);
             Thread.yield();
             //Globals.semaphore.acquire();
 
@@ -351,22 +405,23 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
             }
             fps++;
 
-            if( img == null ) {
-                img = this.getGraphicsConfiguration().createCompatibleImage(width, height);
-            }
-            //this.createBufferStrategy(2);
-            //strategy = this.getBufferStrategy();
-            Graphics g = img.createGraphics(); //.getDrawGraphics();
+            //if( img == null ) {
+            //    img = this.getGraphicsConfiguration().createCompatibleImage(width, height);
+            //}
+            this.createBufferStrategy(2);
+            strategy = this.getBufferStrategy();
+            Graphics g = strategy.getDrawGraphics();
             Graphics2D g2 = (Graphics2D) g;
 
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 
             if (spawns > controls) {
                 phl += Globals.increment;
             }
 
-            g2.setColor(Color.BLACK);
+            g2.setColor(Color.DARK_GRAY);
             g2.fillRect(0, 0, width, height);
 
             ArrayList<Obstacle> rlist = selection.rlist;
@@ -400,24 +455,26 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
             int livingCount = getLivingCount();
             if (list != null) {
-                    for (int i = 0; i < list.size(); i++) {
-                        Entity e = list.get(i);
-                        drawEntity(g2, e);
-                    }
+                for (int i = 0; i < list.size(); i++) {
+                    Entity e = list.get(i);
+                    drawEntity(g2, e);
+                }
             }
 
-            drawPopup(g2, selected, mx, my);
+            if( selected != null ) {
+                drawPopup(g2, selected, mx, my);
+            }
 
             g2.setColor(Color.BLACK);
             g2.fillRect(0, getHeight() - 24, getWidth(), getHeight());
             g2.setColor(Color.YELLOW);
             String logLine = "No message";
             try {
-                logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " FPS: " + frames/((System.currentTimeMillis() - start) / 1000) + " frames:" + frames++ + " total time:" + ((System.currentTimeMillis() - start) / 1000 + " Nan Count:" + getNaNCount());
+                logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + Globals.epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " FPS: " + frames/((System.currentTimeMillis() - start) / 1000) + " frames:" + frames++ + " total time:" + ((System.currentTimeMillis() - start) / 1000 + " Killed NaN:" + killedNan);
             } catch(Exception ex) {}
             g2.drawString(logLine, 10, (getHeight() - 10));
-            this.getGraphics().drawImage(img, 0, 0, this);
-            g2.dispose();
+            strategy.show();
+            strategy.dispose();
             if( System.currentTimeMillis() - firstSnap >= 1000 ) {
                 fps = 0;
                 firstSnap = 0;
@@ -435,7 +492,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
     public void drawEntity(Graphics2D g2, Entity e) {
         try {
-            int r = (int) (Math.min(e.getEnergy(), Settings.MAX_SIZE) / 2);
+            int r = (int) e.calculateSize()/2;
             if( r*2 < Settings.MIN_SIZE){
                 r = Settings.MIN_SIZE / 2;
             }
@@ -446,8 +503,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
                 e.color = Color.BLUE;
                 g2.setColor(Color.BLUE);
             }
-            int px = (Settings.INSPECTOR_WIDTH / 2) + r;
-            int py = (Settings.INSPECTOR_WIDTH / 2) + r;
+
             Point p = null;
 
             p = new Point((int) e.location.x + (r / 2), (int) e.location.y + (r / 2));
@@ -542,20 +598,9 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
                 double PVX = e.location.vx;
                 double PVY = e.location.vy;
 
-                if( new Double(PX).isNaN() ){
-                    e.location.x = 1;
-                }
-                if( new Double(PY).isNaN() ){
-                    e.location.y = 1;
-                }
-                if( new Double(PVX).isNaN() ){
-                    e.location.vx = 1;
-                }
-                if( new Double(PVY).isNaN() ){
-                    e.location.vy = 1;
-                }
 
-                Log.info(PX + "-" + PY);
+
+                //Log.info(PX + "-" + PY);
                 g.drawString("Position: X=" + df.format(PX) + ", Y=" + df.format(PY), px + spacing, py + spacing * 1);
                 g.drawString("Size:" + e.size, px + spacing, py + spacing * 2);
                 g.drawString("Age:" + e.age, px + spacing, py + spacing * 3);
@@ -614,7 +659,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
                 g.drawString("Closest: " + name, px + spacing, py + spacing * 38);
                 g.drawString("Distance to Goal: X:" + e.distanceX + " Y:" + e.distanceY, px + spacing, py + spacing * 39);
                 g.drawString("Reward:" + e.reward, px + spacing, py + spacing * 40);
-                g.drawString("Selected:" + selected.selected, px + spacing, py + spacing * 41);
+                try { g.drawString("Selected:" + selected.selected, px + spacing, py + spacing * 41); } catch(Exception ex) {}
 
                 g.setColor(Color.black);
 
@@ -631,11 +676,8 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
     @Override
     public void componentResized(ComponentEvent componentEvent) {
-
         this.width = getWidth();
         this.height = getHeight();
-        this.img = null;
-
     }
 
     @Override

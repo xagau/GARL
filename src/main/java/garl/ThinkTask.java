@@ -67,7 +67,7 @@ public class ThinkTask implements Runnable {
                 if( Globals.benchmark ) {
                     Log.info("think diff:" + (end - start));
                 }
-                Runtime.getRuntime().gc();
+                //Runtime.getRuntime().gc();
 
             } catch (Exception ex) {
             } finally {

@@ -1366,3 +1366,51 @@
 
 777.76G/811.34G:202206171T1313908:L: [x] Sent Successfully
 
+270.88G/291.14G:202206172T0323874:L:Routing Key:transactions-mc
+
+270.88G/291.14G:202206172T0323875:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50200000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1655796216828","version":"1.48","taskType":"GARL-genome"}'
+
+267.88G/291.14G:202206172T0323913:L: [x] Sent Successfully
+
+264.88G/291.14G:202206172T0323947:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1655795915534-genome-1c62436e-9024-4a2d-a4bb-214ec7732896.json'
+
+1130.85G/1214.09G:202206172T0443646:L:Routing Key:transactions-mc
+
+1130.85G/1214.09G:202206172T0443648:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50030000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1655801017601","version":"1.48","taskType":"GARL-genome"}'
+
+1120.12G/1214.09G:202206172T0443691:L: [x] Sent Successfully
+
+1120.12G/1214.09G:202206172T0443714:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1655800873652-genome-f4efb461-89da-4e01-80ef-a78bb94d452b.json'
+
+1139.35G/1213.83G:202206172T0531706:L:Routing Key:transactions-mc
+
+1139.35G/1213.83G:202206172T0531706:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50170000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1655803903675","version":"1.48","taskType":"GARL-genome"}'
+
+1139.35G/1213.83G:202206172T0531742:L: [x] Sent Successfully
+
+1117.89G/1213.83G:202206172T0531757:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1655803810176-genome-e839f27e-8485-43f3-b9fd-60ded7c705b9.json'
+
+1171.10G/1214.15G:202206172T0604841:L:Routing Key:transactions-mc
+
+1171.10G/1214.15G:202206172T0604841:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50270000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1655805891811","version":"1.48","taskType":"GARL-genome"}'
+
+1171.10G/1214.15G:202206172T0604876:L: [x] Sent Successfully
+
+1160.37G/1214.15G:202206172T0604891:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1655805734743-genome-5e374a58-32bd-4dc3-94fe-e64634b7fcb0.json'
+
+1164.05G/1213.36G:202206172T0721452:L:Routing Key:transactions-mc
+
+1164.05G/1213.36G:202206172T0721452:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50060000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1655810477421","version":"1.48","taskType":"GARL-genome"}'
+
+1164.05G/1213.36G:202206172T0721488:L: [x] Sent Successfully
+
+1142.60G/1213.36G:202206172T0721506:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1655810362220-genome-a41f37f0-9efc-4be8-bf9b-2ffb7e948085.json'
+
+1170.53G/1213.67G:202206172T0817274:L:Routing Key:transactions-mc
+
+1170.53G/1213.67G:202206172T0817274:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50270000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1655813825243","version":"1.48","taskType":"GARL-genome"}'
+
+1170.53G/1213.67G:202206172T0817309:L: [x] Sent Successfully
+
+1159.80G/1213.67G:202206172T0817325:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1655813813340-genome-191c4a09-ec91-404f-a7e2-095839357fbf.json'
+

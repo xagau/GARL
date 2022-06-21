@@ -21,6 +21,7 @@ garl/KinFactory.class
 garl/Entity$1.class
 garl/ann/Neuron.class
 garl/GARLTask$14.class
+garl/DoingTask.class
 garl/ThinkTask.class
 garl/iaf/LinearCombinationFunction.class
 garl/AWTThreadManager$1.class

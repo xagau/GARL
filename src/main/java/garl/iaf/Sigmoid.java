@@ -15,7 +15,13 @@ public class Sigmoid implements IActivationFunction {
 
     @Override
     public double calc(double x) {
-        return 1.0 / (1.0 + Math.exp(-a * x));
+        double b =  1.0 / (1.0 + Math.exp(-a * x));
+        if(Double.isNaN(b)){
+            return a;
+        }
+        else {
+            return b;
+        }
     }
 }
 

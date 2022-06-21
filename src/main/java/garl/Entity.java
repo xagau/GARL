@@ -23,6 +23,7 @@ package garl;
  * @email seanbeecroft@gmail.com
  *
  */
+import javax.swing.plaf.PanelUI;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
@@ -66,11 +67,11 @@ public class Entity {
 
     volatile boolean target = false;
 
-    volatile double targetvx = Double.NaN;
-    volatile double targetvy = Double.NaN;
+    volatile double targetvx = 0;
+    volatile double targetvy = 0;
 
-    volatile double targetx = Double.NaN;
-    volatile double targety = Double.NaN;
+    volatile double targetx = 0;
+    volatile double targety = 0;
 
     volatile int depth = 0;
 
@@ -151,6 +152,8 @@ public class Entity {
             return true;
         }
         double direction = degree;
+        size = calculateSize();
+
         int _xs = (int) ((int) (location.x + (size / 2)) + (size * world.width * Math.cos(direction * ((Math.PI) / 360d)))); //);
         int _ys = (int) ((int) (location.y + (size / 2)) - (size * world.height * Math.sin(direction * ((Math.PI) / 360d)))); //);
 
@@ -237,14 +240,19 @@ public class Entity {
                 e.location.y, size / 2, e.size / 2);
         if (t == 1) {
             touching = e;
+            Log.info("Touching");
             return true;
         }
-        touching = null;
+        if (t == 0) {
+            touching = e;
+            //Log.info("Touching 0?");
+            return true;
+        }
         return false;
     }
 
     public boolean isTouching() {
-        for (int i = 0; i < World.list.size(); i++) {
+        for (int i = 0; i < world.list.size(); i++) {
             Entity e = world.list.get(i);
             if (e != this) {
                 if (isTouching(e)) {
@@ -304,9 +312,9 @@ public class Entity {
         Line l2 = new Line(b_startX, b_startY, b_endX, b_endY);
 
 
-        boolean bb = Line.intersects(l1, l2);
+        boolean intersection = Line.intersects(l1, l2);
 
-        if (bb) {
+        if (intersection) {
             return true;
         }
 
@@ -332,22 +340,32 @@ public class Entity {
         return list;
     }
 
-    public boolean isTouching(int mx, int my) {
-        int t = GFG.circle(location.x, location.y, mx,
-                my, size / 2, size / 2);
+    public boolean isTouching(Entity e, int mx, int my) {
+        int t = GFG.circle(e.location.x, e.location.y, mx,
+                my, e.size / 2, e.size / 2);
         if (t == 1) {
             //Circle touch to each other.
             return true;
-        } else if (t < 0) {
+        } else if (t == 0) {
             //Circle not touch to each other.
-            return false;
+            return true;
         } else {
             //Circle intersect to each other.");
-            return true;
+            return false;
         }
 
     }
 
+    int calculateSize()
+    {
+        int sz = Math.min((int)getEnergy(), Settings.MAX_SIZE);
+        if( sz > Settings.MAX_SIZE){
+            sz = Settings.MAX_SIZE;
+        } else if( sz <= Settings.MIN_SIZE ){
+            sz = Settings.MIN_SIZE;
+        }
+        return sz;
+    }
 
     public Entity(World world) {
         try {
@@ -358,14 +376,9 @@ public class Entity {
             r = genome.read(Gene.SENSORY);
             g = genome.read(Gene.HIDDEN);
             b = genome.read(Gene.SIZE);
-            this.setEnergy(Settings.ENERGY*Math.random());
+            this.setEnergy(Settings.ENERGY*2*Math.random());
             this.color = Color.getHSBColor(r, 128 % g, 128 % b);
-            this.size = Math.min((int)getEnergy(), Settings.MAX_SIZE);
-            if( this.size > Settings.MAX_SIZE){
-                this.size = Settings.MAX_SIZE;
-            } else if( this.size <= Settings.MIN_SIZE ){
-                this.size = Settings.MIN_SIZE;
-            }
+            this.size = calculateSize();
 
             this.degree = Math.random() * 360;
         } catch(Exception ex) {
@@ -413,7 +426,7 @@ public class Entity {
                 move++;
             }
 
-            if( cnt++ > 10 ){
+            if( cnt++ > 20 ){
                 break;
             }
         } while(tryAgain);
@@ -426,8 +439,8 @@ public class Entity {
         e.brain = new Brain(e, e.genome);
 
         e.age = 0;
-        e.energy = Settings.ENERGY * Math.random();
-        e.size = (int)Math.min((int)e.energy, Settings.MAX_SIZE);
+        e.energy = Settings.ENERGY * 2* Math.random();
+        e.size = calculateSize();
         e.degree = Math.random() * 360;
         e.generation = generation + 1;
         e.fertile = false;
@@ -438,34 +451,52 @@ public class Entity {
     private void consume() {
         double cost = (double)age/100000;
         if (Math.abs(location.vx) != 0 && Math.abs(location.vy) != 0) {
-
             setEnergy(getEnergy() - Settings.ENERGY_STEP_COST - cost);
         } else {
             setEnergy(getEnergy() - Settings.ENERGY_STEP_SLEEP_COST - cost);
         }
+
     }
 
 
-    public Action think(World world, long start) {
 
-        depth = 0;
-        if( !alive ){
-            return Action.STOP;
-        }
+    public void act(World world, long start) {
+
+        int depth =0;
+
         age++;
         consume();
-        Action action = null;
+        size = calculateSize();
         distanceX = (int)(location.x - Globals.spawn.getCenterX());
         distanceY = (int)(location.y - Globals.spawn.getCenterY());
         try {
-            action = brain.evaluate(world);
-            long intermediate = System.currentTimeMillis();
-            process(action, world, depth++);
-            world.setState(action);
 
-            if( target && isTrajectoryGoal() ){
-                return Action.FASTER;
-            } else {
+            Action action = brain.last;
+            long intermediate = System.currentTimeMillis();
+            if( action != null ) {
+                process(action, world, depth);
+                world.setState(action);
+            }
+
+        } catch (Exception ex) {
+            if(Globals.verbose) {
+                ex.printStackTrace();
+                Log.info(ex);
+            }
+        }
+    }
+
+    public void think(World world, long start) {
+
+        distanceX = (int)(location.x - Globals.spawn.getCenterX());
+        distanceY = (int)(location.y - Globals.spawn.getCenterY());
+        try {
+
+            brain.input(this, world);
+            Action action = brain.evaluate(world);
+            brain.last = action;
+
+            if( !isTrajectoryGoal() ){
                 sample();
             }
 
@@ -475,8 +506,6 @@ public class Entity {
                 Log.info(ex);
             }
         }
-
-        return Action.SCAN;
     }
 
     public void sample(){
@@ -491,6 +520,9 @@ public class Entity {
 
                 Line line = new Line((int)cx, (int)cy,(int) ex,(int) ey);
 
+                if( Double.isNaN(ex)||Double.isNaN(ey)||Double.isNaN(location.x)||Double.isNaN(location.y)){
+                    return;
+                }
                 if( ex < cx ) {
                     location.vx = location.vx - (ex / ey);
                 } else {
@@ -517,7 +549,6 @@ public class Entity {
             if (!alive) {
                 return;
             }
-
 
             if (depth >= Settings.MAX_THINK_DEPTH) {
                 return;
@@ -546,38 +577,34 @@ public class Entity {
 
                         anglex = Math.sin(anglex);
                         angley = Math.sin(angley);
-                        process(Action.FASTER, world, depth);
+                        //process(Action.FASTER, world, depth);
                         break;
                     case COS:
                         anglex = Math.cos(anglex);
                         angley = Math.cos(angley);
-                        process(Action.FASTER, world, depth);
+                        //process(Action.FASTER, world, depth);
                         break;
                     case TAN:
                         anglex = Math.tan(anglex);
                         angley = Math.tan(angley);
-                        process(Action.FASTER, world, depth);
+                        //process(Action.FASTER, world, depth);
                         break;
-                    case TANH:
-                        anglex = Math.tanh(anglex);
-                        angley = Math.tanh(angley);
-                        process(Action.FASTER, world, depth);
+                    case COSIN:
+                        anglex = Math.cos(anglex);
+                        angley = Math.sin(angley);
+                        //process(Action.FASTER, world, depth);
+                        break;
+                    case SINCOS:
+                        anglex = Math.sin(anglex);
+                        angley = Math.cos(angley);
+                        //process(Action.FASTER, world, depth);
                         break;
 
                     case STOP:
                         // if we're stopped - and we're touching someone, lets move.
-                          if (isTouching()) {
-                            doKill(Action.KILL);
                             location.vx = 0;
                             location.vy = 0;
                             break;
-                        } else {
-                            location.vx = 0;
-                            location.vy = 0;
-                            process(Action.SCAN, world, depth);
-                            break;
-                        }
-
 
                     case JUMP:
 
@@ -665,7 +692,7 @@ public class Entity {
 
                     case APPEND:
                         try {
-                            process(Action.SCAN, world, depth);
+
                             int maxAppends = genome.read(Gene.MAX_APPENDS);
 
                             double ao = 0;
@@ -694,20 +721,7 @@ public class Entity {
                         }
                         break;
                     case SCAN:
-
-                        try {
-                            if (!isTrajectoryGoal()) {
-                                degree = Math.random() * 360d;
-                            } else {
-                                if( Globals.verbose) {
-                                    Log.info("Trajectory good:" + degree);
-                                }
-                            }
-                        } catch (Exception ex) {
-                            if(Globals.verbose) {
-                                Log.info(ex);
-                            }
-                        }
+                        degree = Math.random() * 360d;
                         break;
 
                     case RECODE:
@@ -739,9 +753,10 @@ public class Entity {
                     }
                     case SLOW:
                         if (!isTrajectoryGoal()) {
+
                             location.vy = location.vy / 2;
                             location.vx = location.vx / 2;
-                            process(Action.SCAN, world, depth);
+                            //process(Action.SCAN, world, depth);
                         }
                         break;
                     case FASTER:
@@ -758,12 +773,13 @@ public class Entity {
                                 location.vy = Math.min(-Settings.ACCELERATION, -epsilon);
                             }
 
+                            target = true;
                             targetvx = location.vx;
                             targetvy = location.vy;
                             targetDegree = degree;
                             break;
                         } else if (Utility.precision(location.vx, Math.abs(0), epsilon)) {
-                            degree++;
+                            //degree++;
                             location.vx += Math.max(location.vx * Settings.ACCELERATION, epsilon);
                             if (Math.random() > 0.5) {
                                 location.vx = -location.vx;
@@ -771,7 +787,7 @@ public class Entity {
                             }
                             break;
                         } else if (Utility.precision(location.vy, Math.abs(0), epsilon)) {
-                            degree++;
+                            //degree++;
                             location.vy += Math.max(location.vy * Settings.ACCELERATION, epsilon);
                             if (Math.random() > 0.5) {
                                 degree = -degree;
@@ -830,18 +846,7 @@ public class Entity {
                         break;
                     }
                     case KILL:
-                        if (target) {
-                            if (isTrajectoryGoal()) {
-                                process(Action.FASTER, world, depth);
-                            } else {
-                                process(Action.SLOW, world, depth);
-                                process(Action.CONTINUE, world, depth);
-                                doKill(action);
-                            }
-                            break;
-                        } else {
-                            doKill(action);
-                        }
+                        doKill(action);
                         break;
                     case NONE:
                         break;
@@ -904,16 +909,16 @@ public class Entity {
             }
 
             if( location.x == Double.NaN ){
-                location.x = 0;
+                location.x = previous.x;
             }
             if( location.y == Double.NaN ){
-                location.y = 0;
+                location.y = previous.y;
             }
             if( location.vx == Double.NaN ){
-                location.vx = 0;
+                location.vx = previous.vx;
             }
             if( location.vy == Double.NaN ){
-                location.vy = 0;
+                location.vy = previous.vy;
             }
 
             double v = Math.atan2(location.vx, location.vy);
@@ -946,12 +951,14 @@ public class Entity {
                 if (o != null) {
                     if (isTouching(o) && o != this) {
 
-                        if (KinFactory.create(o.genome.read(Gene.KIN)) == KinFactory.create(genome.read(Gene.KIN))) {
-                            o.fertile = true;
-                            o.touching = this;
-                            touching = o;
-                            fertile = true; // partner for sharing genes.
-                            return;
+                        if( o.alive ) {
+                            if (KinFactory.create(o.genome.read(Gene.KIN)) == KinFactory.create(genome.read(Gene.KIN))) {
+                                o.fertile = true;
+                                o.touching = this;
+                                touching = o;
+                                fertile = true; // partner for sharing genes.
+                                return;
+                            }
                         }
                         double extracted = 0;
                         if (o.alive) {
@@ -960,10 +967,7 @@ public class Entity {
                             extracted = o.getEnergy();
                             //size = size + (o.size );
                             setEnergy(getEnergy()+Math.abs(extracted));
-                            size = Math.min((int)getEnergy(), Settings.MAX_SIZE);
-                            if( size > Settings.MAX_SIZE){
-                                size = Settings.MAX_SIZE;
-                            }
+                            size = calculateSize();
                             world.list.remove(o);
                             continue;
                         }
@@ -977,34 +981,15 @@ public class Entity {
 
                         setEnergy(getEnergy() + Math.abs(extracted));
                         //size = size + (o.size );
-                        size = Math.min((int)getEnergy(), Settings.MAX_SIZE);
+                        size = calculateSize();
                         o.setEnergy(o.getEnergy() - extracted);
-                        o.size = Math.min((int)o.getEnergy(), Settings.MAX_SIZE);
+                        o.size = o.calculateSize();
 
-                        if (size > Settings.MAX_SIZE) {
-                            size = Settings.MAX_SIZE;
-                        }
-                        if (o.size > Settings.MAX_SIZE) {
-                            o.size = Settings.MAX_SIZE;
-                        }
-
-                        if (size <= Settings.MIN_SIZE) {
-                            size = Settings.MIN_SIZE;
-                        }
-                        if (o.size <= Settings.MIN_SIZE) {
-                            o.size = Settings.MIN_SIZE;
-                        }
-                        if (o.getEnergy() <= 0 || o.size <= Settings.MIN_SIZE) {
+                        if (o.getEnergy() <= 0 ) {
                             o.die();
-                            if (o.size <= Settings.MIN_SIZE) {
-                                o.size = Settings.MIN_SIZE;
-                            }
                             world.list.remove(o);
-                        } else if (getEnergy() <= 0 || size <= Settings.MIN_SIZE) {
+                        } else if (getEnergy() <= 0 ) {
                             die();
-                            if (size <= Settings.MIN_SIZE) {
-                                size = Settings.MIN_SIZE;
-                            }
                             world.list.remove(this);
                         }
                     }
@@ -1026,6 +1011,5 @@ public class Entity {
         if( energy >= Settings.MAX_ENERGY ){
             this.energy = Settings.MAX_ENERGY;
         }
-        //this.energy = energy;
     }
 }

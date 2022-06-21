@@ -37,6 +37,9 @@ public class SoftmaxFunction implements IActivationFunction {
         }
 
         double output = Math.exp(netInput - max) / totalLayerInput;
+        if( new Double(output).isNaN() ){
+            return 0;
+        }
         return output;
     }
 
