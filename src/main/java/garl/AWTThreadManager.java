@@ -23,6 +23,8 @@ package garl;
  * @email seanbeecroft@gmail.com
  *
  */
+import org.apache.tika.io.IOExceptionWithCause;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
@@ -46,8 +48,8 @@ public class AWTThreadManager extends Thread {
     public void run() {
 
         timer = new java.util.Timer(true);
-        int width = world.getWidth();
-        int height = world.getHeight();
+        int width = world.width;
+        int height = world.height;
         int inspectorPanelWidth = 0;
         if( !Globals.screenSaverMode ) {
             inspectorPanelWidth = Settings.INSPECTOR_WIDTH;;
@@ -58,9 +60,7 @@ public class AWTThreadManager extends Thread {
         DoingTask doing = new DoingTask(frame, world, width - inspectorPanelWidth, height, 5);
         SelectionTask selection = new SelectionTask(frame, world, width - inspectorPanelWidth, height);
 
-        PaintTask paint = new PaintTask();
         PayoutTask payout = new PayoutTask();
-
 
         TimerTask threadUpdate = new TimerTask() {
             int ctr = 0;
@@ -79,38 +79,61 @@ public class AWTThreadManager extends Thread {
 
         try {
 
-
-
             Log.info("Time logging tasks");
             Thread t = new Thread() {
                 public void run() {
 
                     boolean running = true;
-                    int ctr = 0;
-                    int thinkCtr = 0;
+
+                    long lastTime = System.nanoTime( );
+                    final double ns = 1000000000.0 / Globals.FPS;
+                    double delta = 0;
+
                     while( running ) {
                         try {
-                            ctr++;
-                            thinkCtr++;
-                            paint.run();
-                            doing.run();
-                            selection.run();
+                            long now = System.nanoTime( );
+                            delta += ( now - lastTime ) / ns;
+                            lastTime = now;
+                            while ( delta >= 1 )
+                            {
+                                delta--;
+                                Globals.world.render();
+                                Globals.world.frames++;
+                            }
 
-                            if( thinkCtr >= Settings.THINK_RATE){
-                                think.run();
-                                thinkCtr = 0;
-                            }
-                            if (ctr >= Settings.FRAME_RATE) {
-                                replication.run();
-                                payout.run();
-                                ctr = 0;
-                            }
                         } catch(Exception ex) {}
                     }
                 }
             };
             t.setPriority(Thread.MAX_PRIORITY);
             t.start();
+
+            Thread t2 = new Thread() {
+                public void run() {
+                    int thought = 0;
+                    int ctr = 0;
+                    boolean running = true;
+                    while( running ) {
+
+                        try {
+                            Thread.sleep(1000/Globals.FPS);
+                        } catch(Exception ex) {}
+                            doing.run();
+                            selection.run();
+
+                            if (thought++ >= Settings.THINK_RATE) {
+                                think.run();
+                                thought = 0;
+                            }
+                            if (ctr++ >= Settings.FRAME_RATE) {
+                                replication.run();
+                                payout.run();
+                                ctr = 0;
+                            }
+                    }
+                }
+            }; t2.setPriority(Thread.MIN_PRIORITY);
+            t2.start();
 
             timer.schedule( threadUpdate, 5, 1000);
 

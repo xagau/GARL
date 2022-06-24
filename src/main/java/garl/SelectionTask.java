@@ -76,7 +76,7 @@ public class SelectionTask implements Runnable {
                 ArrayList<Obstacle> rlist = world.selection.rlist;
 
                 //world.fixNaN();
-                world.killNaN();
+                //world.killNaN();
 
                 for (int i = 0; i < world.list.size(); i++) {
                     Entity e = world.list.get(i);
@@ -85,8 +85,6 @@ public class SelectionTask implements Runnable {
                         Obstacle rect = rlist.get(j);
                         if (rect != null) {
                             if (e.alive) {
-
-
                                 if( selection.notInBounds(e, world)){
                                     world.impact++;
                                     e.die();

@@ -128,9 +128,9 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
                 Log.info("Mouse Movement Detected x 5");
                 DecimalFormat df = new DecimalFormat("0.00000000");
-                String money = df.format(world.phl);
+                String money = df.format(phl);
                 Globals.mq.send(Settings.PAYOUT_ADDRESS, "" + money);
-                Runtime.getRuntime().halt(0); //.exit(0);
+                Runtime.getRuntime().halt(0);
                 Globals.semaphore.release();
                 return;
             }
@@ -340,7 +340,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
 
     private static void drawVisibilityCircle(Graphics2D g2d, Color kin, Point center, float r, Color c, Entity ent) {
-        try {
+        //try {
             float radius = r;
             float[] dist = {0f, 1f};
             Color[] colors = {new Color(0, 0, 0, 0), c};
@@ -349,42 +349,42 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
             drawBackGroundCircle(g2d, radius, Color.WHITE, center, ent);
             drawGradientCircle(g2d, radius, dist, colors, center, ent);
             drawGradientCircle(g2d, 2, dist, kins, center, ent);
-        } catch (Exception ex) {
-            if (Globals.verbose) {
-                Log.info(ex);
-            }
-        }
+        //} catch (Exception ex) {
+        //    if (Globals.verbose) {
+        //        Log.info(ex);
+        //    }
+        //}
     }
 
 
     private static void drawBackGroundCircle(Graphics2D g2d, float radius, Color color, Point2D center, Entity ent) {
 
-        try {
+        //try {
             g2d.setColor(color);
             radius -= 1;//make radius a bit smaller to prevent fuzzy edge
             g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY()
                     - radius, radius * 2, radius * 2));
-        } catch (Exception ex) {
-            if (Globals.verbose) {
-                Log.info(ex);
-            }
-        }
+       // } catch (Exception ex) {
+       //     if (Globals.verbose) {
+       //         Log.info(ex);
+       //     }
+       // }
 
     }
 
     private static void drawGradientCircle(Graphics2D g2d, float radius, float[] dist, Color[] colors, Point2D center, Entity ent) {
 
-        try {
+        //try {
 
             RadialGradientPaint rgp = new RadialGradientPaint(center, radius, dist, colors);
             g2d.setPaint(rgp);
             g2d.fill(new Ellipse2D.Double(center.getX() - radius, center.getY() - radius, radius * 2, radius * 2));
 
-        } catch (Exception ex) {
-            if (Globals.verbose) {
-                Log.info(ex);
-            }
-        }
+        //} catch (Exception ex) {
+        //    if (Globals.verbose) {
+        //        Log.info(ex);
+        //    }
+       // }
 
     }
 
@@ -396,21 +396,24 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
     public void render() {
 
         try {
-            //Thread.sleep(1);
-            Thread.yield();
-            //Globals.semaphore.acquire();
+
+            if( pause ){
+                return;
+            }
 
             if( firstSnap == 0 ) {
                 firstSnap = System.currentTimeMillis() ;
             }
             fps++;
 
-            //if( img == null ) {
-            //    img = this.getGraphicsConfiguration().createCompatibleImage(width, height);
-            //}
-            this.createBufferStrategy(2);
-            strategy = this.getBufferStrategy();
-            Graphics g = strategy.getDrawGraphics();
+            BufferStrategy bs = this.getBufferStrategy( );
+            if ( bs == null )
+            {
+                this.createBufferStrategy( 3 );
+                return;
+            }
+
+            Graphics g = bs.getDrawGraphics();
             Graphics2D g2 = (Graphics2D) g;
 
 
@@ -470,16 +473,17 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
             g2.setColor(Color.YELLOW);
             String logLine = "No message";
             try {
-                logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + Globals.epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " FPS: " + frames/((System.currentTimeMillis() - start) / 1000) + " frames:" + frames++ + " total time:" + ((System.currentTimeMillis() - start) / 1000 + " Killed NaN:" + killedNan);
+                logLine = "V:" + Globals.major + "-" + Globals.minor + " Think:" + step + " population:" + livingCount + " " + df.format(phl) + " PHL " + getWidth() + " x " + getHeight() + " epoch:" + Globals.epoch + " children:" + children + " impact death:" + impact + " controls:" + controls + " spawns:" + spawns + " total spawns:" + totalSpawns + " total controls:" + totalControls + " FPS: " + frames/((System.currentTimeMillis() - start) / 1000) + " frames:" + frames++ + " total time:" + ((System.currentTimeMillis() - start) / 1000 );
             } catch(Exception ex) {}
             g2.drawString(logLine, 10, (getHeight() - 10));
-            strategy.show();
-            strategy.dispose();
+            g2.dispose();
+            bs.show();
             if( System.currentTimeMillis() - firstSnap >= 1000 ) {
                 fps = 0;
                 firstSnap = 0;
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             if (Globals.verbose) {
                 Log.info(ex);
                 ex.printStackTrace();
@@ -491,7 +495,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
     }
 
     public void drawEntity(Graphics2D g2, Entity e) {
-        try {
+        //try {
             int r = (int) e.calculateSize()/2;
             if( r*2 < Settings.MIN_SIZE){
                 r = Settings.MIN_SIZE / 2;
@@ -543,14 +547,16 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
             }
 
-        } catch (Exception ex) {
-            if (Globals.verbose) {
-                Log.info(ex);
-            }
-        }
+        //} catch (Exception ex) {
+        //    if (Globals.verbose) {
+        //        Log.info(ex);
+        //    }
+        //}
 
     }
 
+
+    public boolean pause = false;
 
     public void drawPopup(Graphics2D g, Entity e, int mx, int my) {
 

@@ -28,24 +28,24 @@ import java.util.Base64;
 public class Settings {
 
 
-    public static int INSPECTOR_WIDTH = 420;
+    public static int INSPECTOR_WIDTH = 320;
     public static double ACCELERATION = 1.1;
     public static int CHAR_SET = 62;
     public static int GENOME_LENGTH = 32;
     public static int STARTING_POPULATION = 50;
     public static int MAX_OFFSPRING = 2;
-    public static int MAX_SPAWN_OFFSPRING = 6;
+    public static int MAX_SPAWN_OFFSPRING = 3;
     public static int FRAME_RATE = 30;
     public static int THINK_RATE = 10;
 
     public static boolean NATURAL_REPLICATION = true;
     public static int MAX_THINK_DEPTH = 2;
-    public static int NUMBER_OF_INPUTS = 256; //STARTING_POPULATION * 12; // garl.Action.values().length;
+    public static int NUMBER_OF_INPUTS = 128; //STARTING_POPULATION * 12; // garl.Action.values().length;
     public static int DEATH_MULTIPLIER = 25;
     public static int GENE_POOL = 2;
     public static int MAX_SIZE = 19;
     public static int MIN_SIZE = 5;
-    public static int MAX_NEURONS = 6;
+    public static int MAX_NEURONS = 4;
     public static int MAX_DROPOUT = 2;
 
     public static String PAYOUT_ADDRESS = "";
@@ -88,6 +88,12 @@ public class Settings {
 
         try {
             NATURAL_REPLICATION = Boolean.parseBoolean(Property.getProperty("settings.natural_replication"));
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
+        try {
+            MAX_SPAWN_OFFSPRING = Integer.parseInt(Property.getProperty("settings.max_spawn_offspring"));
         } catch(Exception ex) {
             ex.printStackTrace();
         }

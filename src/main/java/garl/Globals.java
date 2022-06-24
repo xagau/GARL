@@ -30,7 +30,7 @@ import java.util.concurrent.Semaphore;
 
 public class Globals {
 
-    public static int minor = 48;
+    public static int minor = 49;
     public static int major = 1;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + major + "." + minor;
@@ -44,11 +44,13 @@ public class Globals {
 
     public static MoneyMQ mq = new MoneyMQ();
 
-    static double increment = 0.00010000;
-    final static int ATC = 10;
-    public static double maxPayout = 25.00;
+    static double increment = 0.00001000;
+    public static int ATC = 10;
+    public static double maxPayout = 2.50;
     public static double minPayout = 0.5;
-    public static double minManualPayout = 0.001;
+    public static double minManualPayout = 0.01;
+
+    public static int FPS = 32;
 
     public static int epoch = 1;
 

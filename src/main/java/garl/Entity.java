@@ -145,12 +145,11 @@ public class Entity {
         }
 
         Obstacle first = closest(mwalls, this);
-        if( first == null ){
+        if( first == null || first != Globals.spawn ){
+            target = false;
             return false;
         }
-        if( first == Globals.spawn ){
-            return true;
-        }
+
         double direction = degree;
         size = calculateSize();
 
@@ -197,13 +196,14 @@ public class Entity {
 
     volatile double targetDegree = -1;
     public ArrayList<Obstacle> sampleForward(Entity e) {
-        double direction = e.degree;
         if( world == null ){
             return null;
         }
         if( e == null ) {
             return null;
         }
+        double direction = e.degree;
+
         int _xs = (int) ((int) (e.location.x + (e.size / 2)) + (e.size * world.width * Math.cos(direction * ((Math.PI) / 360d))));
         int _ys = (int) ((int) (e.location.y + (e.size / 2)) - (e.size * world.height * Math.sin(direction * ((Math.PI) / 360d))));
 
@@ -214,16 +214,16 @@ public class Entity {
 
         ArrayList<Obstacle> walls = new ArrayList<>();
         for (int i = 0; i < world.selection.rlist.size(); i++) {
-            try {
+            //try {
                 Obstacle wall = world.selection.rlist.get(i);
-                if( wall.isVisible() ) {
+                if( wall != null && wall.isVisible() ) {
                     Line line1 = new Line(wall.x, wall.y, wall.x + wall.width, wall.y + wall.height);
                     if (wall.intersectsLine(line)) {
                         walls.add(wall);
                     }
                 }
-            } catch (Exception ex) {
-            }
+            //} catch (Exception ex) {
+            //}
         }
 
         e.walls = walls.size();
@@ -327,7 +327,7 @@ public class Entity {
         }
         ArrayList<Entity> list = new ArrayList<>();
         for (int i = 0; i < world.list.size(); i++) {
-            try {
+            //try {
                 Entity ent = world.list.get(i);
                 // should be closest.
                 if (ent != null && ent != this) {
@@ -335,7 +335,7 @@ public class Entity {
                         list.add(ent);
                     }
                 }
-            } catch(Exception ex) {}
+            //} catch(Exception ex) {}
         }
         return list;
     }
@@ -356,7 +356,7 @@ public class Entity {
 
     }
 
-    int calculateSize()
+    public int calculateSize()
     {
         int sz = Math.min((int)getEnergy(), Settings.MAX_SIZE);
         if( sz > Settings.MAX_SIZE){
@@ -448,14 +448,14 @@ public class Entity {
         return e;
     }
 
-    private void consume() {
+    public void consume() {
         double cost = (double)age/100000;
+
         if (Math.abs(location.vx) != 0 && Math.abs(location.vy) != 0) {
             setEnergy(getEnergy() - Settings.ENERGY_STEP_COST - cost);
         } else {
             setEnergy(getEnergy() - Settings.ENERGY_STEP_SLEEP_COST - cost);
         }
-
     }
 
 
@@ -551,6 +551,7 @@ public class Entity {
             }
 
             if (depth >= Settings.MAX_THINK_DEPTH) {
+                //Thread.yield();
                 return;
             }
 
@@ -568,6 +569,10 @@ public class Entity {
                 double d = Math.random() * Action.values().length;
                 action = ActionFactory.create(d);
                 input = d;
+            }
+
+            if(isTrajectoryGoal()){
+                action = Action.CONTINUE;
             }
 
             if (brain != null) {
@@ -756,7 +761,7 @@ public class Entity {
 
                             location.vy = location.vy / 2;
                             location.vx = location.vx / 2;
-                            //process(Action.SCAN, world, depth);
+                            process(Action.SCAN, world, depth);
                         }
                         break;
                     case FASTER:

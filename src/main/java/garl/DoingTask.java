@@ -51,12 +51,15 @@ public class DoingTask implements Runnable {
 
 
             try {
-                Thread.yield();
                 //Globals.semaphore.acquire();
                 for (int i = 0; i < world.list.size(); i++) {
                         Entity e = world.list.get(i);
                         if (e.alive) {
                             e.act(world, start);
+                        } else {
+                            e.age++;
+                            e.consume();
+                            e.size = e.calculateSize();
                         }
                 }
 

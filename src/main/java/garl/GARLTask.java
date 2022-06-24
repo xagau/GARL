@@ -96,8 +96,8 @@ public class GARLTask extends Thread {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = screenSize.width;
-        int height = screenSize.height;
+        int width = (screenSize.width);
+        int height = (screenSize.height);
 
         int inspectorPanelWidth = Settings.INSPECTOR_WIDTH;
         world = new World(width - inspectorPanelWidth, height);
@@ -105,6 +105,7 @@ public class GARLTask extends Thread {
         selection = new Selection(world);
         world.selection = selection;
         frame.setSize(width, height);
+        frame.setLocationRelativeTo(null);
 
         //3. Create components and put them in the frame.
         //...create emptyLabel...

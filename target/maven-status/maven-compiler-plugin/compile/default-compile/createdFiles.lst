@@ -39,10 +39,10 @@ garl/GARLTask$8.class
 garl/Tester.class
 garl/Utility.class
 garl/iaf/CosusoidFunction.class
+garl/AWTThreadManager$4.class
 garl/GARLTask$13.class
 garl/GARLTask$4.class
 garl/ann/NeuralNet.class
-garl/PaintTask.class
 garl/Obstacle.class
 garl/iaf/SarsaFunction.class
 garl/Transaction.class

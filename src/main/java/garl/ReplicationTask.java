@@ -14,8 +14,7 @@ public class ReplicationTask implements Runnable {
     @Override
     public void run() {
             try {
-                Globals.semaphore.acquire();
-
+                //Globals.semaphore.acquire();
                 int livingCount = -1;
                 if (Settings.NATURAL_REPLICATION) {
                     if( livingCount < 0 ) {
@@ -26,7 +25,6 @@ public class ReplicationTask implements Runnable {
                         try {
 
                             Entity e = world.list.get(i);
-
                             if (e.fertile && e.alive) {
                                 int min = Math.max(32, e.genome.read(Gene.MATURITY) * 2);
                                 if (e.alive && (e.age > min)) {
@@ -59,6 +57,7 @@ public class ReplicationTask implements Runnable {
 
                 if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION) {
                     try {
+                        world.pause = true;
 
                         ArrayList<Seed> list = SeedLoader.load();
                         ArrayList<Entity> entList = new ArrayList<Entity>();
@@ -103,7 +102,6 @@ public class ReplicationTask implements Runnable {
                         if (livingCount <= Settings.GENE_POOL && list.isEmpty()) {
                             try {
                                 world.selection = new Selection(world);
-
                                 world.list = Population.create(world, Settings.STARTING_POPULATION);
                             } catch (Exception ex) {
                                 ex.printStackTrace();
@@ -133,11 +131,12 @@ public class ReplicationTask implements Runnable {
                         }
                     }
 
+                    world.pause = false;
                 }
             } catch (Exception ex) {
                 Log.info(ex.getMessage());
             } finally {
-                Globals.semaphore.release();
+                //Globals.semaphore.release();
                 Runtime.getRuntime().gc();
             }
 
