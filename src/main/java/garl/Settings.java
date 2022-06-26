@@ -57,7 +57,8 @@ public class Settings {
     public static double MIN_ENERGY = 1;
     public static int CELL_MOVEMENT = 1;
     public static int MAX_SPEED = 8;
-    public static int MAX_POPULATION = 200;
+    public static int MAX_POPULATION = 150;
+    public static int MAX_ENTITY_POPULATION = 200;
 
     public static double MAX_ENERGY = 150.0 ;
     public static double ENERGY = 15.0 ;

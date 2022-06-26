@@ -49,10 +49,14 @@ public class CullingStrategy {
             boolean f = dir.isDirectory();
             File[] list = dir.listFiles();
 
+            int highestReward = SeedLoader.highestReward();
             int lowestReward = SeedLoader.lowestReward();
-            ArrayList<Seed> seeds = SeedLoader.load();
+            ArrayList<Seed> seeds = SeedLoader.load(SeedLoader.count());
             int limit = CullingStrategy.MAX_ENTITIES;
             int count = 0;
+            Log.info("Highest reward:" + highestReward);
+            Log.info("Lowest reward:" + lowestReward);
+
             Log.info(f + " genome source: " + genomePath + " " + list.length);
             for (int i = 0; i < seeds.size(); i++) {
                 if( seeds.size() >= MAX_ENTITIES) {

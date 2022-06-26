@@ -38,11 +38,11 @@ import java.util.Comparator;
 public class SeedLoader {
     public synchronized static int lowestReward() throws IOException {
 
-        int lowestReward = Integer.MIN_VALUE;
-        ArrayList<Seed> list = load();
+        int lowestReward = Integer.MAX_VALUE;
+        ArrayList<Seed> list = load(count());
         for(int i = 0; i < list.size(); i++ ){
             Seed s = (Seed)list.get(i);
-            if( s.reward > lowestReward ) {
+            if( s.reward < lowestReward ) {
                 lowestReward = s.reward;
             }
         }
@@ -50,7 +50,36 @@ public class SeedLoader {
         return lowestReward;
     }
 
-    public synchronized static ArrayList<Seed> load()  {
+    public synchronized static int count()
+    {
+        String seed = "./genomes/";
+        Gson gson = new Gson(); //null;
+        // create a reader
+        File dir = new File(seed);
+
+        File[] listFiles = dir.listFiles();
+        return listFiles.length;
+    }
+    public synchronized static int highestReward() throws IOException {
+
+
+        int highestReward = Integer.MIN_VALUE;
+        ArrayList<Seed> list = load(count());
+        for(int i = 0; i < list.size(); i++ ){
+            Seed s = (Seed)list.get(i);
+            if( s.reward > highestReward ) {
+                highestReward = s.reward;
+            }
+        }
+
+        return highestReward;
+    }
+
+    public synchronized static ArrayList<Seed> load() {
+        return load(count());
+    }
+
+        public synchronized static ArrayList<Seed> load(int max)  {
         ArrayList<Seed> list = new ArrayList<Seed>();
         String seed = "./genomes/";
         Gson gson = new Gson(); //null;

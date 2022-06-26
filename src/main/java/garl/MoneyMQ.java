@@ -229,8 +229,10 @@ public class MoneyMQ {
             String fileName = "./genomes-" + snap + ".zip";
             File archive = new File(fileName);
             ArrayList<Seed> list = SeedLoader.load();
-            for(int i = 0; i < list.size(); i++) {
-                ZipUtil.pack(list.get(i).file, archive);
+            for(int i = 0; i < Math.min(Globals.TOP, list.size()); i++) {
+                try {
+                    ZipUtil.pack(list.get(i).file, archive);
+                } catch(Exception ex) {}
             }
             ArtifactStorage storage = new ArtifactStorage();
             String address = AddressGenerator.generateNewAddress();

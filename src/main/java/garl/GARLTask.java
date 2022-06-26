@@ -55,7 +55,7 @@ public class GARLTask extends Thread {
             public void run() {
                 ArrayList<Seed> list = new ArrayList<>();
                 if (args.length > 0) {
-                    list = SeedLoader.load();
+                    list = SeedLoader.load(Settings.STARTING_POPULATION);
                 }
 
                 GARLTask task = new GARLTask(list);
@@ -111,7 +111,7 @@ public class GARLTask extends Thread {
         //...create emptyLabel...
         ArrayList<Entity> population = new ArrayList<>();
         try {
-            list = SeedLoader.load();
+            list = SeedLoader.load(Settings.STARTING_POPULATION);
         } catch(Exception ex) {}
         if (list == null ) {
             population = Population.create(world, Settings.STARTING_POPULATION);

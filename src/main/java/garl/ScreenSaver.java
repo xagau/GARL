@@ -48,74 +48,6 @@ public final class ScreenSaver {
     ArrayList<Seed> list = null;
 
 
-    /*
-    public static ArrayList<Seed> load() throws IOException {
-        ArrayList<Seed> list = new ArrayList<>();
-        String seed = Property.getProperty("settings.genomes"); //"./genomes/";
-        if( seed == null ){
-            seed = "./genomes/";
-        }
-        Gson gson = new Gson();
-        // create a reader
-        File dir = new File(seed);
-
-        File[] listFiles = dir.listFiles();
-        File[] files = dir.listFiles();
-        Arrays.sort(files, Comparator.comparingLong(File::lastModified));
-        int ctr = 0;
-        for (int i = files.length - 1; i >= 0; i--) {
-            File f = files[i];
-            if (f.getName().contains("genome")) {
-                String fName = f.getName();
-                Log.info("Using entity:" + f.getName());
-                Reader reader = Files.newBufferedReader(Paths.get(seed + fName));
-                try {
-                    Seed lseed = (Seed) gson.fromJson(reader, Seed.class);
-                    list.add(lseed);
-                    ctr++;
-                } catch (Exception ex) {
-                }
-            }
-            if (ctr >= Settings.STARTING_POPULATION) {
-                break;
-            }
-            // convert JSON string to User object
-        }
-        return list;
-    }
-
-    public static ArrayList<Entity> load(ArrayList<Seed> seeds, World world) throws IOException {
-        ArrayList<Seed> list = seeds;
-        ArrayList<Entity> ents = new ArrayList<>();
-
-        for (int i = 0; i < Math.min(list.size() > Settings.STARTING_POPULATION ? list.size() : Settings.STARTING_POPULATION, Settings.STARTING_POPULATION); i++) {
-            if (list.get(i).genome.contains("-")) {
-
-                continue;
-            }
-            try {
-                String genome = list.get(i).genome;
-                Log.info("Adding:" + i + ":" + genome);
-                Genome g = new Genome(genome);
-                Brain brain = new Brain(g);
-                Entity e = new Entity(world);
-                brain.setOwner(e);
-                e.location.x = (int) (Math.random() * world.getWidth());
-                e.location.y = (int) (Math.random() * world.getHeight());
-                g.setOwner(e);
-                e.brain = brain;
-
-                e.genome = g;
-                ents.add(e);
-                Log.info("Added:" + i + " at " + e.location.x + " " + e.location.y);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return ents;
-    }
-    */
 
     static GARLFrame frame = new GARLFrame();
 
@@ -159,7 +91,7 @@ public final class ScreenSaver {
             ArrayList<Entity> population = new ArrayList<>();
 
             try {
-                list = SeedLoader.load();
+                list = SeedLoader.load(Settings.STARTING_POPULATION);
             } catch(Exception ex) {}
             if (list == null ) {
                 population = Population.create(world, Settings.STARTING_POPULATION);
