@@ -547,6 +547,29 @@ public class GARLTask extends Thread {
         });
         inspector.add(neuronsInBaseLayer);
 
+        inspector.add(new JLabel("Sound"));
+        JToggleButton toggleButton = new JToggleButton();
+        if(Globals.sound){
+            toggleButton.setText("On");
+            //toggleButton.setEnabled(true);
+        } else {
+            toggleButton.setText("Off");
+            //toggleButton.setEnabled(false);
+        }
+        inspector.add(toggleButton);
+        toggleButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                Globals.sound = !Globals.sound;
+                if(Globals.sound){
+                    toggleButton.setText("On");
+                    //toggleButton.setEnabled(true);
+                } else {
+                    toggleButton.setText("Off");
+                    //toggleButton.setEnabled(false);
+                }
+            }
+        });
         inspector.add(new JLabel("Reset"));
         JButton reset = new JButton("Clear");
         reset.addActionListener(new ActionListener() {
