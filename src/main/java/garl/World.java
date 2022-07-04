@@ -518,6 +518,15 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
             kin = new Color(k, 128 % (k % 256), 128 % (k % 256));
 
             drawVisibilityCircle(g2, kin, p, r, e.color, e);
+            if( e.broadcasted ){
+                try {
+                    float[] dist = {0f, 1f};
+                    drawGradientCircle(g2, r - (r / 3), dist, new Color[]{Color.DARK_GRAY, Color.MAGENTA}, p, e);
+                    if (System.currentTimeMillis() - e.lastBroadcast >= Globals.soundDuration) {
+                        e.broadcasted = false;
+                    }
+                } catch(Exception ex) { }
+            }
 
             if (e == selected) {
                 g2.drawOval((int) e.location.x - (r / 2) -1, (int) e.location.y - (r / 2) -1, r * 2, r * 2);

@@ -69,6 +69,7 @@ public class Globals {
 
     public static boolean sound = true;
     public static int repeat = 5;
+    public static long soundDuration = 1500;
 
     public static int neuronIobe = 0;
     static {

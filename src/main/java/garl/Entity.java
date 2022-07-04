@@ -77,6 +77,8 @@ public class Entity {
     volatile int depth = 0;
 
     volatile int lastMessageRead = 0;
+    volatile boolean broadcasted = false;
+    volatile long lastBroadcast = -1;
 
 
 
@@ -741,6 +743,8 @@ public class Entity {
 
                             message.time = System.nanoTime();
                             world.getChannel().broadcast(message);
+                            broadcasted = true;
+                            lastBroadcast = System.currentTimeMillis();
                         } catch(Exception ex) {
                             Log.info(ex);
                             ex.printStackTrace();

@@ -1,5 +1,28 @@
 package garl;
-
+/** Copyright (c) 2019-2022 placeh.io,
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @author xagau
+ * @email seanbeecroft@gmail.com
+ *
+ */
 import javax.sound.sampled.*;
 import java.util.ArrayList;
 
@@ -39,23 +62,26 @@ class SoundPlayer {
                     line.open();
                     line.start();
                 }
-                //System.out.println("Sound initialized successfully.");
+
             } catch (LineUnavailableException lue) {
-                Log.info("Unavailable data line");
+                if(Globals.verbose) {
+                    Log.info("Unavailable data line");
+                }
             } catch(IllegalStateException ise){
-                Log.info(ise.getMessage());
+                if( Globals.verbose) {
+                    Log.info(ise.getMessage());
+                }
             }
 
             for (int i = 0; i < Globals.repeat; i++) {
-// fill with noise
-                //for (int ii = 0; ii < buffer.length; ii++) {
-                //    buffer[ii] = (byte) ((int) (Math.random() * 256) & 0xff);
-                //}
+
                 line.write(buffer, 0, buffer.length);
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            if(Globals.verbose) {
+                e.printStackTrace();
+            }
         } finally {
             try {
                 line.drain();
@@ -63,16 +89,13 @@ class SoundPlayer {
                 line.close();
 
             } catch(Exception ex) {
-                ex.printStackTrace();
+                if(Globals.verbose) {
+                    ex.printStackTrace();
+                }
             } catch(Error error){
 
             }
         }
-
-// dunno why this is necessary, but the javasound seems to not let the
-// program end...
-
-
     }
 }
 
@@ -83,23 +106,12 @@ public class Bleep {
     }
 
     public static void main(String[] args) {
-        // Create the AudioData object from the byte array
-        //java.awt.Toolkit.getDefaultToolkit().beep();
-
-
         SoundPlayer bug = new SoundPlayer();
         ArrayList<Double> sounds = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             sounds.add((Double) (Math.random() * 256));
         }
         bug.run(sounds);
-
-        //byte[] byteArray = new byte[]{1,2,3,4,5,0,0,1,0,0,1};
-
-        //ByteArrayInputStream bis = new ByteArrayInputStream(byteArray);
-        //Bleep bleep = new Bleep();
-        //bleep.play(bis);
-
     }
 
 }
