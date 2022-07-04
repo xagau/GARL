@@ -24,10 +24,12 @@ package garl.iaf;
  * @email seanbeecroft@gmail.com
  *
  */
+import garl.ann.NeuralLayer;
+
 import java.lang.reflect.Field;
 
 public class ActivationFactory {
-        public static IActivationFunction create(int gene) {
+        public static IActivationFunction create(int gene, NeuralLayer layer) {
             int index = gene % ActivationFunction.values().length;
             Field[] fl = ActivationFunction.class.getDeclaredFields();
             Field f = fl[index];
@@ -36,36 +38,51 @@ public class ActivationFactory {
             switch (af) {
                 case SIGMOID:
                     Sigmoid sigmoid = new Sigmoid(gene);
+                    sigmoid.setLayer(layer);
                     return sigmoid;
-                //case LINEAR:
-                //    iaf.Linear linear = new iaf.Linear(gene);
-                //    return linear;
-                //case STEP:
-                //    iaf.StepFunction st = new iaf.StepFunction((double) gene);
-                //    return st;
-                //case HYPERTAN:
-                //    iaf.HTANFunction ht = new iaf.HTANFunction((double) gene);
-                //    return ht;
+                case LINEAR:
+                    Linear linear = new Linear(gene);
+                    linear.setLayer(layer);
+                    return linear;
+                case STEP:
+                    StepFunction st = new StepFunction((double) gene);
+                    st.setLayer(layer);
+                    return st;
+                case HYPERTAN:
+                    HTANFunction ht = new HTANFunction((double) gene);
+                    ht.setLayer(layer);
+                    return ht;
                 case RELU:
                     ReluFunction rl = new ReluFunction((double) gene);
+                    rl.setLayer(layer);
                     return rl;
+                case LEAKY_RELU:
+                    LeakyReluFunction lrl = new LeakyReluFunction((double) gene);
+                    lrl.setLayer(layer);
+                    return lrl;
                 case SOFTMAX:
                     SoftmaxFunction smx = new SoftmaxFunction((double) gene);
+                    smx.setLayer(layer);
                     return smx;
-                //case NEGATE:
-                //    iaf.NegateFunction nl = new iaf.NegateFunction((double) gene);
-                //    return nl;
-                //case LINEAR_COMBINATION:
-                //    iaf.LinearCombinationFunction lcb = new iaf.LinearCombinationFunction((double) gene);
-                //    return lcb;
-                //case SINUSMOID:
-                //    iaf.SinusoidFunction sinusmoid = new iaf.SinusoidFunction((double) gene);
-                //    return sinusmoid;
-                //case COSUSMOID:
-                //    iaf.CosusoidFunction cosusmoid = new iaf.CosusoidFunction((double) gene);
-                //    return cosusmoid;
+                case NEGATE:
+                    NegateFunction nl = new NegateFunction((double) gene);
+                    nl.setLayer(layer);
+                    return nl;
+                case LINEAR_COMBINATION:
+                    LinearCombinationFunction lcb = new LinearCombinationFunction((double) gene);
+                    lcb.setLayer(layer);
+                    return lcb;
+                case SINUSMOID:
+                    SinusoidFunction sinusmoid = new SinusoidFunction((double) gene);
+                    sinusmoid.setLayer(layer);
+                    return sinusmoid;
+                case COSUSMOID:
+                    CosusoidFunction cosusmoid = new CosusoidFunction((double) gene);
+                    cosusmoid.setLayer(layer);
+                    return cosusmoid;
                 default:
                     ReluFunction smax = new ReluFunction((double) gene);
+                    smax.setLayer(layer);
                     return smax;
             }
         }

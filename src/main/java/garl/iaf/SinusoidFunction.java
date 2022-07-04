@@ -42,7 +42,9 @@ public class SinusoidFunction implements IActivationFunction {
     }
 
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
+        this.layer = layer;
     }
 
     public double derivative(double net) {

@@ -32,5 +32,6 @@ public class Seed {
     public int generation;
     public String genome;
     public int reward;
+    public int penalty  = 0;
     public File file = null;
 }

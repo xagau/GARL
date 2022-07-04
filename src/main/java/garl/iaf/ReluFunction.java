@@ -29,8 +29,9 @@ import garl.ann.NeuralLayer;
 public class ReluFunction implements IActivationFunction {
     private double a = 0.0;
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
-
+        this.layer = layer;
     }
 
     public ReluFunction(double _a) {

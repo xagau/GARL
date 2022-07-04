@@ -39,6 +39,7 @@ public class SeedLoader {
     public synchronized static int lowestReward() throws IOException {
 
         int lowestReward = Integer.MAX_VALUE;
+        Log.info("lowest reward");
         ArrayList<Seed> list = load(count());
         for(int i = 0; i < list.size(); i++ ){
             Seed s = (Seed)list.get(i);
@@ -50,6 +51,36 @@ public class SeedLoader {
         return lowestReward;
     }
 
+    public synchronized static int lowestPenalty() throws IOException {
+
+        int lowestPenalty = Integer.MAX_VALUE;
+        Log.info("lowest penalty");
+        ArrayList<Seed> list = load(count());
+        for(int i = 0; i < list.size(); i++ ){
+            Seed s = (Seed)list.get(i);
+            if( s.penalty < lowestPenalty ) {
+                lowestPenalty = s.penalty;
+            }
+        }
+
+        return lowestPenalty;
+    }
+
+    public synchronized static int highestPenalty() throws IOException {
+
+        int highestPenalty = Integer.MIN_VALUE;
+        Log.info("highest penalty");
+        ArrayList<Seed> list = load(count());
+        for(int i = 0; i < list.size(); i++ ){
+            Seed s = (Seed)list.get(i);
+            if( s.penalty > highestPenalty ) {
+                highestPenalty = s.penalty;
+            }
+        }
+
+        return highestPenalty;
+    }
+
     public synchronized static int count()
     {
         String seed = "./genomes/";
@@ -58,12 +89,17 @@ public class SeedLoader {
         File dir = new File(seed);
 
         File[] listFiles = dir.listFiles();
-        return listFiles.length;
+        if(listFiles != null) {
+            return listFiles.length;
+        } else {
+            return 0;
+        }
     }
     public synchronized static int highestReward() throws IOException {
 
 
         int highestReward = Integer.MIN_VALUE;
+        Log.info("highest reward");
         ArrayList<Seed> list = load(count());
         for(int i = 0; i < list.size(); i++ ){
             Seed s = (Seed)list.get(i);
@@ -76,18 +112,20 @@ public class SeedLoader {
     }
 
     public synchronized static ArrayList<Seed> load() {
+        Log.info("load()");
         return load(count());
     }
 
-        public synchronized static ArrayList<Seed> load(int max)  {
+    public synchronized static ArrayList<Seed> load(int max) {
+        Log.info("load(int max)");
         ArrayList<Seed> list = new ArrayList<Seed>();
         String seed = "./genomes/";
         Gson gson = new Gson(); //null;
         // create a reader
         File dir = new File(seed);
 
-        File[] listFiles = dir.listFiles();
         File[] files = dir.listFiles();
+        Log.info("Found:" + files.length + " files in the genome folder");
         Arrays.sort(files, Comparator.comparingLong(File::lastModified));
         int ctr = 0;
         for (int i = files.length - 1; i >= 0; i--) {
@@ -108,6 +146,7 @@ public class SeedLoader {
                             Log.info(ex);
                         }
                     }
+                    reader.close();
                 } catch(Exception ex){}
             }
         }
@@ -119,17 +158,16 @@ public class SeedLoader {
         // CODE BELOW SELECTS MOST FIT INDIVIDUALS BASED ON METRICS - REQUIRES REFACTORING
 
 
-        Comparator comparator = new Comparator() {
-            @Override
-            public int compare(Object o1, Object o2) {
-                Seed s1 = (Seed)o1;
-                Seed s2 = (Seed)o2;
-                if( s1.reward>s2.reward){
-                    return -1;
-                } else if( s1.reward == s2.reward ){
+        Comparator comparator = new Comparator<Seed>(){
+
+            public int compare(Seed e1, Seed e2) {
+                if (e1.reward - e1.penalty == e2.reward - e2.penalty) {
                     return 0;
+                } else if (e1.reward - e1.penalty < e2.reward - e2.penalty) {
+                    return 1;
+                } else {
+                    return -1;
                 }
-                return 1;
             }
         };
 
@@ -146,10 +184,10 @@ public class SeedLoader {
         }
         Arrays.sort(arr, comparator);
         for(int i =0; i < arr.length; i++ ){
-            if (i > Settings.STARTING_POPULATION) {
+            if (i > max) {
                 break;
             }
-            Log.info("generation:" + arr[i].generation + " genome length:" + arr[i].genome.length() + " reward:" + arr[i].reward);
+            Log.info("generation:" + arr[i].generation + " genome length:" + arr[i].genome.length() + " reward:" + arr[i].reward + " penalty:" + arr[i].penalty);
         }
         list = new ArrayList<>();
         for (int i = 0; i < arr.length; i++) {
@@ -165,6 +203,7 @@ public class SeedLoader {
         ArrayList<Seed> list = seeds;
         ArrayList<Entity> ents = new ArrayList<>();
 
+        Log.info("SeedLoader.load(ArrayList<Seed> seeds, World world)");
         for (int i = 0; i < Settings.STARTING_POPULATION; i++) {
             if (list.get(i).genome.contains("-")) {
                 continue;
@@ -173,8 +212,8 @@ public class SeedLoader {
                 String genome = list.get(i).genome;
                 Log.info("Adding:" + i + ":" + genome);
                 Genome g = new Genome(genome);
-                Brain brain = new Brain(g);
                 Entity e = new Entity(world);
+                Brain brain = new Brain(e, g);
                 brain.setOwner(e);
                 e.location.x = (int) (Math.random() * world.width);
                 e.location.y = (int) (Math.random() * world.height);
@@ -182,6 +221,10 @@ public class SeedLoader {
                 e.brain = brain;
                 try {
                     e.reward = list.get(i).reward;
+                } catch (Exception ex) {
+                }
+                try {
+                    e.penalty = list.get(i).penalty;
                 } catch (Exception ex) {
                 }
 

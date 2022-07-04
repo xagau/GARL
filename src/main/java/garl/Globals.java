@@ -30,7 +30,7 @@ import java.util.concurrent.Semaphore;
 
 public class Globals {
 
-    public static int minor = 50;
+    public static int minor = 52;
     public static int major = 1;
 
     public static String title = "Genetic Based Multi-Agent Reinforcement Learning " + major + "." + minor;
@@ -53,6 +53,11 @@ public class Globals {
     public static double minManualPayout = 0.01;
 
     public static int FPS = 32;
+    public static int SPAWNER_REWARD = 10;
+    public static int REPLICATION_REWARD = 2;
+    public static int CONTROL_PENALTY = 10;
+    public static int WALL_PENALTY = 1;
+
 
     public static int epoch = 1;
 
@@ -62,6 +67,10 @@ public class Globals {
 
     public static boolean benchmark = false;
 
+    public static boolean sound = true;
+    public static int repeat = 5;
+
+    public static int neuronIobe = 0;
     static {
         try {
             Locale.setDefault(Locale.US);

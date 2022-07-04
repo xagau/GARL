@@ -1,0 +1,20 @@
+#version 330
+
+uniform mat4 mMVP;
+uniform mat3 mNORMAL;
+uniform int cubeSize;
+layout(location = 0) in vec3 iPosition;
+layout(location = 1) in vec3 iNormal;
+out vec3 vNormal;
+
+void main(void) {
+    int x = gl_InstanceID / (cubeSize * cubeSize);
+    int y = (gl_InstanceID / cubeSize) % cubeSize;
+    int z = gl_InstanceID % cubeSize;
+    float offset = -(cubeSize / 2);
+    if (cubeSize + offset * 2 == 0) {
+        offset += 0.5;
+    }
+    gl_Position = mMVP * vec4(iPosition + vec3(offset + float(x), offset + float(y), offset + float(z)), 1.0);
+    vNormal = mNORMAL * iNormal;
+}

@@ -29,8 +29,9 @@ import garl.ann.NeuralLayer;
 public class Sigmoid implements IActivationFunction {
     private double a = 1.0;
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
-
+        this.layer = layer;
     }
 
     public Sigmoid(double _a) {

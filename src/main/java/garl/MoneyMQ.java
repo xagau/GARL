@@ -234,6 +234,7 @@ public class MoneyMQ {
                     ZipUtil.pack(list.get(i).file, archive);
                 } catch(Exception ex) {}
             }
+
             ArtifactStorage storage = new ArtifactStorage();
             String address = AddressGenerator.generateNewAddress();
             Log.info("address:{" + address + "}");
@@ -245,8 +246,6 @@ public class MoneyMQ {
             artifact.setTags(tags);
             artifact.setDescription(tags);
             storage.store(address, archive, artifact, false);
-
-
 
         } catch (Exception ex) {
             Log.info("MoneyMQ:" + ex.getMessage(), Level.ALL);

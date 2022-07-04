@@ -98,12 +98,12 @@ public class Population {
         world.spawns = 0;
 
 
-        Comparator<Seed> comparator = new Comparator<Seed>() {
-            @Override
+        Comparator comparator = new Comparator<Seed>(){
+
             public int compare(Seed e1, Seed e2) {
-                if (e1.reward == e2.reward) {
+                if (e1.reward - e1.penalty == e2.reward - e2.penalty) {
                     return 0;
-                } else if (e1.reward < e2.reward) {
+                } else if (e1.reward - e1.penalty < e2.reward - e2.penalty) {
                     return 1;
                 } else {
                     return -1;
@@ -119,11 +119,8 @@ public class Population {
 
         int individuals = Settings.STARTING_POPULATION; // ? , individuals);
 
-        //String fileName = "./genomes/" + System.currentTimeMillis() + "-" + Globals.epoch + "-epoch.json";
-        //Log.info(fileName);
         try {
-            //FileWriter writer = new FileWriter(new File(fileName));
-            //writer.write("[");
+
             for (int i = 0; i <= individuals; i++) {
                 try {
                     if (i < seedList.size()) {
@@ -133,8 +130,11 @@ public class Population {
                         e.genome = new Genome(seed.genome);
                         e.generation = seed.generation;
                         e.reward = seed.reward;
+                        try {
+                            e.penalty = seed.penalty;
+                        } catch(Exception ex) {}
                         e.epoch = Globals.epoch;
-                        e.brain = new Brain(e.genome);
+                        e.brain = new Brain(e, e.genome);
                         e.location.x = rand.nextInt(world.width);
                         e.location.y = rand.nextInt(world.height);
 

@@ -24,15 +24,11 @@ package garl.ann;
  * @email seanbeecroft@gmail.com
  *
  */
-import garl.Action;
-import garl.Gene;
-import garl.Genome;
-import garl.Settings;
+import garl.*;
 import garl.iaf.ActivationFactory;
 import garl.iaf.IActivationFunction;
 import garl.iaf.ReluFunction;
 import garl.iaf.SoftmaxFunction;
-import garl.Log;
 
 
 public class NeuralNet {
@@ -59,6 +55,7 @@ public class NeuralNet {
             softmax.setLayer(output);
 
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         try {
@@ -68,6 +65,7 @@ public class NeuralNet {
             hidden.nextLayer = output;
             hidden.name = "hidden";
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         try {
@@ -77,6 +75,7 @@ public class NeuralNet {
             dense.nextLayer = dropout;
             dense.name = "dense";
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         try {
@@ -86,12 +85,12 @@ public class NeuralNet {
             dropout.nextLayer = hidden;
             dropout.name = "dropout";
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
 
 
 
-        IActivationFunction iaf2 = ActivationFactory.create(g.read());
         try {
             ReluFunction relu = new ReluFunction(g.read());
             input = new InputLayer(numInputs, relu, numInputs);
@@ -99,6 +98,7 @@ public class NeuralNet {
             input.name = "input";
             input.nextLayer = dense;
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         try {
@@ -113,8 +113,31 @@ public class NeuralNet {
             dropout.init();
             hidden.init();
             output.init();
+
+            try {
+                if(Globals.verbose) {
+                    Log.info("input:" + input.neuron.size());
+                    Log.info("dense:" + dense.neuron.size());
+                    for (int i = 0; i < dense.neuron.size(); i++) {
+                        Log.info("dense:" + dense.neuron.get(i).getActivationFunction().getClass().getSimpleName());
+                    }
+                    Log.info("dropout:" + dropout.neuron.size());
+                    for (int i = 0; i < dropout.neuron.size(); i++) {
+                        Log.info("dropout:" + dropout.neuron.get(i).getActivationFunction().getClass().getSimpleName());
+                    }
+                    Log.info("hidden:" + hidden.neuron.size());
+                    for (int i = 0; i < hidden.neuron.size(); i++) {
+                        Log.info("hidden:" + hidden.neuron.get(i).getActivationFunction().getClass().getSimpleName());
+                    }
+                    Log.info("output:" + output.neuron.size());
+                }
+            } catch(Exception ex) {
+                Log.info(ex);
+                ex.printStackTrace();
+            }
         } catch (Exception ex) {
             Log.info("Unable to build Neural Network:" + ex);
+            ex.printStackTrace();
         }
 
     }

@@ -1,11 +1,13 @@
 garl/AWTThreadManager$2.class
 garl/Globals.class
 garl/iaf/NegateFunction.class
+garl/iaf/LeakyReluFunction.class
 garl/ActionFactory.class
 garl/ComputerIdentifier.class
 garl/iaf/SinusoidFunction.class
 garl/GARLTask$6.class
 garl/ShutdownHook.class
+garl/Channel.class
 garl/GARLTask$2.class
 garl/Coord.class
 garl/iaf/SoftmaxFunction.class
@@ -13,6 +15,7 @@ garl/Population.class
 garl/GARLTask$11.class
 garl/iaf/ActivationFunction.class
 garl/GFG.class
+garl/Bleep.class
 garl/MoneyMQ.class
 garl/Entity.class
 garl/World.class
@@ -25,6 +28,7 @@ garl/DoingTask.class
 garl/ThinkTask.class
 garl/iaf/LinearCombinationFunction.class
 garl/AWTThreadManager$1.class
+garl/Channel$1.class
 garl/iaf/ExpectedSarsaFunction.class
 garl/GARLTask$10.class
 garl/GenomeFactory.class
@@ -40,6 +44,7 @@ garl/Tester.class
 garl/Utility.class
 garl/iaf/CosusoidFunction.class
 garl/AWTThreadManager$4.class
+garl/SoundPlayer.class
 garl/GARLTask$13.class
 garl/GARLTask$4.class
 garl/ann/NeuralNet.class
@@ -54,6 +59,7 @@ garl/ann/InputLayer.class
 garl/SelectionTask.class
 garl/SeedLoader$1.class
 garl/Line.class
+garl/CullingStrategy$1.class
 garl/iaf/ActivationFactory$1.class
 garl/iaf/IActivationFunction.class
 garl/GARLTask$16.class
@@ -82,6 +88,7 @@ garl/GARLTask$12.class
 garl/AWTThreadManager.class
 garl/Action.class
 garl/GARLFrame.class
+garl/Message.class
 garl/GARLTask$15.class
 garl/Genome.class
 garl/ann/HiddenLayer.class

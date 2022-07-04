@@ -7,7 +7,16 @@
     <groupId>org.example</groupId>
     <artifactId>GARL</artifactId>
     <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+
+
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.jogamp.jogl/jogl-all-main -->
         <dependency>
             <groupId>com.placeh</groupId>
             <artifactId>placeholders-api</artifactId>
@@ -32,21 +41,14 @@
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
-            <version>LATEST</version>
+            <version>RELEASE</version>
         </dependency>
     </dependencies>
 
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
 
     <build>
 
     <plugins>
-
-
-
         <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>

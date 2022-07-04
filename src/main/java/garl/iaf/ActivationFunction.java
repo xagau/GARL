@@ -26,14 +26,15 @@ package garl.iaf;
  */
 public enum ActivationFunction
 {
-    //LINEAR,
+    LINEAR,
     SIGMOID,
-    //HYPERTAN,
+    HYPERTAN,
+    LEAKY_RELU,
     RELU,
     SOFTMAX,
-    //COSUSMOID,
-    //SINUSMOID,
-    //STEP,
-    //NEGATE,
-    //LINEAR_COMBINATION
+    COSUSMOID,
+    SINUSMOID,
+    STEP,
+    NEGATE,
+    LINEAR_COMBINATION
 }

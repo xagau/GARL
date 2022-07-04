@@ -38,8 +38,9 @@ public class StepFunction implements IActivationFunction {
         this.threshold = threshold;
     }
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
-
+        this.layer = layer;
     }
 
     public double calc(double summedInput) {

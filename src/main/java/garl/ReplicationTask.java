@@ -82,6 +82,7 @@ public class ReplicationTask implements Runnable {
                 if (livingCount <= Settings.GENE_POOL || livingCount >= Settings.MAX_POPULATION || world.list.size() >= Settings.MAX_ENTITY_POPULATION) {
                     try {
                         world.pause = true;
+                        CullingStrategy.cleanup();
 
                         ArrayList<Seed> list = SeedLoader.load();
                         ArrayList<Entity> entList = new ArrayList<Entity>();

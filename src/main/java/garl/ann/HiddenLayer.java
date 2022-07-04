@@ -31,5 +31,6 @@ public class HiddenLayer extends NeuralLayer {
         this.numberOfInputs = numberofinputs;
         this.numberOfNeuronsInLayer = numberofneurons;
         this.activationFnc = iaf;
+        this.activationFnc.setLayer(this);
     }
 }

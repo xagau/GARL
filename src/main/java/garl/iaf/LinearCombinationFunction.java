@@ -36,13 +36,12 @@ public class LinearCombinationFunction implements IActivationFunction {
      * Bias value
      */
     private double bias = 0;
-
+    NeuralLayer layer = null;
+    public void setLayer(NeuralLayer layer) {
+        this.layer = layer;
+    }
     LinearCombinationFunction(double bias) {
         this.bias = bias;
-    }
-
-    public void setLayer(NeuralLayer layer) {
-        setLayer(layer);
     }
 
     @Override

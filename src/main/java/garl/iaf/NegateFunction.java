@@ -34,7 +34,9 @@ public class NegateFunction implements IActivationFunction {
     }
 
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
+        this.layer = layer;
     }
 
     @Override

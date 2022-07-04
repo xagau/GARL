@@ -23,6 +23,8 @@ package garl;
  * @email seanbeecroft@gmail.com
  *
  */
+import sun.security.action.GetLongAction;
+
 import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
@@ -49,7 +51,7 @@ public class SelectionTask implements Runnable {
     public void save(int epoch, Entity e) {
         try {
             FileWriter writer = new FileWriter(new File(Property.getProperty("settings.genomes") + System.currentTimeMillis() + "-genome-" + UUID.randomUUID().toString() + ".json"));
-            writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + e.generation + ", \"genome\":\"" + e.genome.code + "\", \"reward\":\"" + e.reward + "\" }");
+            writer.write("{ \"epoch\":" + epoch + ",\"generation\":" + e.generation + ", \"genome\":\"" + e.genome.code + "\", \"reward\":\"" + e.reward + "\", \"penalty\":\"" + e.penalty + "\" }");
             writer.flush();
             writer.close();
 
@@ -86,6 +88,8 @@ public class SelectionTask implements Runnable {
                         if (rect != null) {
                             if (e.alive) {
                                 if( selection.notInBounds(e, world)){
+                                    e.penalty+=Globals.WALL_PENALTY;
+                                    save(Globals.epoch, e);
                                     world.impact++;
                                     e.die();
                                 } else if (selection.insideRect(rect, e)) {
@@ -97,7 +101,7 @@ public class SelectionTask implements Runnable {
                                             Log.info("Spawn:Y" + Globals.spawn.y);
                                         }
 
-                                        e.reward++;
+                                        e.reward+=Globals.SPAWNER_REWARD;
                                         save(Globals.epoch, e);
                                         for (int k = 0; k < Settings.MAX_SPAWN_OFFSPRING; k++) {
                                             Entity n = e.clone();
@@ -115,9 +119,14 @@ public class SelectionTask implements Runnable {
                                         if (rect.control) {
                                             world.controls += Settings.MAX_SPAWN_OFFSPRING;
                                             world.totalControls += Settings.MAX_SPAWN_OFFSPRING;
+                                            e.penalty+= Globals.CONTROL_PENALTY;
+                                        } else {
+                                            e.penalty+= Globals.WALL_PENALTY;
                                         }
                                         if( rect.isVisible()) {
                                             world.impact++;
+                                            save(Globals.epoch, e);
+
                                             e.die();
                                         }
 
@@ -134,6 +143,7 @@ public class SelectionTask implements Runnable {
                                                 }
                                             }
                                         }
+                                        save(Globals.epoch, e);
                                         world.impact++;
                                         e.die();
 
@@ -144,6 +154,8 @@ public class SelectionTask implements Runnable {
                     }
 
                     if (e.getEnergy() <= Settings.MIN_ENERGY) {
+                        e.penalty++;
+                        save(Globals.epoch, e);
                         e.die();
                     }
                 }

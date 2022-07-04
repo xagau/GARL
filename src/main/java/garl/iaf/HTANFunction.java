@@ -34,9 +34,10 @@ public class HTANFunction implements IActivationFunction {
     }
 
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
+        this.layer = layer;
     }
-
 
     @Override
     public double calc(double x) {

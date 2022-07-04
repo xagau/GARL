@@ -82,6 +82,7 @@ public class Property {
             java.util.Properties property = new java.util.Properties();
             property.load(fis);
             String value = property.getProperty(name);
+            fis.close();
             return value;
 
         } catch(Exception ex) {

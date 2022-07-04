@@ -26,9 +26,7 @@ package garl.ann;
  */
 import garl.Action;
 import garl.Utility;
-import garl.iaf.IActivationFunction;
-import garl.iaf.ReluFunction;
-import garl.iaf.SoftmaxFunction;
+import garl.iaf.*;
 import garl.Log;
 
 import java.util.ArrayList;
@@ -55,16 +53,42 @@ public abstract class NeuralLayer {
                 activationFnc = sf;
 
             } else {
-                activationFnc = new ReluFunction(owner.owner.read(owner.owner.index()));
+                activationFnc = new ReluFunction(owner.owner.read());
             }
             owner.owner.advance();
-            double bias = Utility.flatten(owner.owner.read(owner.owner.index()));
-            try {
-                neuron.get(i).setActivationFunction(activationFnc);
-                neuron.get(i).init();
-            } catch (IndexOutOfBoundsException iobe) {
-                neuron.add(new Neuron(numberOfInputs, activationFnc, bias));
-                neuron.get(i).init();
+            double bias = Utility.flatten(owner.owner.read());
+            if( neuron != null && !neuron.isEmpty() && i < neuron.size()) {
+                Neuron n = neuron.get(i);
+                try {
+                    IActivationFunction af = ActivationFactory.create((int)owner.owner.read(), this);
+                    if( af instanceof SoftmaxFunction ){
+                        ((SoftmaxFunction) af).setLayer(this);
+                    }
+                    n.setActivationFunction(af);
+
+                    n.bias = bias;
+                    n.init(false, this);
+                } catch (IndexOutOfBoundsException iobe) {
+                    IActivationFunction af = ActivationFactory.create((int)owner.owner.read(), this);
+                    if( af instanceof SoftmaxFunction ){
+                        ((SoftmaxFunction) af).setLayer(this);
+                    }
+                    Neuron nn = new Neuron(numberOfInputs, af, bias, this);
+                    neuron.add(nn);
+                    nn.init(false, this);
+                }
+            } else {
+                if( neuron != null ){
+                    IActivationFunction af = ActivationFactory.create((int)owner.owner.read(), this);
+                    if( af instanceof SoftmaxFunction ){
+                        ((SoftmaxFunction) af).setLayer(this);
+                    }
+                    Neuron nn = new Neuron(numberOfInputs, af, bias, this);
+                    neuron.add(nn);
+                    nn.init(false, this);
+                } else {
+                    Log.info(name + " layer neuron array is null");
+                }
             }
 
         }
@@ -77,23 +101,28 @@ public abstract class NeuralLayer {
             Log.info(this.name + " calc() " + numberOfNeuronsInLayer);
         }
         for (int i = 0; i < numberOfNeuronsInLayer; i++) {
-            if (previousLayer != null) {
-                if (neuralLayerDebug) {
-                    Log.info("input-" + name + ":" + previousLayer.input);
+            if(neuron != null && i < neuron.size()) {
+                Neuron n = neuron.get(i);
+
+                if (previousLayer != null) {
+                    if (neuralLayerDebug) {
+                        Log.info("input-" + name + ":" + previousLayer.input);
+                    }
+                    n.setInputs(previousLayer.input);
+                    n.calc();
+
+                } else {
+                    if (neuralLayerDebug) {
+                        Log.info("input-" + name + ":" + input);
+                    }
+                    n.setInputs(input);
+                    n.calc();
                 }
-                neuron.get(i).setInputs(previousLayer.input);
-                neuron.get(i).calc();
-            } else {
-                if (neuralLayerDebug) {
-                    Log.info("input-" + name + ":" + input);
+                try {
+                    output.set(i, n.getOutput());
+                } catch (IndexOutOfBoundsException iobe) {
+                    output.add(n.getOutput());
                 }
-                neuron.get(i).setInputs(input);
-                neuron.get(i).calc();
-            }
-            try {
-                output.set(i, neuron.get(i).getOutput());
-            } catch (IndexOutOfBoundsException iobe) {
-                output.add(neuron.get(i).getOutput());
             }
         }
         if (nextLayer != null) {

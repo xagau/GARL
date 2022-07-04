@@ -3,6 +3,8 @@ package garl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 /** Copyright (c) 2019-2022 placeh.io,
@@ -51,22 +53,51 @@ public class CullingStrategy {
 
             int highestReward = SeedLoader.highestReward();
             int lowestReward = SeedLoader.lowestReward();
+            int highestPenalty = SeedLoader.highestPenalty();
+            int lowestPenalty = SeedLoader.lowestPenalty();
+
             ArrayList<Seed> seeds = SeedLoader.load(SeedLoader.count());
             int limit = CullingStrategy.MAX_ENTITIES;
             int count = 0;
             Log.info("Highest reward:" + highestReward);
             Log.info("Lowest reward:" + lowestReward);
+            Log.info("Highest penalty:" + highestPenalty);
+            Log.info("Lowest penalty:" + lowestPenalty);
 
             Log.info(f + " genome source: " + genomePath + " " + list.length);
+
+            Comparator comparator = new Comparator<Seed>(){
+
+                public int compare(Seed e1, Seed e2) {
+                    if (e1.reward - e1.penalty == e2.reward - e2.penalty) {
+                        return 0;
+                    } else if (e1.reward - e1.penalty < e2.reward - e2.penalty) {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                }
+            };
+            Collections.sort(seeds, comparator);
+            int reward = 0;
+            int penalty = 0;
+            boolean set = false;
             for (int i = 0; i < seeds.size(); i++) {
+                if (i >= MAX_ENTITIES && set == false ){
+                    reward = seeds.get(i).reward;
+                    penalty = seeds.get(i).penalty;
+                    Log.info("Benchmark Reward:" + reward);
+                    Log.info("Benchmark Penalty:" + penalty);
+                    set = true;
+                }
                 if( seeds.size() >= MAX_ENTITIES) {
                     Seed seed = (Seed) seeds.get(i);
-                    if (seed.reward <= lowestReward) {
-                        Log.info("Removing:" + seeds.get(i).file.getName() + " because reward = " + seeds.get(i).reward);
+                    if (seed.reward-seed.penalty < reward-penalty) {
+                        Log.info("Removing:" + seeds.get(i).file.getName() + " because reward = " + seeds.get(i).reward + " and penalty = " + seeds.get(i).penalty);
                         seeds.get(i).file.delete();
                         count++;
                     } else {
-                        Log.info("Retain:" + seeds.get(i).file.getName() + " because reward = " + seeds.get(i).reward);
+                        Log.info("Retain:" + seeds.get(i).file.getName() + " because reward = " + seeds.get(i).reward + " and penalty = " + seeds.get(i).penalty);
                     }
                 }
             }

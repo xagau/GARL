@@ -1,5 +1,7 @@
 package garl.iaf;
 
+import garl.ann.NeuralLayer;
+
 /** Copyright (c) 2019-2022 placeh.io,
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -25,7 +27,13 @@ package garl.iaf;
  *
  */
 public interface IActivationFunction {
+
+    NeuralLayer layer = null;
+
     double calc(double x);
+
+    void setLayer(NeuralLayer layer);
+
 }
 
 

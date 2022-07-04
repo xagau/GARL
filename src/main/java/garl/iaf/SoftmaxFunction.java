@@ -39,11 +39,9 @@ public class SoftmaxFunction implements IActivationFunction {
     }
 
     NeuralLayer layer = null;
-
     public void setLayer(NeuralLayer layer) {
         this.layer = layer;
     }
-
     @Override
     public double calc(double netInput) {
         double totalLayerInput = 0;

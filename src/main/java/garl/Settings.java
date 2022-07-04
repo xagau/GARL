@@ -27,6 +27,7 @@ import java.util.Base64;
 
 public class Settings {
 
+    public static int MAX_MESSAGE_SIZE = 16;
 
     public static int INSPECTOR_WIDTH = 320;
     public static double ACCELERATION = 1.1;
@@ -64,6 +65,8 @@ public class Settings {
     public static double ENERGY = 15.0 ;
     public static double ENERGY_STEP_COST = 0.0005;
     public static double ENERGY_STEP_SLEEP_COST = 0.02;
+    public static boolean ENABLE_SOUND = false;
+    public static int SOUND_REPEAT = 5;
 
     static {
         try {
@@ -95,6 +98,18 @@ public class Settings {
 
         try {
             MAX_SPAWN_OFFSPRING = Integer.parseInt(Property.getProperty("settings.max_spawn_offspring"));
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+        try {
+            ENABLE_SOUND = Boolean.parseBoolean(Property.getProperty("settings.sound"));
+            Globals.sound = ENABLE_SOUND;
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+        try {
+            SOUND_REPEAT = Integer.parseInt(Property.getProperty("settings.sound.repeat"));
+            Globals.repeat = SOUND_REPEAT;
         } catch(Exception ex) {
             ex.printStackTrace();
         }

@@ -1862,3 +1862,39 @@
 
 1199.46G/1213.99G:202206174T2011624:L:ERROR: publish failed:java.io.IOException: Given file is not a directory './genomes/1656029436500-genome-5f459c58-266f-4ecc-bf9c-c4a152c3a4cc.json'
 
+961.61G/1214.09G:202207182T1347218:L:Routing Key:transactions-mc
+
+961.61G/1214.09G:202207182T1347221:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50004000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1656697634182","version":"1.51","taskType":"GARL-genome"}'
+
+934.78G/1214.09G:202207182T1347256:L: [x] Sent Successfully
+
+915.93G/1214.04G:202207182T1534286:L:Routing Key:transactions-mc
+
+915.93G/1214.04G:202207182T1534286:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50034000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1656704052260","version":"1.51","taskType":"GARL-genome"}'
+
+872.96G/1214.04G:202207182T1534318:L: [x] Sent Successfully
+
+667.04G/1214.25G:202207182T2328385:L:Routing Key:transactions-mc
+
+667.04G/1214.25G:202207182T2328387:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50016000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1656732491348","version":"1.51","taskType":"GARL-genome"}'
+
+656.31G/1214.25G:202207182T2328419:L: [x] Sent Successfully
+
+335.86G/1214.25G:202207183T0201364:L:Routing Key:transactions-mc
+
+335.86G/1214.25G:202207183T0201364:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50059000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1656741706333","version":"1.51","taskType":"GARL-genome"}'
+
+325.57G/1214.25G:202207183T0201395:L: [x] Sent Successfully
+
+381.78G/1214.15G:202207183T1754359:L:Routing Key:transactions-mc
+
+381.78G/1214.15G:202207183T1754362:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50015000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1656798894318","version":"1.51","taskType":"GARL-genome"}'
+
+367.46G/1214.15G:202207183T1754399:L: [x] Sent Successfully
+
+325.53G/1214.25G:202207183T2018380:L:Routing Key:transactions-mc
+
+325.53G/1214.25G:202207183T2018380:L: [x] Sent '{"terminalId":"99389849839490390493090390403","amount":"0.50019000","currency":"PHL","recipient":"FD99FpG4V9q8m9BNkHddK1A3J3RPVLVGC2","clientId":"NONE-NO-MAC","otp":"0099389849839490390493090390403","transactionId":"MC1656807501349","version":"1.51","taskType":"GARL-genome"}'
+
+303.90G/1214.25G:202207183T2018413:L: [x] Sent Successfully
+

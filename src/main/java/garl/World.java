@@ -39,6 +39,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
 
     volatile World world = null;
 
+    private volatile Channel channel = new Channel();
 
     volatile ArrayList<Entity> list = new ArrayList<>();
 
@@ -666,6 +667,7 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
                 g.drawString("Distance to Goal: X:" + e.distanceX + " Y:" + e.distanceY, px + spacing, py + spacing * 39);
                 g.drawString("Reward:" + e.reward, px + spacing, py + spacing * 40);
                 try { g.drawString("Selected:" + selected.selected, px + spacing, py + spacing * 41); } catch(Exception ex) {}
+                try { g.drawString("Penalty:" + e.penalty, px + spacing, py + spacing * 42); } catch(Exception ex) {}
 
                 g.setColor(Color.black);
 
@@ -699,6 +701,14 @@ public class World extends Canvas implements ComponentListener, MouseMotionListe
     @Override
     public void componentHidden(ComponentEvent componentEvent) {
 
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
     }
 }
 

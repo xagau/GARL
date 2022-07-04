@@ -37,6 +37,7 @@ public class Entity {
     volatile Genome genome = null;
     volatile int generation = 0;
     volatile int reward = 0;
+    volatile int penalty = 0;
 
     volatile int epoch = 0;
     volatile boolean fertile = false;
@@ -75,6 +76,7 @@ public class Entity {
 
     volatile int depth = 0;
 
+    volatile int lastMessageRead = 0;
 
 
 
@@ -146,7 +148,7 @@ public class Entity {
 
         Obstacle first = closest(mwalls, this);
         if( first == null || first != Globals.spawn ){
-            target = false;
+            //target = false;
             return false;
         }
 
@@ -280,8 +282,6 @@ public class Entity {
 
     public boolean intersects(Entity a, Entity b) {
 
-
-
         int a_startX = (int) a.location.x;
         int a_startY = (int) a.location.y;
 
@@ -392,6 +392,16 @@ public class Entity {
 
     public Entity clone() {
         Entity e = new Entity(world);
+
+        e.genome.code = genome.code;
+        e.reward = reward;
+        e.penalty = penalty;
+        e.genome.numAppends = 0;
+        e.genome.numRecodes = 0;
+        e.genome.mutate();
+        e.genome.owner = e;
+        e.brain = new Brain(e, e.genome);
+
         e.alive = true;
 
         int move = 1;
@@ -431,12 +441,8 @@ public class Entity {
             }
         } while(tryAgain);
 
-        e.genome.code = genome.code;
-        e.reward = reward;
-        e.genome.numAppends = 0;
-        e.genome.numRecodes = 0;
-        e.genome.mutate();
-        e.brain = new Brain(e, e.genome);
+
+
 
         e.age = 0;
         e.energy = Settings.ENERGY * 2* Math.random();
@@ -464,6 +470,11 @@ public class Entity {
 
         int depth =0;
 
+        if( brain == null ){
+            Log.info("My brain was null");
+            die();
+            return;
+        }
         age++;
         consume();
         size = calculateSize();
@@ -488,6 +499,11 @@ public class Entity {
 
     public void think(World world, long start) {
 
+        if( brain == null ){
+            Log.info("My brain was null");
+            die();
+            return;
+        }
         distanceX = (int)(location.x - Globals.spawn.getCenterX());
         distanceY = (int)(location.y - Globals.spawn.getCenterY());
         try {
@@ -557,11 +573,18 @@ public class Entity {
 
             if ((Math.abs(location.vx) == Math.abs(0) && Math.abs(location.vy) == Math.abs(0))) {
 
-                double d = brain.getOutput();
-                action = ActionFactory.create(d);
-                input = d;
-                location.vx = Math.random();
-                location.vy = Math.random();
+                if( brain != null ) {
+                    brain.input(world);
+                    brain.calculate();
+                    double d = brain.getOutput();
+                    action = ActionFactory.create(d);
+                    input = d;
+                    location.vx = Math.random();
+                    location.vy = Math.random();
+                } else {
+                    Log.info("Brain was null");
+                    return;
+                }
 
             }
 
@@ -571,7 +594,7 @@ public class Entity {
                 input = d;
             }
 
-            if(isTrajectoryGoal()){
+            if(isTrajectoryGoal() && depth != 1 ){
                 action = Action.CONTINUE;
             }
 
@@ -582,27 +605,22 @@ public class Entity {
 
                         anglex = Math.sin(anglex);
                         angley = Math.sin(angley);
-                        //process(Action.FASTER, world, depth);
                         break;
                     case COS:
                         anglex = Math.cos(anglex);
                         angley = Math.cos(angley);
-                        //process(Action.FASTER, world, depth);
                         break;
                     case TAN:
                         anglex = Math.tan(anglex);
                         angley = Math.tan(angley);
-                        //process(Action.FASTER, world, depth);
                         break;
                     case COSIN:
                         anglex = Math.cos(anglex);
                         angley = Math.sin(angley);
-                        //process(Action.FASTER, world, depth);
                         break;
                     case SINCOS:
                         anglex = Math.sin(anglex);
                         angley = Math.cos(angley);
-                        //process(Action.FASTER, world, depth);
                         break;
 
                     case STOP:
@@ -616,7 +634,7 @@ public class Entity {
                         try {
                             if (register == 0) {
                                 brain.input(this, world);
-                                brain.ann.input.calc();
+                                brain.calculate();
                                 register = brain.getOutput();
                             }
                             double jf = 0;
@@ -642,7 +660,7 @@ public class Entity {
                         break;
                     case CYCLE:
                     case CONTINUE:
-                        if (target) {
+                        if (target && isTrajectoryGoal()) {
                             if (targetvx != 0) {
                                 if (targetx > location.x) {
                                     location.vx = -Settings.ACCELERATION;
@@ -662,7 +680,7 @@ public class Entity {
 
                     case SAVE:
                         brain.input(this, world);
-                        brain.ann.input.calc();
+                        brain.calculate();
                         register = brain.getOutput();
 
                         break;
@@ -673,10 +691,10 @@ public class Entity {
                             Entity ent = ae.get(i);
                             brain.input(ent, world);
                         }
-                        brain.ann.input.calc();
+                        brain.calculate();
 
 
-                        if (brain != null && brain.entity != null && brain.entity.genome != null && brain.entity.genome.code != null) {
+                        //if (brain != null && brain.entity != null && brain.entity.genome != null && brain.entity.genome.code != null) {
                             try {
                                 if (brain.entity.genome.index == Integer.MIN_VALUE) {
                                     brain.entity.genome.index = 33;
@@ -691,10 +709,71 @@ public class Entity {
                                     Log.info(ex);
                                 }
                             }
+                        //}
+                        break;
+
+                    case BROADCAST:
+                        try {
+                            //Log.info(hashCode() + " - broadcast:");
+                            Message message = new Message();
+                            double dm = brain.getOutput((double) Action.BROADCAST.ordinal());
+                            brain.input(dm);
+                            brain.calculate();
+                            double part = brain.getOutput();
+                            part %= Settings.MAX_MESSAGE_SIZE;
+                            message.setSender(this);
+                            //Log.info(hashCode() + " - sent " + part);
+
+                            //double dmm = brain.getOutput(genome.read());
+                            message.add((double)Action.BROADCAST.ordinal());
+                            message.add((double)hashCode());
+                            message.add((double)System.currentTimeMillis()/1000);
+                            //message.add(dmm);
+                            message.add(part);
+                            message.add(genome.read(Gene.KIN));
+                            message.add(location.x);
+                            message.add(location.y);
+                            message.add(location.vx);
+                            message.add(location.vy);
+                            message.add(distanceX);
+                            message.add(distanceY);
+                            message.add(walls);
+
+                            message.time = System.nanoTime();
+                            world.getChannel().broadcast(message);
+                        } catch(Exception ex) {
+                            Log.info(ex);
+                            ex.printStackTrace();
                         }
                         break;
 
+                    case LISTEN:
+                        try {
 
+                            int numNewMessages = world.getChannel().getMessages().size() - lastMessageRead;
+                            //Log.info(hashCode() + " - listen:" + numNewMessages);
+                            for(int i = lastMessageRead; i < numNewMessages; i++ ) {
+                                Message m = world.getChannel().listen(i);
+                                Entity sender = m.getSender();
+                                if( sender.hashCode() != this.hashCode() ) {
+                                    int sz = m.getMessage().size();
+                                    //Log.info(hashCode() + " heard " + sender.hashCode() + " " + sz);
+                                    for (int j = 0; j < sz; j++) {
+                                        brain.input(sender, m.getMessage().get(j));
+                                    }
+                                }
+                            }
+                            lastMessageRead += numNewMessages;
+                            brain.calculate();
+                            register = brain.getOutput();
+                            Action a = ActionFactory.create(register);
+
+                            process(a, world, depth);
+                        } catch(Exception ex) {
+                            Log.info(ex);
+                            ex.printStackTrace();
+                        }
+                        break;
                     case APPEND:
                         try {
 
@@ -705,7 +784,7 @@ public class Entity {
                             double l = 0;
                             if (register == 0d) {
                                 brain.input(this, world);
-                                brain.ann.input.calc();
+                                brain.calculate();
                                 ao = brain.getOutput();
                                 l = Utility.flatten((long) ao, Settings.CHAR_SET);
                             } else {
@@ -733,10 +812,10 @@ public class Entity {
 
                         try {
                             brain.input(this, world);
-                            brain.ann.input.calc();
+                            brain.calculate();
                             double output = brain.getOutput();
                             brain.input(this, world);
-                            brain.ann.input.calc();
+                            brain.calculate();
                             double code = brain.getOutput();
                             if (Character.isLetter((char) output) || Character.isDigit((char) output)) {
                                 genome.recode((int) code, (char) output);
@@ -985,7 +1064,6 @@ public class Entity {
                         }
 
                         setEnergy(getEnergy() + Math.abs(extracted));
-                        //size = size + (o.size );
                         size = calculateSize();
                         o.setEnergy(o.getEnergy() - extracted);
                         o.size = o.calculateSize();
@@ -1015,6 +1093,8 @@ public class Entity {
     public void setEnergy(double energy) {
         if( energy >= Settings.MAX_ENERGY ){
             this.energy = Settings.MAX_ENERGY;
+        } else if( energy <= 0 ){
+            this.energy = 0;
         }
     }
 }

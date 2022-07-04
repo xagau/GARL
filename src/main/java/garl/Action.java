@@ -55,5 +55,8 @@ public enum Action {
     CONTINUE,
     APPEND,
     SAVE,
-    DELETE
+    DELETE,
+    BROADCAST,
+    LISTEN
+
 }

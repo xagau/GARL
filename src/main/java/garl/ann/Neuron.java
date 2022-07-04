@@ -24,6 +24,9 @@ package garl.ann;
  * @email seanbeecroft@gmail.com
  *
  */
+import garl.Globals;
+import garl.Log;
+import garl.Utility;
 import garl.iaf.IActivationFunction;
 
 import java.util.ArrayList;
@@ -37,11 +40,17 @@ public class Neuron {
     private int numberOfInputs = 0;
     protected Double bias = 0d; // get from gene? OR TD(0)?
     private IActivationFunction activationFunction;
+    private NeuralLayer layer = null;
 
-    public Neuron(int numberofinputs, IActivationFunction iaf, Double bias) {
+    public Neuron(int numberofinputs, IActivationFunction iaf, Double bias, NeuralLayer parent) {
         this.bias = bias;
         if(this.bias.isNaN()){
             this.bias = Math.random();
+        }
+        if( parent != null ) {
+            layer = parent;
+        } else {
+            Log.info("Parent layer is null for " );
         }
         numberOfInputs = numberofinputs;
         weight = new ArrayList<>(numberofinputs + 1);
@@ -53,14 +62,32 @@ public class Neuron {
         activationFunction = iaf;
     }
 
-    public void init() {
-        Random rand = new Random();
-        for (int i = 0; i <= numberOfInputs; i++) {
-            double newWeight = rand.nextDouble();
-            try {
-                this.weight.set(i, newWeight);
-            } catch (IndexOutOfBoundsException iobe) {
-                this.weight.add(newWeight);
+    public IActivationFunction getActivationFunction(){
+        return activationFunction;
+    }
+
+    public void init(boolean random, NeuralLayer layer) {
+        if( random ) {
+            Random rand = new Random();
+            for (int i = 0; i <= numberOfInputs; i++) {
+                double newWeight = rand.nextDouble();
+                try {
+                    this.weight.set(i, newWeight);
+                } catch (IndexOutOfBoundsException iobe) {
+                    this.weight.add(newWeight);
+                }
+            }
+        } else {
+            for (int i = 0; i <= numberOfInputs; i++) {
+                double newWeight = Math.random();
+                try {
+
+                    newWeight = Utility.flatten(this.layer.owner.owner.read());
+                    this.weight.set(i, newWeight);
+                } catch (IndexOutOfBoundsException iobe) {
+                    Globals.neuronIobe++;
+                    this.weight.add(newWeight);
+                }
             }
         }
     }
@@ -90,7 +117,7 @@ public class Neuron {
     }
 
     public Double getOutput() {
-        if( output.isNaN() ){
+        if( output.isNaN() || output.isInfinite() ){
             return bias;
         }
         return output;

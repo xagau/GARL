@@ -24,14 +24,55 @@ package garl;
  *
  */
 
-import java.io.File;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
 public class Utility {
+
+
+    public static String readFile(File file){
+
+        String fileContent = "";
+
+        FileInputStream fis = null;
+
+        StringBuilder contentBuilder = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(fis = new FileInputStream(file))))
+        {
+            String sCurrentLine;
+            while ((sCurrentLine = br.readLine()) != null)
+            {
+                contentBuilder.append(sCurrentLine).append("\n");
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        if( fis != null ){
+            try {
+                fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        fileContent = contentBuilder.toString();
+
+        return fileContent;
+    }
+
+    public static byte[] doubleToByteArray(double d){
+        byte[] output = new byte[8];
+        long lng = Double.doubleToLongBits(d);
+        for(int i = 0; i < 8; i++) output[i] = (byte)((lng >> ((7 - i) * 8)) & 0xff);
+        return output;
+    }
     public synchronized static long checksum(String in) {
         return getCRC32Checksum(in.getBytes());
     }

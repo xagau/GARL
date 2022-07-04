@@ -33,8 +33,9 @@ public class CosusoidFunction implements IActivationFunction {
         this.gene = gene;
     }
 
+    NeuralLayer layer = null;
     public void setLayer(NeuralLayer layer) {
-
+        this.layer = layer;
     }
 
     /**
